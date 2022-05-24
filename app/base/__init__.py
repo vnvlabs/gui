@@ -7,7 +7,7 @@ import shutil
 import threading
 import uuid
 
-from flask import Blueprint, render_template, request, make_response, jsonify, send_file
+from flask import Blueprint, render_template, request, make_response, jsonify, send_file, current_app
 from werkzeug.utils import redirect
 
 from . import blueprints
@@ -39,10 +39,28 @@ def updateBranding(config, pd):
 
     logo = config.get("logo", {})
     if "small" in logo and os.path.exists(os.path.join(pd, logo["small"])):
-        shutil.copy(os.path.join(pd, logo["small"]), LOGO_SMALL)
+        global LOGO_SMALL
+        LOGO_SMALL = os.path.basename(logo["small"])
+        shutil.copy(os.path.join(pd, logo["small"]), IMAGES_DIR)
 
     if "icon" in logo and os.path.exists(os.path.join(pd, logo["icon"])):
-        shutil.copy(os.path.join(pd, logo["icon"]), LOGO_ICON)
+        global LOGO_ICON
+        LOGO_ICON =  os.path.basename(logo["icon"])
+        shutil.copy(os.path.join(pd, logo["icon"]), IMAGES_DIR)
+
+    if "large" in logo and os.path.exists(os.path.join(pd, logo["large"])):
+        global LOGO_LARGE
+        LOGO_LARGE = os.path.basename(logo["large"])
+        shutil.copy(os.path.join(pd, logo["large"]), IMAGES_DIR)
+
+    if "home" in config:
+        global HOME_FILE
+        HOME_FILE = "includes/home_custom.html"
+        shutil.copy(os.path.join(pd,config["home"]),os.path.join(TEMPLATES_DIR,HOME_FILE))
+
+    if "title" in config:
+        global TITLE_NAME
+        TITLE_NAME = config["title"]
 
     copy = config.get("copyright", {})
     if "message" in copy:
@@ -67,14 +85,20 @@ def updateBranding(config, pd):
             threading.Event().wait(1)
             ALL_BLUEPRINTS[k] = importlib.import_module("app.temp.blueprints." + k)
 
+    if config.get("exclude_parents",False):
+        blueprints.inputfiles.vnv_executables = {}
+
     for key, value in config.get("executables", {}).items():
       blueprints.inputfiles.vnv_executables[key] = [
          os.path.join(pd, value["filename"]),
-         value.get("description", ""), value.get("defaults",{})
+         value.get("description", "No Description Available"),
+         value.get("defaults",{}),
+         value.get("packageName", "VnV")
       ]
 
     for key, value in config.get("plugins", {}).items():
-       blueprints.inputfiles.vnv_plugins[key] = os.path.join(pd, value)
+       value["filename"] = os.path.join(pd,value.get("filename",""))
+       blueprints.inputfiles.vnv_plugins[key] = value
 
     blueprints.files.load_defaults(config.get("reports", {}))
 
@@ -85,12 +109,17 @@ if FIRST_TIME is None:
     AUTHENTICATE = False
     PASSWORD = generate_password_hash("password")
     COOKIE_PASS = uuid.uuid4().hex
-    LOGO_SMALL = os.path.join(VNV_DIR_PATH, "static/assets/images/logo.png")
-    LOGO_ICON = os.path.join(VNV_DIR_PATH, "static/assets/images/favicon.ico")
-    INTRO_TEMPLATE = os.path.join(VNV_DIR_PATH,"base/templates/includes/intro.html")
-    STATIC_DIR=os.path.join(VNV_DIR_PATH,"static","config")
+    IMAGES_PATH = "/static/assets/images"
+    IMAGES_DIR = os.path.join(VNV_DIR_PATH, IMAGES_PATH[1:])
+    TEMPLATES_DIR = os.path.join(VNV_DIR_PATH,"base/templates")
+    LOGO_SMALL = "logo.png"
+    LOGO_LARGE = "logo.png"
+    LOGO_ICON =  "favicon.ico"
     COPYRIGHT_LINK = "mailto:boneill@rnet-tech.com"
     COPYRIGHT_MESSAGE = "RNET Technologies Inc. 2022"
+    HOME_FILE = "includes/intro.html"
+    TITLE_NAME = "VnV Toolkit"
+
 
     ALL_BLUEPRINTS = {
         "inputfiles" : blueprints.inputfiles,
@@ -115,7 +144,7 @@ if FIRST_TIME is None:
                 print(e)
                 pass
 
-    blueprints.inputfiles.vnv_executables["Custom"] = ["", "Custom Application"]
+    blueprints.inputfiles.vnv_executables["Custom"] = ["", "Custom Application",{},"N/A"]
 
     for k,v in ALL_BLUEPRINTS.items():
         blueprint.register_blueprint(v.blueprint)
@@ -243,9 +272,37 @@ def template_globals(d):
         def __str__(self):
             return COPYRIGHT_MESSAGE
 
+    def logo_large():
+        return os.path.join(IMAGES_PATH,LOGO_LARGE)
+    def logo_small():
+        return os.path.join(IMAGES_PATH,LOGO_SMALL)
+    def logo_icon():
+        return os.path.join(IMAGES_PATH,LOGO_ICON)
+
+    def home_file():
+        return HOME_FILE
+
+    def title_name():
+        return TITLE_NAME
+
+    def theia_url():
+        return current_app.config["THEIA_URL"]
+
+    def paraview_url():
+        return current_app.config["PARAVIEW_URL"]
+
+
     d["COPYRIGHT_LINK"] = DelayCopyRightLink()
     d["COPYRIGHT_MESSAGE"] = DelayCopyRightMessage()
     d["ALL_BLUEPRINTS"] = ALL_BLUEPRINTS
+    d["logo_large"] = logo_large
+    d["logo_small"] = logo_small
+    d["logo_icon"] = logo_icon
+    d["theia_url"] = theia_url
+    d["home_template"] = home_file
+    d["paraview_url"] = paraview_url
+    d["title_name"] = title_name
+
 
     for kk, vv in ALL_BLUEPRINTS.items():
         if hasattr(vv,"template_globals"):

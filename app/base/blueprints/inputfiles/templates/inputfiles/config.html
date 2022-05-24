@@ -33,11 +33,13 @@
     <div class="form-group">
         <label for="specDump">Command required to extract application schema.</label>
         <input name="specDump" type="text" class="form-control" id="specDump" value="{{file.specDump}}">
-        <small>This should be the command required to run the application with an input file called ${inputfile}. We
-            will substitute the value
-            of ${application} with the file path configured above. The value %{inputfile} will be substituted with a
-            path to a temporary file that
-            we upload to the remote machine (the temp file path is created using the bash "mktemp" command)
+        <small>
+            This should be the command required to ensure INJECTION_INITIALIZE gets called within the
+            application. VnV uses an environment variable to set the VnV Input file internally.  We
+            will substitute the value of ${application} with the file path configured above.
+            On the off chance that you need it, the value %{inputfile} will be substituted with a path
+            to the VnV Input file that will be used.
+
         </small>
     </div>
 

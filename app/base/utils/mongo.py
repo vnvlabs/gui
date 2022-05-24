@@ -22,8 +22,7 @@ try:
     MONGO_DB = "vnv"
     pymongo_client = pymongo.MongoClient(MONGO_URL, serverSelectionTimeoutMS = 2000)
 
-    if True:
-       pymongo_client.drop_database(MONGO_DB)
+    #pymongo_client.drop_database(MONGO_DB)
 
     pymongo_database = pymongo_client.get_database(MONGO_DB)
     MONGO_AVAILABLE = True

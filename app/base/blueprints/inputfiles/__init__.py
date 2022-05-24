@@ -18,6 +18,7 @@ from ..files import get_file_from_runinfo
 from ...utils import mongo
 from ...utils.utils import render_error
 
+
 vnv_executables = {}
 vnv_plugins = {}
 
@@ -434,14 +435,10 @@ def execute(id_):
 
 
 def list_vnv_executables():
-    return [[k, v[1]] for k, v in vnv_executables.items()]
+    return [[k, v[1], v[3]] for k, v in vnv_executables.items()]
 
 
 def template_globals(globs):
     globs["inputfiles"] = VnVInputFile.FILES
     globs["list_vnv_executables"] = list_vnv_executables
-
-
-def faker(PREFIX):
     VnVInputFile.loadAll()
-    VnVInputFile.VNV_PREFIX = PREFIX

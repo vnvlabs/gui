@@ -4,16 +4,38 @@
 		<div class="navbar-wrapper  ">
 			<div class="navbar-content scroll-div " >
 				<ul class="nav pcoded-inner-navbar " style="font-size:15px">
-                	{% for k,v in ALL_BLUEPRINTS.items() %}
+                	<li class="nav-item pcoded-menu-caption">
+						<label>Reports And Executables</label>
+					</li>
+					{% for k,v in ALL_BLUEPRINTS.items() %}
+					{% if k in ["inputfiles","files"] %}
 					{%with get_template_file = v.get_template_file %}
                 		{% include k + "/sidebar.html"  ignore missing %}
 					{% endwith %}
+					{%endif%}
                 	{%endfor%}
+					<li class="nav-item pcoded-menu-caption">
+						<label>Help And Documentation</label>
+					</li>
+					{% for k,v in ALL_BLUEPRINTS.items() %}
+							{% if k not in ["inputfiles","files"] %}
+							{%with get_template_file = v.get_template_file %}
+                					{% include k + "/sidebar.html"  ignore missing %}
+								{% endwith %}
+							{%endif%}
+					{%endfor%}
+
+
 				</ul>
+			</div>
+			<div class="navbar-content scroll-div " >
+				<ul class="nav pcoded-inner-navbar " style="font-size:15px">
+               </ul>
 			</div>
 		</div>
 	</nav>
 
+	{%include "includes/modals.html"  %}
 	{% for k,v in ALL_BLUEPRINTS.items() %}
 	{%with get_template_file = v.get_template_file %}
 		{% include k + "/modals.html" ignore missing %}

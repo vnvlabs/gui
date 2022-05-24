@@ -1,3 +1,23 @@
+
 <div>
-    <img style="height:300px;" src="/static/assets/images/logo.png" alt="" >
+    <img style="width:80%; max-height:400px;" src="{{logo_large()}}" alt="" >
 </div>
+
+{% with buttons = [
+["Create a New Executable","feather icon-file-plus","$('#new_inputfile_modal').modal()"],
+["Load A Report","fa fa-play-circle","$('#new_file_modal').modal()"],
+["Open a Terminal" ,"fa fa-terminal", "$('#terminal-modal').modal('toggle')"],
+["View Files","fa fa-folder", "show_file_reader(1000,'','directory','')"],
+["Logout","fa fa-sign-out-alt", "logout()"]
+]%}
+
+{%for r in buttons %}
+
+<div class="index-container" onclick="{{r[2]}}">
+
+    <i class="index-icon icon {{r[1]}}"></i>
+    <div class="index-content">{{r[0]}}</div>
+
+</div>
+{%endfor%}
+{% endwith %}

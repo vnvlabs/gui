@@ -1,4 +1,3 @@
-#!./virt/bin/python3
 # -*- encoding: utf-8 -*-
 
 import os
@@ -9,7 +8,7 @@ blueprint_name = sys.argv[1]
 output_directory = sys.argv[2]
 
 # Copy the template
-shutil.copytree("template", output_directory, )
+shutil.copytree(os.path.join(os.path.dirname(os.path.realpath(__file__)),"template"), output_directory)
 
 # Rename the templates subfolder
 shutil.move(os.path.join(output_directory, "templates", "example"),

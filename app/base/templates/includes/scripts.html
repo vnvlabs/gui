@@ -60,13 +60,13 @@
 
         function show_theia() {
             if ( $('#theia-iframe').attr("src") === undefined ) {
-                $('#theia-iframe').attr("src","/theia" )
+                $('#theia-iframe').attr("src","{{theia_url()}}" )
             }
             $('#theia-modal').modal('toggle')
         }
         function show_viz() {
             if ( $('#viz-iframe').attr("src") === undefined ) {
-                $('#viz-iframe').attr("src","/paraview" )
+                $('#viz-iframe').attr("src","{{paraview_url()}}" )
             }
             $('#viz-modal').modal('toggle')
         }

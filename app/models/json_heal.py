@@ -336,7 +336,7 @@ def oneOfDefaults(schema, main_schema):
     return r
 
 
-def getSchema(bail, schema, main_schema):
+def getSchema(bail, schema, main_schema, plugins=None):
     schema = resolve_schema(schema, main_schema)
 
     if bail.type in ["object-keys"] or bail.type == "object-key" and len(bail.val) == 0:
@@ -399,7 +399,19 @@ def autocomplete(txt, schema, row, col, plugins=None):
         a = txt[0:row + 1]
         a[-1] = a[-1][0:col] + "   "  # add a little white space to catch some issues that might occur
         bail = JsonWithBail("".join(a)).value()
-        res = getSchema(bail, schema, schema)
+
+        if bail.val == "additionalPlugins" and isinstance(plugins, dict):
+            ret = []
+            for k, v in plugins.items():
+                ret.append({
+                    "caption": k,
+                    "value": "\"" + v["packageName"] + "\" : \"" + v["filename"] + "\"",
+                    "meta": "vnv plugin",
+                    "desc": v["description"]
+                })
+            return ret
+
+        res = getSchema(bail, schema, schema, plugins=plugins)
 
         ret = []
         for i in res:

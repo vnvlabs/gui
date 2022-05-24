@@ -317,7 +317,7 @@ def render_rst_to_string(content):
     setup_build_directory(temp_dir, -1)
 
     with open(os.path.join(temp_dir, "index.rst"), 'w') as w:
-        w.write(content)
+        w.write(textwrap.dedent(content))
 
     params = ["-M", "html", temp_dir, os.path.join(temp_dir, "_build")]
     sphinx.cmd.build.make_main(params)

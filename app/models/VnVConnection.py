@@ -360,6 +360,7 @@ class VnVLocalConnection:
     def execute(self, command, asy=False, name=None, fullscript=None, metadata=None, env={}):
         try:
             result = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE, env=env)
+
             if not asy:
                 return result.communicate()[0].decode("utf-8")
             else:
@@ -368,6 +369,7 @@ class VnVLocalConnection:
                                                  metadata, VnVLocalConnection.SessionContext(result))
                 return uid
         except Exception as e:
+
             raise Exception("Failed to execute command: " + str(e))
 
     def execute_script(self, script , work_dir=None, deps={}, asy=True, name=None, metadata=None):

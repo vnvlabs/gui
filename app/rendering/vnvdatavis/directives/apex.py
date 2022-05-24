@@ -1,5 +1,6 @@
 import json
 import os.path
+import uuid
 
 import jsonschema
 from flask import render_template_string
@@ -160,28 +161,28 @@ loading = {
 class ApexChartDirective(JsonChartDirective):
     script_template = '''
          <div>
-           <div id="{uid}" class='vnv-table'></div>
+           <div id="{uid1}" class='vnv-table'></div>
           
-           <div class="apex-error-main" id="{uid}_errors" 
+           <div class="apex-error-main" id="{uid1}_errors" 
                style="color:orangered; font-size:30px; width:40px; height:40px; position:absolute; top:3px; right:3px; cursor:pointer; display:none">
-            <i onclick="$('#{uid}_error_message').toggle()" class="feather icon-alert-triangle" ></i>
+            <i onclick="$('#{uid1}_error_message').toggle()" class="feather icon-alert-triangle" ></i>
            </div>
-           <div class="card" id ="{uid}_error_message" style="display:none; position:absolute; margin:20px; padding=20px; z-index:1000; top:43px; right:43px;"></div>   
+           <div class="card" id ="{uid1}_error_message" style="display:none; position:absolute; margin:20px; padding=20px; z-index:1000; top:43px; right:43px;"></div>   
          </div> 
           <script>
           $(document).ready(function() {{
-            var chart = new ApexCharts(document.getElementById("{uid}"), {loading});
+            var chart = new ApexCharts(document.getElementById("{uid1}"), {loading});
             chart.render();
             
             url = "/directives/updates/{uid}/{{{{data.getFile()}}}}/{{{{data.getAAId()}}}}{context}"
-            update_now(url, "{uid}", 1000, function(config) {{
+            update_now(url, "{uid1}", 1000, function(config) {{
                 z = JSON.parse(config)
                 chart.updateOptions(z) 
                 if (z["errors"]) {{
-                    $('#{uid}_errors').show()   
-                    $('#{uid}_error_message').html(z["errors"])
+                    $('#{uid1}_errors').show()   
+                    $('#{uid1}_error_message').html(z["errors"])
                 }} else {{
-                    $('#{uid}_errors').hide()   
+                    $('#{uid1}_errors').hide()   
                 }}
             }})
             
@@ -201,6 +202,7 @@ class ApexChartDirective(JsonChartDirective):
             id_=id_,
             config=self.getContent(),
             uid=uid,
+            uid1=uuid.uuid4().hex,
             loading=json.dumps(loading),
             context=self.getContext()
         )}</div>

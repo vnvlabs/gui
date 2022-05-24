@@ -100,7 +100,7 @@ class VnVInputFile:
 
     DEFAULT_SPEC = {}
 
-    def __init__(self, name, path=None, **defs):
+    def __init__(self, name, path=None, defs={}):
         self.name = name
         self.displayName = name
         self.filename = path if path is not None else "path/to/application"
@@ -121,7 +121,7 @@ class VnVInputFile:
         self.rendered = None
 
         #Set the command used to dump the specification
-        self.specDump = "${application} ${inputfile}"
+        self.specDump = "${application}"
         if "specDump" in defs:
             self.specDump = defs["specDump"]
 
@@ -132,7 +132,7 @@ class VnVInputFile:
             self.exec = json.dumps(defs["exec"], indent=4)
 
         #Set the PSIP configuration if it exists.
-        self.psip = "{}"
+        self.psip = GET_DEFAULT_PSIP()
         self.psip_enabled = defs.get("psip_enabled", True)
         if "psip" in defs:
             self.psip = json.dumps(defs["psip"])
@@ -153,8 +153,8 @@ class VnVInputFile:
                 self.add_dependency(**v)
 
         # Set the default Input file values.
-        if "vnv_input" in defs:
-            self.value = json.dumps(defs["vnv_input"], indent=4)
+        if "input" in defs:
+            self.value = json.dumps(defs["input"], indent=4)
         else:
             self.value = json.dumps(VnV.getVnVConfigFile_1(), indent=4)
 
@@ -240,7 +240,7 @@ class VnVInputFile:
                 if (self.specValid):
                     return ["green", "Valid"]
                 else:
-                    return ["blue", "Could not extract schema. Is this the path to a valid VnV executable?"]
+                    return ["blue", "Could not extract schema. See specification tab for more information!"]
             else:
                 return ["#d54287", "Application does not exist"]
         else:
@@ -326,6 +326,8 @@ class VnVInputFile:
         self.spec = json.dumps(self.specLoad)
 
         if not self.connection.connected():
+            self.specLoad["error-reason"] = "Disconnected"
+            self.spec = json.dumps(self.specLoad, indent=4)
             return
 
         def getSpecDumpCommand(inputfilename):
@@ -337,9 +339,8 @@ class VnVInputFile:
             s = {"additionalPlugins": self.get_current_plugins()}
             s["schema"] = {"dump": True, "quit": True}
             path = self.connection.write(json.dumps(s), None)
-            a = getSpecDumpCommand(path)
-
-            res = self.connection.execute(a, env={"VNV_INPUT_FILE":path})
+            aa = getSpecDumpCommand(path)
+            res = self.connection.execute(aa, env={"VNV_INPUT_FILE":path})
             a = res.find("===START SCHEMA DUMP===") + len("===START SCHEMA DUMP===")
             b = res.find("===END SCHEMA_DUMP===")
             if a > 0 and b > 0 and b > a:
@@ -347,9 +348,16 @@ class VnVInputFile:
                 self.specLoad = json.loads(self.spec)
                 self.specValid = True
                 self.rendered = self.get_executable_description()
+            else:
+                self.specLoad["error-message"] = res
+                self.specLoad["error-command"] = aa
+                self.specLoad["error-input"] = s
+                self.specLoad["error-input-file-name"] = path
+                self.spec = json.dumps(self.specLoad, indent=4)
 
         except Exception as e:
-            pass
+            self.specLoad["error-exception"] = str(e)
+            self.spec = json.dumps(self.specLoad, indent=4)
 
     NO_INFO = "No Application Information Available\n===================================="
 
@@ -461,7 +469,7 @@ class VnVInputFile:
         "active_overrides": ["run"],
         "overrides": {
             "run": {
-                "command-line": "${application} ${inputfile}",
+                "command-line": "${application}",
                 "name": "Hello"
             }
         }
@@ -647,15 +655,14 @@ def bash_script(application_path, inputfile, data, workflowName, deps):
 
 export application={application_path}
 export application_dir=$(dirname {application_path})
-export inputfile={data.get("input-file-name", ".vv-input.json")}
+export VNV_INPUT_FILE={data.get("input-file-name", ".vv-input.json")}
 
 export VNV_WORKFLOW_ID={workflowName}
-
 cd {data.get("working-directory", "${application_dir}")}
 
 {deps}
 
-cat << EOF > ${{inputfile}}
+cat << EOF > ${{VNV_INPUT_FILE}}
     {inputfile}
 EOF
 
