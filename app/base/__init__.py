@@ -8,7 +8,10 @@ import threading
 import uuid
 
 from flask import Blueprint, render_template, request, make_response, jsonify, send_file, current_app
+from pygments import highlight
+from pygments.formatters.html import HtmlFormatter
 from werkzeug.utils import redirect
+from pygments.lexers import guess_lexer, guess_lexer_for_filename, get_lexer_by_name
 
 from . import blueprints
 from .blueprints.files import get_file_template_root
@@ -97,8 +100,7 @@ def updateBranding(config, pd):
       ]
 
     for key, value in config.get("plugins", {}).items():
-       value["filename"] = os.path.join(pd,value.get("filename",""))
-       blueprints.inputfiles.vnv_plugins[key] = value
+       blueprints.inputfiles.vnv_plugins[key] = os.path.join(pd,value.get("filename",""))
 
     blueprints.files.load_defaults(config.get("reports", {}))
 
@@ -260,6 +262,14 @@ def autocomplete():
 
     return make_response(jsonify(glob.glob(pref + "*")), 200)
 
+def highlight_code(code, type):
+    try:
+        lex = get_lexer_by_name(type)
+        form = HtmlFormatter( linenos=True, style="colorful", noclasses=True)
+        return highlight(code, lex, form)
+    except Exception as e:
+        print(e)
+        return code
 
 def template_globals(d):
 
@@ -302,6 +312,7 @@ def template_globals(d):
     d["home_template"] = home_file
     d["paraview_url"] = paraview_url
     d["title_name"] = title_name
+    d["highlight_code"] = highlight_code
 
 
     for kk, vv in ALL_BLUEPRINTS.items():

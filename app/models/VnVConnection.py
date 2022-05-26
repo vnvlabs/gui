@@ -53,6 +53,13 @@ class VnVJob:
     def exitcode(self):
         return self.getCtx().exitcode()
 
+    def refresh(self):
+        if self.running():
+            return { "status" : "running" }
+        return {
+            "exitcode" : self.exitcode(),
+            "stdout" : self.stdout()
+        }
 
 class VnVConnection:
     INFO_FILE = get_file_name()
@@ -203,6 +210,9 @@ class VnVConnection:
     def get_jobs(self):
         return [v for k, v in self.running_sessions.items()]
 
+    def get_job(self, jobId):
+        return self.running_sessions.get(jobId)
+
     def delete_job(self, jobId):
         self.running_sessions.pop(jobId)
 
@@ -213,7 +223,7 @@ class VnVConnection:
 
         path = self.write(script, None)
         self.execute("chmod u+x " + path)
-        self.execute(path, asy, name=name, fullscript=Ansi2HTMLConverter().convert(script), meta=metadata)
+        self.execute(path, asy, name=name, fullscript=script, meta=metadata)
 
     def getInfo(self, path):
 
@@ -359,7 +369,7 @@ class VnVLocalConnection:
 
     def execute(self, command, asy=False, name=None, fullscript=None, metadata=None, env={}):
         try:
-            result = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE, env=env)
+            result = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE, env={**os.environ,**env})
 
             if not asy:
                 return result.communicate()[0].decode("utf-8")
@@ -376,10 +386,13 @@ class VnVLocalConnection:
         path = self.write(script, None)
         st = os.stat(path)
         os.chmod(path, st.st_mode | stat.S_IEXEC)
-        return self.execute("sh " + path, asy, name=name, fullscript=Ansi2HTMLConverter().convert(script), metadata=metadata)
+        return self.execute("sh " + path, asy, name=name, fullscript=script, metadata=metadata)
 
     def get_jobs(self):
         return [v for k, v in self.running_procs.items()]
+
+    def get_job(self, jobId):
+        return self.running_procs.get(jobId)
 
     def delete_job(self, jobId):
         self.running_procs.pop(jobId)

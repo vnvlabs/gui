@@ -21,7 +21,9 @@ import os
 blueprint = Blueprint(
     'temporary',
     __name__,
-    template_folder=Directory.TEMP_TEMPLATE_DIR
+    template_folder=Directory.TEMP_TEMPLATE_DIR,
+    url_prefix="/temp"
+
 )
 
 

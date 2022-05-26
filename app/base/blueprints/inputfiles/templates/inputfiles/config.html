@@ -1,92 +1,12 @@
 {%with connection = file.connection %}
 
 
-<div style="display:flex; align-items:center; margin-bottom:15px;">
-    <h2 style="flex:1">Application Configuration</h2>
-    <button id="exec_help" class="btn btn-primary" style="margin-left:10px"
-            onclick='show_help_modal("inputconfig")'>Help
-    </button>
-    <button id="exec_save" class="btn btn-primary input-save-button" style="margin-left:10px"
-            onclick="save_input_config({{file.id_}}, $('#input-configuration-form'))">Save
-    </button>
-
-</div>
-
-<form id="input-configuration-form" method="post" action="/inputfiles/configure/{{file.id_}}">
-
-    <div class="form-group" style="position:relative">
-        <label for="inputfile_application">Application</label>
-        <input name="application" type="text" class="autocomplete form-control" id="inputfile_application"
-               placeholder="Enter Path to application" value="{{file.filename}}">
-
-        <script>
-            $(document).ready(function(){
-               autocomplete(document.getElementById('inputfile_application'), function() {
-                        return "&file={{file.id_}}&context=inputfile";
-               },"/inputfiles")
-            })
-        </script>
-
-    </div>
-
-
-    <div class="form-group">
-        <label for="specDump">Command required to extract application schema.</label>
-        <input name="specDump" type="text" class="form-control" id="specDump" value="{{file.specDump}}">
-        <small>
-            This should be the command required to ensure INJECTION_INITIALIZE gets called within the
-            application. VnV uses an environment variable to set the VnV Input file internally.  We
-            will substitute the value of ${application} with the file path configured above.
-            On the off chance that you need it, the value %{inputfile} will be substituted with a path
-            to the VnV Input file that will be used.
-
-        </small>
-    </div>
-
-    <div id="connection_information">
-
-        <div class="form-group form-check">
-            <input name="local" type="checkbox" class="form-check-input" id="clh" {%if
-                   connection.local()
-                   %}checked {%endif%}>
-            <label class="form-check-label" for="clh">Files are accessible from the web
-                server.</label>
-        </div>
-        <div id="remote_conn_info" style="{%if connection.local()%} display:none; {%endif%}">
-            <div class="form-group">
-                <label for="cun">Username</label>
-                <input name="username" type="text"
-                       class="form-control"
-                       id="cun" placeholder="Enter Username"
-                       value="{{connection.username()}}">
-            </div>
-            <div class="form-group">
-                <label for="cd">Domain</label>
-                <input name="domain" type="text"
-                       class="form-control"
-                       id="cd" placeholder="Enter Domain name"
-                       value="{{connection.domain()}}">
-            </div>
-            <div class="form-group">
-                <label for="cp">Port</label>
-                <input name="port" type="number" min="0"
-                       class="form-control" id="cp" placeholder="Enter SSH Port Number"
-                       value="{{connection.port()}}">
-            </div>
-
-            <div class="form-group">
-                <label for="cpa">Password</label>
-                <input name="password" type="password"
-                       class="form-control"
-                       id="cpa" placeholder="Enter your password" value="">
-            </div>
-        </div>
-    </div>
-</form>
 
 {%endwith%}
 
-<h2>Application Information</h2>
+<h5 style="margin-top:10px;" title="{% if file.connection.connected()%}Connected{%else%}Not Connected{%endif%}">Hostname: <span style="color:{% if file.connection.connected()%}green{%else%}red{%endif%};"> {{file.connection.describe()}}  </span>  </h5>
+<h5 style="margin-top:10px;" title="{{file.getFileStatus()[1]}}" >Path: <span style="color:{{file.getFileStatus()[0]}};"> {{file.filename}}  </span>  </h5>
+
 <div class="card" style="padding:20px;">
 
     <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
@@ -116,8 +36,9 @@
              role="tabpanel" aria-labelledby="config-spec-tab">
             <div id="specFile" style="font-size:20px; height:1050px; width:100%; ">{{file.spec}}</div>
         </div>
-
     </div>
+
+
 </div>
 <script>
 

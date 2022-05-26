@@ -405,9 +405,9 @@ def autocomplete(txt, schema, row, col, plugins=None):
             for k, v in plugins.items():
                 ret.append({
                     "caption": k,
-                    "value": "\"" + v["packageName"] + "\" : \"" + v["filename"] + "\"",
+                    "value": f"\"{k}\" : \"{v}\"",
                     "meta": "vnv plugin",
-                    "desc": v["description"]
+                    "desc": "A VnV Plugin"
                 })
             return ret
 

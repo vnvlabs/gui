@@ -59,6 +59,14 @@ tablist = {
     </div>
 </div>
 
+{% if error is not none %}
+<script>
+    $(document).ready(function() {
+        addToast("{{error}}", "", 5000)
+    });
+</script>
+{%endif%}
+
 
 {% endwith %}
 {% endwith %}

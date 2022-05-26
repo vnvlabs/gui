@@ -1,16 +1,82 @@
 <div style="flex:1;" >
    <h1 contenteditable=true id="inputfile_display_name" >{{file.displayName}}</h1>
-   <h5 title="File Status: {{file.getFileStatus()[1]}}"> Executable Path: <span style="color:{{file.getFileStatus()[0]}};"> {{file.connection.describe()}}:/{{file.filename}}  </span>  </h5>
+
+
+
+
+</div>
+<div style="display:flex; position:relative; top:5px; right:5px">
+   <button id="exec_config" class="btn btn-secondary input-save-button" style="margin-left:10px"
+            onclick="$('#config-file-modal').modal('show')">Configure
+   </button>
+   <button id="exec_prev" class="btn btn-secondary input-save-button" style="margin-left:10px"
+            onclick='preview_the_job({{file.id_}})'>Preview
+   </button>
+   <button id="exec_save" class="btn btn-secondary input-save-button" style="margin-left:10px"
+            onclick='save_the_job({{file.id_}})'>Save
+   </button>
+   <button id="exec_exec" class="btn btn-primary input-save-button" style="margin-left:10px"
+            onclick='execute_the_job({{file.id_}})'>Execute
+   </button>
+</div>
+
+
+<div id="config-file-modal" class="modal fade" tabindex="-1" style="height:98vh;" role="dialog"
+     aria-labelledby="rst-modal-label"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="width:98vw; max-width:98vw" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cf-modal-label"> Configuration </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="cf-modal-body">
+                {%include "inputfiles/config_form.html" %}
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
 
-            document.getElementById("inputfile_display_name").addEventListener("input", function() {
+document.getElementById("inputfile_display_name").addEventListener("input", function() {
 
                 $.post('/inputfiles/update_display_name/{{file.id_}}?new=' + encodeURIComponent($(this).html()), function(data) {
                     $('#inputfile-display-name-side-{{file.id_}}').html(data)
                 });
-            }, false);
+}, false);
+
+function save_the_job(fileId) {
+   save_input_object(fileId,"inputfile", "save_input")
+   save_input_object(fileId, "execfile", "save_exec")
+}
+
+function execute_the_job(fileid) {
+   save_input_object(fileid,"inputfile", "save_input", function(data,s,xhr) {
+
+       if (xhr.status == 200) {
+          save_input_object(fileid,"execfile", "save_exec", function(dd,ss,xx) {
+               if (xx.status == 200) {
+                  $.get(`/inputfiles/execute/${fileid}?val=${encodeURIComponent(ace.edit("execfile").getValue())}`, function(data) {
+                     refresh_jobs_list(fileid)
+                     $('#pills-jobs-tab').click()
+                  });
+               } else {
+                   alert("Something went wrong - Please try again.")
+               }
+          })
+       } else {
+          alert("Something went wrong - Please try again.")
+       }
+   })
+}
+
+function preview_the_job(fileid) {
+   $.get(`/inputfiles/execute/${fileid}?dryrun=1&val=${encodeURIComponent(ace.edit("execfile").getValue())}`, function(data) {
+           alert(data)
+   });
+}
 
 </script>
 

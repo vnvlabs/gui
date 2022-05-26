@@ -42,7 +42,7 @@ def new():
             path = os.path.join(VnVInputFile.VNV_PREFIX, vnv_executables.get(c)[0])
             defs = vnv_executables.get(c)[2]
 
-        file = VnVInputFile.add(request.form["name"], path, defs=defs)
+        file = VnVInputFile.add(request.form["name"], path, defs=defs, plugs = vnv_plugins)
 
         return redirect(url_for("base.inputfiles.view", id_=file.id_))
     except Exception as e:
@@ -260,7 +260,7 @@ def input_autocomplete(comp, id_):
     val = request.args["val"].split("\n")
     with VnVInputFile.find(id_) as file:
         if hasattr(file, "autocomplete_" + comp):
-            r = getattr(file, "autocomplete_" + comp)(row, col, pre, val, plugins=vnv_plugins)
+            r = getattr(file, "autocomplete_" + comp)(row, col, pre, val)
             return make_response(jsonify(r), 200)
 
     return make_response(jsonify([]), 200)
@@ -346,15 +346,17 @@ def configure(id_):
             password = request.form["password"]
             file.setConnection(domain, username, password, port)
 
-        file.setFilename(request.form.get("application", file.filename), request.form.get("specDump", file.specDump))
-        return render_template("inputfiles/connection_content.html", file=file)
+        res = file.setFilename(request.form.get("application"), request.form.get("specDump"), request.form.get("plugs"))
+        if res:
+            return redirect(url_for(".view", id_=id_, error="Application Configuration Completed Successfully."),302)
+        return redirect(url_for(".view", id_=id_, error="Configuration Failed!"),302)
 
 
 @blueprint.route('/view/<int:id_>')
 def view(id_):
     try:
         with VnVInputFile.find(id_) as file:
-            return render_template("inputfiles/view.html", file=file)
+            return render_template("inputfiles/view.html", file=file, error=request.args.get("error"))
     except Exception as e:
         print(e)
         return render_error(501, "Error Loading File")
@@ -375,6 +377,14 @@ def delete_job(id_, jobid):
         file.connection.delete_job(jobid);
         return render_template("inputfiles/joblist.html", file=file)
     return render_error(401, "Huh")
+
+@blueprint.route('/refresh_job/<int:id_>/<jobid>', methods=["GET"])
+def refresh_job(id_, jobid):
+    with VnVInputFile.find(id_) as file:
+        file.refresh_job(jobid);
+        return make_response(jsonify(file.refresh_job(jobid)), 200)
+    return render_error(jsonify({"stdout" : "no file found", "errorcode" : 100}), 200)
+
 
 
 @blueprint.route('/cancel_job/<int:id_>/<jobid>', methods=["POST"])

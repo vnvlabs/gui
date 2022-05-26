@@ -65,7 +65,7 @@ function close_inputfile_connection(fileid) {
 
 
 
-function save_input_object(fileid ,elm, object ) {
+function save_input_object(fileid ,elm, object, then ) {
 
     a = {"value" : ace.edit(elm).getValue()};
 
@@ -75,11 +75,16 @@ function save_input_object(fileid ,elm, object ) {
         contentType : 'application/json',
         type : 'POST',
         success: function(data, s, xhr) {
-                    if (xhr.status == 200) {
-            addToast("Save Successfull", "", 5000)
-         } else {
-            alert("Something went wrong - Please try again.")
-         }
+            if (then != null) {
+                then(data,s,xhr)
+            } else {
+
+               if (xhr.status == 200) {
+                 addToast("Save Successfull", "", 5000)
+               } else {
+                 alert("Something went wrong - Please try again.")
+               }
+            }
         }
     });
 }
@@ -167,14 +172,16 @@ function refresh_jobs_list(fileId) {
         })
 }
 
-function delete_exe_job(fileId, jobId) {
+function delete_exe_job(e,fileId, jobId) {
+    e.stopPropagation();
     $.post("/inputfiles/delete_job/" + fileId + "/" + jobId, function(data) {
             $('#input-file-job-list').html(data)
     })
 
 }
 
-function cancel_exe_job(fileId, jobId) {
+function cancel_exe_job(e, fileId, jobId) {
+    e.stopPropagation();
     $.post("/inputfiles/cancel_job/" + fileId + "/" + jobId, function(data) {
             $('#input-file-job-list').html(data)
     })

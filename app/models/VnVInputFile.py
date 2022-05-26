@@ -100,7 +100,7 @@ class VnVInputFile:
 
     DEFAULT_SPEC = {}
 
-    def __init__(self, name, path=None, defs={}):
+    def __init__(self, name, path=None, defs={}, plugs={}):
         self.name = name
         self.displayName = name
         self.filename = path if path is not None else "path/to/application"
@@ -159,7 +159,7 @@ class VnVInputFile:
             self.value = json.dumps(VnV.getVnVConfigFile_1(), indent=4)
 
         # Update my plugins -- based on the input file.
-        self.plugs = self.getPlugins()
+        self.plugs = plugs
 
         # Update my specification -- based on the input file.
         self.updateSpec()
@@ -183,7 +183,7 @@ class VnVInputFile:
         a["specValid"] = self.specValid
         a["exec"] = self.exec
         a["execFile"] = self.execFile
-
+        a["plugs"] = self.plugs
         a["rendered"] = self.rendered
         return a
 
@@ -207,13 +207,13 @@ class VnVInputFile:
         r.rendered = a["rendered"]
         r.exec = a["exec"]
         r.execFile = a["execFile"]
+        r.plugs = a["plugs"]
 
         try:
             r.specLoad = json.loads(r.spec)
         except:
             r.specLoad = VnVInputFile.DEFAULT_SPEC.copy()
 
-        r.plugs = r.getPlugins()
 
         return r
 
@@ -229,10 +229,18 @@ class VnVInputFile:
             self.connection = VnVLocalConnection()
         self.connection.connect("", "", "", "")
 
-    def setFilename(self, fname, specDump):
-        self.filename = fname
-        self.specDump = specDump
-        self.updateSpec()
+    def setFilename(self, fname, specDump, plugs):
+        try:
+            self.plugs = json.loads(plugs)
+            self.filename = fname
+            self.specDump = specDump
+            self.updateSpec()
+            return True
+        except:
+            return False
+
+    def plugs_str(self):
+        return json.dumps(self.plugs,indent=4)
 
     def getFileStatus(self):
         if self.connection.connected():
@@ -246,33 +254,11 @@ class VnVInputFile:
         else:
             return ["red", "Connection is not open"]
 
-    def getPlugins(self, val=None):
-        if val is None:
-            val = self.value
-        try:
-            # if the input is valid, then do it the easy way.
-            a = json.loads(val)
-            return a.get("additionalPlugins", {})
-        except:
-            return {}
-
     # When user clicks save we save the input and update the plugins.
     # if auto is on, we should also update the specification.
     def saveInput(self, newValue):
-
-        # If the plugins have changed then we need to update the spec.
-        newPlugs = self.getPlugins(newValue)
-        if (newPlugs != self.get_current_plugins()):
-            self.plugs = newPlugs
-            self.updateSpec()
-
-        # update the value
         self.value = newValue
 
-    def get_current_plugins(self):
-        if self.plugs is None:
-            self.plugs = self.getPlugins()
-        return self.plugs
 
     def validateInput(self, newVal):
         try:
@@ -336,13 +322,14 @@ class VnVInputFile:
             return main
 
         try:
-            s = {"additionalPlugins": self.get_current_plugins()}
+            s = {"additionalPlugins": self.plugs}
             s["schema"] = {"dump": True, "quit": True}
             path = self.connection.write(json.dumps(s), None)
             aa = getSpecDumpCommand(path)
-            res = self.connection.execute(aa, env={"VNV_INPUT_FILE":path})
+            res = self.connection.execute(aa, env={**os.environ,"VNV_INPUT_FILE":path})
             a = res.find("===START SCHEMA DUMP===") + len("===START SCHEMA DUMP===")
             b = res.find("===END SCHEMA_DUMP===")
+            print(a,b , " sdfs")
             if a > 0 and b > 0 and b > a:
                 self.spec = res[a:b]
                 self.specLoad = json.loads(self.spec)
@@ -376,6 +363,8 @@ class VnVInputFile:
             self.rendered = flask.render_template_string(render_rst_to_string(self.get_executable_description_()),
                                                          data=DataClass(self, self.id_, 1022334234443))
         return self.rendered
+
+
 
     def getId(self):
         return self.id_
@@ -487,13 +476,13 @@ class VnVInputFile:
         except Exception as e:
             return [{"row": 1, "column": 1, "text": str(e), "type": 'warning', "source": 'vnv'}]
 
-    def autocomplete_input(self, row, col, pre, val, plugins=None):
-        return autocomplete(val, self.specLoad, int(row), int(col), plugins=plugins)
+    def autocomplete_input(self, row, col, pre, val):
+        return autocomplete(val, self.specLoad, int(row), int(col), plugins=self.plugs)
 
     def autocomplete_exec(self, row, col, pre, val, plugins=None):
         return autocomplete(val, VnVInputFile.getExecutionSchema(), int(row), int(col))
 
-    def autocomplete_spec(self, row, col, pre, val, plugins=None):
+    def autocomplete_spec(self, row, col, pre, val):
         return []
 
     #MOOSE VALIDATION AND AUTOCOMPLETE
@@ -512,6 +501,11 @@ class VnVInputFile:
         #return validate_hive(spec, newVal);
         return [{"row": 1, "column": 1, "text": "Validation is a work in progress", "type": 'warning', "source": 'vnv'}]
 
+    def refresh_job(self, jobId):
+        j = self.connection.get_job(jobId)
+        if j is not None:
+            return j.refresh()
+        return {"stdout" : "unknown job", "errorcode" : 100}
     def get_jobs(self):
         return [a for a in self.connection.get_jobs()]
 
@@ -535,7 +529,7 @@ class VnVInputFile:
         script, name = self.script(val, workflow_id)
 
         meta = {
-            "vnv_input": Ansi2HTMLConverter().convert(self.fullInputFile()),
+            "vnv_input": self.fullInputFile(),
             "workflow_id": workflow_id,
             "workflow_dir": inp_dir
         }
@@ -591,13 +585,13 @@ class VnVInputFile:
         return VnVInputFile.COUNTER
 
     @staticmethod
-    def add(name, path=None, defs={}):
+    def add(name, path=None, defs={}, plugs={}):
 
         a = mongo.loadInputFile(name)
         if a is not None:
             raise Exception("Name is taken")
         else:
-            f = VnVInputFile(name, path=path, defs=defs )
+            f = VnVInputFile(name, path=path, defs=defs, plugs=plugs )
 
         VnVInputFile.FILES[f.id_] = f
         return f

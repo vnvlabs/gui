@@ -9,7 +9,7 @@ import sys
 
 
 class Config:
-    DEBUG = False
+    DEBUG = True
     LOCAL = False
     basedir = os.path.abspath(os.path.dirname(__file__))
     passw = "password"
