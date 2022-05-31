@@ -1,17 +1,13 @@
 
-<div style="width:100%">
+<div class="card" style="width:100%; padding:20px;">
 
-    <ul class="breadcrumb">
-    <li class="breadcrumb-item"><a onclick='show_file_reader({{vnvfileid}},"{{filename}}","","{{modal}}")'><i class="feather icon-home" style="cursor:pointer"></i></a></li>
-    <li class="breadcrumb-item"><span style="cursor:pointer" onclick="">connection</span></li>
-    <li class="breadcrumb-item">
-        {%if connection.connected()%}
-        <span style="color:green">Connected</span>
-        {%else%}
-        <span style="color:red">Disconnected</span>
-        {%endif%}
-    </li>
-    </ul>
+    <div id ="browser-buttons" style="display:flex; position:relative; align-items:center; margin-bottom:20px; ">
+
+        <h2 style="flex:1">Connection Configuration</h2>
+        <button class="btn btn-primary" title="connection info" style="margin-right:10px;" onclick='show_file_reader({{vnvfileid}},"{{filename}}","upload","{{modal}}")'>Upload</button>
+        <button class="btn btn-primary" title="upload file" style="" onclick='show_file_reader({{vnvfileid}},"{{filename}}","","{{modal}}")'>Cancel</button>
+
+    </div>
 
     {%if reason%}
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -49,16 +45,15 @@
                 <input {%if connection.local() %}readonly{%endif%} name="password" type="password" class="form-control" id="connectionpassword" placeholder="Enter your password" value="">
             </div>
             {%endif%}
-            <div class="form-group">
+            <div class="form-group" hidden>
                 <label for="connectionfilename">Filename</label>
                 <input name="filename" type="text" class="form-control" id="connectionfilename" placeholder="Enter Filename" value="{{filename}}">
             </div>
         </form>
 
         <div style="display:flex;justify-content:end">
-            <button class="btn btn-secondary" style="margin-right:20px;{%if not connection.connected()%}display:none;{%endif%}" onclick='show_file_reader({{vnvfileid}}, $("#connectionfilename").val(),"","{{modal}}")'>View File</button>
-            <button class="btn btn-primary" style="{%if not connection.connected()%}display:none;{%endif%}" onclick='close_connection({{vnvfileid}},"connection-form",$("#connectionfilename").val(),"","{{modal}}")'>Disconnect</button>
-            <button class="btn btn-primary" style="{%if connection.connected()%}display:none;{%endif%}" onclick='open_connection({{vnvfileid}}, "connection-form",$("#connectionfilename").val(),"","{{modal}}")'>Connect</button>
+            <button class="btn btn-primary" style="width:100%;{%if not connection.connected()%}display:none;{%endif%}" onclick='close_connection({{vnvfileid}},"connection-form",$("#connectionfilename").val(),"","{{modal}}")'>Disconnect</button>
+            <button class="btn btn-primary" style="width:100%;{%if connection.connected()%}display:none;{%endif%}" onclick='open_connection({{vnvfileid}}, "connection-form",$("#connectionfilename").val(),"","{{modal}}")'>Connect</button>
         </div>
 
     </div>

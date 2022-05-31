@@ -1,7 +1,11 @@
 
-<div>
-    <img style="width:80%; max-height:400px;" src="{{logo_large()}}" alt="" >
+
+
+<div style="flex:1; display:flex; justify-content:center; align-items:center">
+    <img style="width:60%; max-height:400px;" src="{{logo_large()}}" alt="" >
 </div>
+
+
 
 {% with buttons = [
 ["Create a New Executable","feather icon-file-plus","$('#new_inputfile_modal').modal()"],
@@ -20,4 +24,6 @@
 
 </div>
 {%endfor%}
-{% endwith %}
+    {% endwith %}
+
+</div>

@@ -45,6 +45,7 @@ def new():
         file = VnVInputFile.add(request.form["name"], path, defs=defs, plugs = vnv_plugins)
 
         return redirect(url_for("base.inputfiles.view", id_=file.id_))
+
     except Exception as e:
         return render_error(501, "Error Loading File")
 

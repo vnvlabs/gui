@@ -179,6 +179,7 @@ def check_valid_login():
 def default_route():
     return render_template('index.html', segment='index')
 
+
 @blueprint.route('/theia')
 def theia_route():
     #This route should get intercepted by the "serve" app, so, when
@@ -309,6 +310,7 @@ def template_globals(d):
     d["logo_small"] = logo_small
     d["logo_icon"] = logo_icon
     d["theia_url"] = theia_url
+
     d["home_template"] = home_file
     d["paraview_url"] = paraview_url
     d["title_name"] = title_name

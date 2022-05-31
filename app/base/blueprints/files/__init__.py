@@ -172,7 +172,7 @@ def source(id_, dataId):
         return render_template("files/sourcemap.html", sourcemap=file.getSourceMap(dataId))
 
 
-@blueprint.route("/reader/<int:id_>")
+@blueprint.route("/reader/<int:id_>", methods=["GET","POST"])
 def reader(id_):
     try:
         reader = request.args.get("reader")
@@ -193,6 +193,17 @@ def reader(id_):
             return render_template("files/connection.html", vnvfileid=id_, modal=modal, filename=filename,
                                    connection=connection, reason="disconnected")
 
+        if reader == "upload":
+            return render_template("files/upload.html",  vnvfileid=id_, filename=filename, reason="", modal=modal, connection=connection)
+
+        if reader == "actual_upload":
+            try:
+                filename = request.form["filename"]
+                request.files["file"].save(filename)
+            except Exception as e:
+                return render_template("files/upload.html",  vnvfileid=id_, filename=filename, modal=modal, reason=str(e), connection=connection)
+
+
         if len(filename) == 0:
             filename = connection.home()
 
@@ -211,7 +222,7 @@ def reader(id_):
                                    modal=modal)
 
     except Exception as e:
-        return render_error(501, "Error Loading File")
+        return render_error(501, "Error Loading File:" + str(e))
 
 
 @blueprint.route("/render_file/<int:id_>")
