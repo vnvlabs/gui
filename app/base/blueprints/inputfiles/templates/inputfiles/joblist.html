@@ -1,9 +1,9 @@
 {%with jobs = file.get_jobs() %}
+<h4 style="flex:1">Jobs</h4>
 
 {% if jobs | length == 0 %}
 <div>No Jobs Found</div>
 {%else%}
-
 
 <table class="table">
     <thead>
