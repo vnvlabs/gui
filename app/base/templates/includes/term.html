@@ -29,6 +29,7 @@
         macOptionIsMeta: true,
         scrollback: true,
       });
+
       fit = new FitAddon.FitAddon()
       term.loadAddon(new WebLinksAddon.WebLinksAddon());
       term.loadAddon(new SearchAddon.SearchAddon());
@@ -51,7 +52,9 @@
 
       socket.on("connect", () => {
         status.remove()
-        setTimeout(() => {  socket.emit("{{pty}}-input", { input: "\n" }); } , 500);
+        setTimeout(() => {
+                socket.emit("{{pty}}-input", { input: "\n" });
+        }, 500);
       });
 
       socket.on("disconnect", () => {
