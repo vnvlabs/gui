@@ -8,26 +8,22 @@
             <a href="#!" onclick="$('#log-modal').modal('toggle')" class="vnvh badge badge-success"
                style="margin-left:10px; display:none">Logs</a>
             {%endif%}
-            <a id='ipprocessing-{{iprender.getId()}}' href="#!" onclick="" class="vnvh badge badge-success"
-               style="margin-left:10px;display:none"
-               ;>{{iprender.getStatus()}}</a>
+            {% if iprender.processing() %}
+            <a id='ipprocessing-{{iprender.getId()}}' href="#!" onclick="" class="vnvh badge badge-warning"
+               style="margin-left:10px;display:none;">{{iprender.getStatus()}}</a>
+            {% endif %}
+            {% if iprender.needs_comm_map() %}
             <a href="#!" onclick="$('#comm-modal').modal('toggle')" class="vnvh badge badge-success"
-               style="margin-left:10px; display:none" ;>Communication
-                Map </a>
+               style="margin-left:10px; display:none" ;>Communication Map </a>
+            {%endif%}
             <a href="#!"
                onclick="show_ip_rst_editor({{iprender.getFile()}}, {{iprender.getId()}}, {{iprender.getInternalTest().getData().getId()}} )"
                class="vnvh badge badge-success" style="margin-left:10px;display:none;"
                ;>RST</a>
-            <a href="#!" onclick="$('#source-modal').modal('toggle')" class="vnvh badge badge-info"
-               style="margin-left:10px;display:none" ;>Source
-                Code</a>
             <a href="#!" onclick="show_data_explorer({{iprender.getFile()}}, {{iprender.getId()}})"
                class="vnvh badge badge-info"
                style="margin-left:10px;display:none" ;>Data
                 Explorer</a>
-            <a href="#!" onclick="$('#internal_render').toggle(300)" class="vnvh badge badge-info"
-               style="margin-left:10px;display:none">+/-</a>
-
             <a href="#!" onclick="$('.vnvh').toggle(300)" class="badge badge-info" style="margin:10px;"><</a>
 
         </div>

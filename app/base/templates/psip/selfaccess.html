@@ -1,11 +1,12 @@
-<div style="padding:15px;">
+<div style="padding:15px;position:relative">
     <div style="display:flex; align-items:center;">
 
         <h2 style="flex:1">PSIP Application Dashboard</h2>
         {% if not readonly %}
-            <button class="btn btn-primary" onclick="toggle_psip({{file.id_}})" id="psip_enabled_btn">{%if file.psip_enabled %}Disable {%else%}Enable {%endif%} PSIP</button>
+            <button style=z-index:30;" class="btn btn-primary" onclick="toggle_psip({{file.id_}})" id="psip_enabled_btn">{%if file.psip_enabled %}Disable {%else%}Enable {%endif%} PSIP</button>
         {%endif%}
     </div>
+  <div id="psipDarkLayer" class="darkClass" style="display:none"></div>
   <div id="show_psip_view">
     <div>
         <p>Software engineering is a systematic approach to the design, development, and maintenance of a software

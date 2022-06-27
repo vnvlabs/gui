@@ -17,14 +17,14 @@
                 <form id="new_inputfile_form" action="/inputfiles/new" method="post">
                     <div class="form-group">
                         <label for="name" class="col-form-label">Executable Name</label>
-                        <input type="text" class="form-control" name="name" id="name">
+                        <input type="text" class="form-control" name="name" id="name" value="Untitled Executable">
                         <small>The executable name is used to identify this executable in the user interface.</small>
                     </div>
                     <div class="form-group">
                         <label for="existing" class="col-form-label">Select A VnV Executable:</label>
                         <select type="text" class="form-control" id="existing" name="executable">
                             {%for r in list_vnv_executables() %}
-                            <option value="{{r[0]}}" {%if loop.index0 == 0 %} selected {%endif%}  data-message="{{r[1]}}" >{{r[2] + ": " + r[0]}}</option>
+                            <option value="{{r[0]}}" {%if loop.index0 == 0 %} selected {%endif%}  data-message="{{r[1]}}" >{{r[0]}}</option>
                             {%endfor%}
                         </select>
                         <small id="application_description"> {{list_vnv_executables()[0][1]}} </small>
@@ -74,3 +74,26 @@
     </div>
 </div>
 
+<div id="script-modal" class="modal fade" tabindex="-1" style="height:98vh;" role="dialog"
+     aria-labelledby="rst-modal-label"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="width:98vw; max-width:1000px" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="script-modal-label">Executable Script</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="executable-script-body">
+                {%include "viewers/rst_editor.html" %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function show_script(script_html) {
+    $("#executable-script-body").html(script_html);
+    $("#script-modal").modal("show")
+}
+</script>

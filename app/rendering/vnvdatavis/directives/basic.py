@@ -90,6 +90,7 @@ class JsonCodeBlockDirective(SphinxDirective):
     def run(self):
         return process_query(" ".join(self.arguments), "codeblock", tag="div")
 
+
 class JsonImageDirective(SphinxDirective):
     required_arguments = 1
     optional_arguments = 0

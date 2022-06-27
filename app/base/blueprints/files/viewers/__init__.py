@@ -153,7 +153,7 @@ def rst():
         with VnVFile.VnVFile.find(id_) as file:
             data = file.getById(dataId).cast() if dataId is not None else file.root
             templateName = file.render_to_string(content)
-            config = render_template_string(templateName, data=DataClass(data, data.getId(), id_))
+            config = render_template_string(templateName, file=file, data=DataClass(data, data.getId(), id_))
             return render_template("viewers/rst_render.html", content=config);
 
     except Exception as e:
@@ -437,6 +437,7 @@ def data_root(id_):
         return make_response(jsonify([{
             "text": node.getName(),
             "children": True,
+            "state" : {"opened" : True },
             "li_attr": {
                 "fileId": file.id_,
                 "nodeId": node.getId(),

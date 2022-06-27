@@ -15,7 +15,7 @@ def post_process_include(text, data, file ):
             rendered_template = file.render_to_string(f.read())
 
             # Convert Flask Template to Full HTML
-            config = render_template_string(rendered_template, data=data)
+            config = render_template_string(rendered_template, data=data, file=file)
 
             # Chuck it inside an iframe
             return render_template("viewers/rst_render.html", content=config);

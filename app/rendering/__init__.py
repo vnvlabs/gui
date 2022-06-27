@@ -59,11 +59,18 @@ class TemplateBuild:
         self.file = id_
         self.descrip = descrip
         self.smap = smap
+        self.codeblocks = None
 
     def read(self, f):
         with open(os.path.join(self.root_dir, f), 'r') as ff:
             r = ff.readlines()
             return "".join(r)
+
+    def get_code_block(self,codeblock):
+        if self.codeblocks is None:
+            with open(os.path.join(self.root_dir,"codeblocks.json")) as f:
+                self.codeblocks = json.load(f)
+        return self.codeblocks.get(codeblock , "<error>")
 
     def getSourceMap(self,package, name):
         return self.smap.get(package + ":"+name,{})
@@ -211,7 +218,7 @@ def build(src_dir, templates, id_):
     setup_build_directory(src_dir, id_)
     fnames = []
     descriptions = {}
-
+    codeblocks = {}
     sourcemap = {}
 
     for type_, packages in templates.items():
@@ -227,6 +234,10 @@ def build(src_dir, templates, id_):
 
             with open(os.path.join(src_dir, fnames[-1]), 'w') as w:
                 w.write(f'{textwrap.dedent(packages["docs"].get("title",""))}\n\n')
+
+        elif type_ in ["CodeBlocks"]:
+            codeblocks = packages;
+
 
         elif type_ in ["Options"]:
             for package, docinfo in packages.items():
@@ -299,6 +310,9 @@ def build(src_dir, templates, id_):
 
     with open(os.path.join(src_dir, "descriptions.json"), 'w') as w:
         json.dump(descriptions, w)
+
+    with open(os.path.join(src_dir, "codeblocks.json"), 'w') as w:
+        json.dump(codeblocks, w)
 
     with open(os.path.join(src_dir, "runv.py"), 'w') as w:
         w.write(

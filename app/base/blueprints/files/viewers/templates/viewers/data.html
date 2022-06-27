@@ -1,20 +1,12 @@
 
-<div class="card" style="padding:10px; overflow:scroll; display: flex; flex-direction:row; ">
-    <div id="data_tree_div_ip" style="width:50%; overflow:scroll; margin-right:10px;">
-    </div>
-    <div id="data_jmes_div" style="width:50%; overflow:scroll; display:flex; flex-direction:column; margin-left:10px;">
-        <div id="name-group" class="form-group">
-            <label for="jmes_query" class="col-form-label">JMES Path Query: Press Enter to Submit</label>
-            <input type="text" class="form-control" name="name" id="jmes_query">
-        </div>
-        <div class="card" style="padding:10px; font-size:20px; margin:5px; flex-grow:1" id="jmes_query_result">
-            Results will display here:
-        </div>
-    </div>
+<div class="card" style="padding:10px; overflow:auto; display: flex; flex-direction:row; ">
+    <div id="data_tree_div_ip" style="width:100%; overflow:auto; margin-right:10px;"></div>
 </div>
 <script>
 
-$(document).ready( function () { $('#data_tree_div_ip').jstree(
+$(document).ready( function () {
+
+$('#data_tree_div_ip').jstree(
 {
   "core" : {
     "animation" : 0,
@@ -39,6 +31,8 @@ $(document).ready( function () { $('#data_tree_div_ip').jstree(
     "state", "types", "wholerow"
   ]
 });
+
+$("#data_tree_div_ip").jstree("open_all");
 
 $("#jmes_query").change(function() {
   $.get('/files/viewers/jmes-query?fileId={{fileId}}&dataId={{dataId}}&query=' + encodeURIComponent($(this).val()) , function(data) {

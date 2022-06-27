@@ -23,7 +23,7 @@ from .utils.utils import render_error
 
 from .. import Directory
 from ..models.VnVFile import VnVFile
-from ..models.VnVInputFile import VnVInputFile
+from ..models.VnVInputFile import VnVInputFile, add_input_file_type
 
 blueprint = Blueprint(
     'base',
@@ -75,6 +75,8 @@ def updateBranding(config, pd):
         global COPYRIGHT_LINK
         COPYRIGHT_LINK = copy["link"]
         print("Update Copyright Link", COPYRIGHT_LINK)
+
+
 
     if "blueprints" in config:
         bp = config["blueprints"]
@@ -185,14 +187,31 @@ def theia_route():
     #This route should get intercepted by the "serve" app, so, when
     #serving, this should never be called. This button is just a placeholder
     # for the serve app -- should really allow the serve app to add buttons.
-    return render_error(200, "Eclipse Theia is not configured")
+    return render_error(200, "Eclipse Theia is not configured", nohome=True)
 
 @blueprint.route('/paraview')
 def paraview_route():
     #This route should get intercepted by the "serve" app, so, when
     #serving, this should never be called. This button is just a placeholder
     # for the serve app -- should really allow the serve app to add buttons.
-    return render_error(200, "Visualzier is not configured")
+    return render_error(200, "Visualzier is not configured", nohome=True)
+
+@blueprint.route("/ide")
+def ide_route():
+    return render_template("ide.html")
+
+@blueprint.route("/viz")
+def viz_route():
+    return render_template("para.html")
+
+@blueprint.route("/browse")
+def browse_route():
+    return render_template("browse.html")
+
+@blueprint.route("/term")
+def term_route():
+    return render_template("terminal_.html")
+
 
 
 @blueprint.route('/avatar/<username>')

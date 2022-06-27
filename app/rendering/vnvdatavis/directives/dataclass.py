@@ -120,6 +120,9 @@ class DataClass:
         return pygments.highlight(
             j, JsonLexer(), HtmlFormatter(), outfile=None)
 
+    def rawCodeBlock(self, package, name):
+        self.file
+
     def getFile(self):
         return self.file
 

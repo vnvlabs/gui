@@ -2,7 +2,7 @@
 def setup(sapp):
 
     from . import basic, line, charts, jmes, dashboard, gauge, table, psip, issues, \
-        plotly, iff, slider, forr, plotly_animation, apex, chartsjs, include, math
+        plotly, iff, slider, forr, plotly_animation, apex, chartsjs, include, math, code
 
     jmes.setup(sapp)
     charts.setup(sapp)
@@ -22,3 +22,4 @@ def setup(sapp):
     chartsjs.setup(sapp)
     include.setup(sapp)
     math.setup(sapp)
+    code.setup(sapp)

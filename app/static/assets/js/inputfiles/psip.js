@@ -477,10 +477,11 @@ psip_readonly = true
 function toggle_psip(fileId) {
     if (!psip_readonly) {
         $.post('/inputfiles/toggle_psip/' + fileId, function(data) {
-            $('#show_psip_view').toggle(data)
             if (data === "show") {
+                $('#psipDarkLayer').toggle('hide')
                 $('#psip_enabled_btn').html("Disable PSIP")
             } else {
+                $('#psipDarkLayer').toggle('show')
                 $('#psip_enabled_btn').html("Enable PSIP")
             }
         })

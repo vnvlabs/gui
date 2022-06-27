@@ -1,0 +1,26 @@
+<div id="tagroup" class="form-group" style="">
+    <div style="height:800px" id="inputtextarea"></div>
+</div>
+
+<script>
+function set_dep_text(data) {
+    ace.edit('inputtextarea').setValue(data.kwargs.text)
+}
+
+function get_dep_text(formdata){
+    formdata.append('text', ace.edit('inputtextarea').getValue() )
+}
+
+$(document).ready(function() {
+ var input_editor = ace.edit('inputtextarea',
+    {
+        theme: "ace/theme/tomorrow_night_blue",
+        autoScrollEditorIntoView: true,
+        fontSize: 20,
+        enableBasicAutocompletion: true,
+        enableLiveAutocompletion: true
+
+    });
+});
+
+</script>

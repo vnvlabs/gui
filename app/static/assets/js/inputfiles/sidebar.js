@@ -80,7 +80,7 @@ function save_input_object(fileid ,elm, object, then ) {
             } else {
 
                if (xhr.status == 200) {
-                 addToast("Save Successfull", "", 5000)
+                 //addToast("Save Successfull", "", 5000)
                } else {
                  alert("Something went wrong - Please try again.")
                }
@@ -111,7 +111,7 @@ function show_input_modal(fileId, modalId) {
 }
 
 
-function get_ace_editor(fileid, elmId, mode, live, autocompl) {
+function get_ace_editor(fileid, elmId, mode, live, autocompl, autosave) {
 
     var input_editor = ace.edit(elmId,
     {
@@ -120,6 +120,10 @@ function get_ace_editor(fileid, elmId, mode, live, autocompl) {
         autoScrollEditorIntoView: true,
         minLines: 40
     });
+
+    if (autosave) {
+        input_editor.session.on('change', function(delta) { autosave(delta); });
+    }
 
     if (autocompl) {
 
@@ -146,7 +150,6 @@ function get_ace_editor(fileid, elmId, mode, live, autocompl) {
     const originalSetAnnotations = input_editor.session.setAnnotations
 
     input_editor.session.setAnnotations = function (annotations) {
-
       // If we have annotations already, then set them.
       if (annotations && annotations.length) {
         originalSetAnnotations.call(input_editor.session, annotations)

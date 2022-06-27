@@ -7,7 +7,7 @@
   a = {{initial_data|safe}}
   set_psip_data(a,{{file.id_}})
   {%if not file.psip_enabled %}
-    $('#show_psip_view').toggle('hide')
+    $('#psipDarkLayer').toggle('show')
   {%endif%}
 {% endwith %}
 </script>

@@ -1,0 +1,18 @@
+<div id="copy_group" class="form-group">
+    <label for="copylinkValue" class="col-form-label">Remote File</label>
+    <input type="text" class="form-control" name="copy_file" id="copylinkValue">
+    <small>The file name on the remote machine to copy</small>
+</div>
+
+<script>
+
+    function get_dep_copy(formdata){
+        formdata.append("text",$('#copylinkValue').val());
+    }
+
+    function set_dep_copy(data){
+        $('#copyLinkValue').val(data.kwargs.text)
+    }
+
+
+</script>

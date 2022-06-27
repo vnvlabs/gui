@@ -1,0 +1,18 @@
+<div id="soft_group" class="form-group">
+    <label for="softLinkValue" class="col-form-label">Remote File</label>
+    <input type="text" class="form-control" name="soft_file" id="softLinkValue">
+    <small>The file name on the remote machine to  soft link</small>
+</div>
+
+<script>
+
+    function get_dep_slink(formdata){
+        formdata.append("text",$('#softLinkValue').val());
+    }
+
+    function set_dep_slink(data){
+        $('#softLinkValue').val(data.kwargs.text)
+    }
+
+
+</script>

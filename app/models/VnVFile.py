@@ -91,9 +91,20 @@ class ProvWrapper:
         return self.prov.commandLine
 
     def get_libraries(self):
-        a = [ProvFileWrapper(self.vnvfileid, self.prov.get(a, 2), "") for a in range(0, self.prov.size(2))]
-        a.sort(key=lambda x: x.modified(), reverse=True)
-        return a
+        a = []
+        m = []
+        for i in range(0,self.prov.size(2)):
+            b = ProvFileWrapper(self.vnvfileid, self.prov.get(i, 2), "")
+            if not b.getName().startswith("/"):
+                pass
+            elif b.modified():
+                m.append(b)
+            else:
+                a.append(b)
+
+        a.sort(key=lambda x: x.getName())
+        m.sort(key=lambda x: x.getName())
+        return m + a
 
     def get_outputs(self):
         r = []
@@ -317,14 +328,16 @@ class PackageRender:
         self.data = data
         self.package = package
         self.templates = templates
+        self.html = None
+
+    def getHtml_(self):
+        if self.html is None:
+            t = self.templates.get_package(self.package)
+            self.html = render_vnv_template(t, data=self.data.getData(), file=self.templates.file)
+        return self.html
 
     def getHtml(self):
-        t = self.templates.get_package(self.package)
-        a = render_vnv_template(t, data=self.data.getData(), file=self.templates.file)
-        if len(a) > 0:
-            return a
-        else:
-            return "<h4> No Package Information Available </h>"
+        return self.getHtml_()
 
     def getLogs(self):
         return [LogRender(a, self.commObj, self.templates)
@@ -340,7 +353,7 @@ class IntroductionRender:
 
     def getTitle(self, short=False):
         t = self.templates.get_intro_title(short=short)
-        a = render_vnv_template(t, data=self.root, file=self.templates.file)
+        a = render_vnv_template(t, data=self.root.getInitialization().getData(), file=self.templates.file)
         if len(a) > 0:
             return a.replace("<p>", "<span>").replace("</p>", "</span>")
         return self.package
@@ -351,8 +364,11 @@ class IntroductionRender:
     def getId(self):
         return self.root.getId()
 
+    def has_introduction(self):
+        return len(self.getRawRST().strip())>0
+
     def getHtml(self):
-        return render_vnv_template(self.templates.get_introduction(), data=self.root, file=self.templates.file)
+        return render_vnv_template(self.templates.get_introduction(), data=self.root.getInitialization().getData(), file=self.templates.file)
 
     def getRawRST(self):
         return self.templates.get_raw_introduction()
@@ -541,6 +557,9 @@ class InjectionPointRender:
     def getCommRender(self):
         return CommRender(self.ip.getComm(), self.commObj)
 
+    def needs_comm_map(self):
+        return self.commObj.world_size > 1
+
     def getName(self):
         return self.ip.getName()
 
@@ -554,6 +573,9 @@ class InjectionPointRender:
             return "Processing"
         else:
             return "Complete"
+
+    def processing(self):
+        return self.getStatus() != "Complete"
 
     def open(self):
         return self.ip.getopen()
@@ -600,6 +622,7 @@ class VnVFile:
     COUNTER = 0
 
     FILES = VnV.FILES
+
 
     def getReaderConfig(self, username, password):
         if not Configured():
@@ -670,6 +693,7 @@ class VnVFile:
     def update_dispName(self, newName):
         self.dispName = newName
         mongo.update_display_name(self.name, newName)
+
 
     def render_temp_string(self, content):
         if self.setupNow():
@@ -772,7 +796,23 @@ class VnVFile:
         return self.root.getCommInfoNode().getWorldSize()
 
     def getPackages(self):
-        return [{"name": a} for a in self.root.getPackages().fetchkeys()]
+        if self.templates is not None:
+            return [{"name": a} for a in self.root.getPackages().fetchkeys() ]
+        return []
+
+    def renderAllPackages(self):
+      if self.templates is not None:
+        if not hasattr(self,"renderpackages"):
+            self.renderpackages = []
+            for package in self.getPackages():
+                r = self.render_package(package["name"])
+                if (len(r.strip())>0):
+                    self.renderpackages.append({"name":package["name"],"content":r})
+        return self.renderpackages
+      return []
+
+    def hasPackages(self):
+        return len(self.renderAllPackages())>0
 
     def getPackage(self, package):
         return self.root.getPackage(package)
@@ -782,6 +822,11 @@ class VnVFile:
 
     def browse(self):
         return LocalFile(self.get_cwd(), self.id_, self.connection, reader="directory")
+
+    def hasInjectionPoints(self):
+        if self.templates is not None:
+            return self.has_introduction() or self.root.get
+        return True
 
     def getFirstPackage(self):
         a = self.getPackages()
@@ -795,6 +840,15 @@ class VnVFile:
     def getActions(self):
         return [{"name": a, "id_": n, "display_name": self.displayName(a)} for n, a in
                 enumerate(self.root.getActions().fetchkeys())]
+
+    def get_code_block(self,codeblock):
+        return self.templates.get_code_block(codeblock)
+
+    def render_code_block(self,codeblock):
+        lex = pygments.lexers.get_lexer_by_name("cpp")
+        form = pygments.formatters.html.HtmlFormatter(
+            linenos=True, style="colorful", noclasses=True)
+        return pygments.highlight(self.get_code_block(codeblock), lex, form)
 
     def getFirstAction(self):
         a = self.getActions()
@@ -993,6 +1047,10 @@ class VnVFile:
     def get_introduction(self):
         return IntroductionRender("VnV Application", self.root, self.templates)
 
+    def has_introduction(self):
+        return IntroductionRender("VnV Application", self.root, self.templates).has_introduction()
+
+
     def get_conclusion(self):
         return render_template(self.templates.get_conclusion())
 
@@ -1066,7 +1124,7 @@ class VnVFile:
     def proc_iter_next(self, count=None):
 
         res = []
-        if self.currX == -1:
+        if self.currX == -1 and self.has_introduction():
             res.append(
                 {
                     "id": VnVFile.INJECTION_INTRO,
@@ -1075,6 +1133,7 @@ class VnVFile:
                     "package": "Root"
                 }
             )
+            self.currX = 1
 
         while True:
 

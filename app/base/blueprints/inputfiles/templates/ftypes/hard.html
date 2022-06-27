@@ -1,0 +1,18 @@
+<div id="hard_group" class="form-group">
+    <label for="hardlinkValue" class="col-form-label">Remote File</label>
+    <input type="text" class="form-control" name="hard_file" id="hardlinkValue">
+    <small>The file name on the remote machine to  hard link</small>
+</div>
+
+<script>
+
+    function get_dep_hlink(formdata){
+        formdata.append("text",$('#hardlinkValue').val());
+    }
+
+    function set_dep_hlink(data){
+        $('#hardlinkValue').val(data.kwargs.text)
+    }
+
+
+</script>

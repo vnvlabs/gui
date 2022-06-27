@@ -345,9 +345,11 @@ class VnVLocalConnection:
 
     class SessionContext:
 
-        def __init__(self, session):
+        def __init__(self, session, stdfile):
             self.session = session
             self.stdout_data = None
+            self.stdfile = stdfile
+
 
         def running(self):
             return self.session.poll() is None
@@ -355,12 +357,17 @@ class VnVLocalConnection:
         def cancel(self):
             self.session.kill()
 
+        def read(self):
+            with open(self.stdfile,'r') as f:
+                return f.read()
+
         def stdout(self):
-            if not self.running():
-                if self.stdout_data is None:
-                    self.stdout_data = self.session.communicate()[0].decode("utf-8")
-                return self.stdout_data
-            return ""
+            if self.running():
+                return self.read()
+            elif self.stdout_data is None:
+                self.session.communicate()
+                self.stdout_data = self.read()
+            return self.stdout_data
 
         def exitcode(self):
             if not self.running():
@@ -369,20 +376,23 @@ class VnVLocalConnection:
 
     def execute(self, command, asy=False, name=None, fullscript=None, metadata=None, env={}):
         try:
-            result = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE, env={**os.environ,**env})
-
             if not asy:
+                result = subprocess.Popen(shlex.split(command), stdout=subprocess.PIPE, env={**os.environ, **env})
                 return result.communicate()[0].decode("utf-8")
             else:
                 uid = uuid.uuid4().hex
+                stdefile = "/tmp/stdout-" + uid
+                f = open(stdefile, 'w')
+                result = subprocess.Popen(shlex.split(command), stdout=f, stderr=f, env={**os.environ, **env})
                 self.running_procs[uid] = VnVJob(uid, name, command if fullscript is None else fullscript,
-                                                 metadata, VnVLocalConnection.SessionContext(result))
+                                                 metadata, VnVLocalConnection.SessionContext(result,stdefile))
+
                 return uid
         except Exception as e:
 
             raise Exception("Failed to execute command: " + str(e))
 
-    def execute_script(self, script , work_dir=None, deps={}, asy=True, name=None, metadata=None):
+    def execute_script(self, script, asy=True, name=None, metadata=None):
         path = self.write(script, None)
         st = os.stat(path)
         os.chmod(path, st.st_mode | stat.S_IEXEC)

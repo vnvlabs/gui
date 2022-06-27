@@ -198,7 +198,7 @@ def plotly_post_process_raw(text, data, file, ext):
 
     for k, v in options.items():
         if k[0:len(t)] == t:
-            traces[k[len(t):]] = render_template_string(v,data=data)
+            traces[k[len(t):]] = render_template_string(v,data=data, file=file)
 
     for k, v in options.items():
         a = k.split('.')

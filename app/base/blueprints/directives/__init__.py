@@ -54,7 +54,7 @@ def chartupdates(updateId, fileid, dataid):
                    if context in context_map:
                        config = context_map[context](w.read(), data, file)
                    else:
-                       config = render_template_string(w.read(), data=data)
+                       config = render_template_string(w.read(), data=data, file=file)
            d = {"more": False, "config": config}
            return make_response(json.dumps(d), 200)
 
@@ -65,7 +65,7 @@ def chartupdates(updateId, fileid, dataid):
                 if context in context_map:
                     config = context_map[context](w.read(), DataClass(data, dataid, fileid), file )
                 else:
-                    config = render_template_string(w.read(), data=DataClass(data, dataid, fileid))
+                    config = render_template_string(w.read(), file=file, data=DataClass(data, dataid, fileid))
 
             d = {"more": data.getopen(), "config": config}
             return make_response(json.dumps(d), 200)

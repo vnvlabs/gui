@@ -1,9 +1,9 @@
 {%with
 tablist = {
-    "home": ["Injection","viewers/view.html", True],
+    "home": ["Injection","viewers/view.html", file.hasInjectionPoints()],
     "workflow" : ["Workflow" , "files/workflow.html", file.hasWorkflow() ],
     "comm": ["Communication","files/comms.html", file.hasComm()],
-    "packages": ["Packages" , "files/packages.html", True],
+    "packages": ["Packages" , "files/packages.html", file.hasPackages() ],
     "prov": ["Provenance","files/provenance.html", True],
     "unit": ["Unit Tests","files/unit_testing.html", file.hasUnitTests() ],
     "logs": ["Logs" , "files/logs.html", file.hasLogs() ],
@@ -31,15 +31,15 @@ tablist = {
                     });
                 </script>
                 {%endif%}
-               <h1 contenteditable=true id="file_display_name" >{{file.dispName}}</h1>
+               <input id="file_display_name" value="{{file.dispName}}"
+                      style=" width: 100%; border: none; font-size: 34px; font-family: 'Poppins', sans-serif;font-weight: 600;">
 
             </div>
         </div>
         <script>
 
             document.getElementById("file_display_name").addEventListener("input", function() {
-
-                $.post('/files/update_display_name/{{file.id_}}?new=' + encodeURIComponent($(this).html()), function(data) {
+                $.post('/files/update_display_name/{{file.id_}}?new=' + encodeURIComponent($(this).val()), function(data) {
                     $('#file-display-name-side-{{file.id_}}').html(data)
                 });
             }, false);

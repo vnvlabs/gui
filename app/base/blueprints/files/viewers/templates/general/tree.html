@@ -14,18 +14,23 @@
                 return current[current.length - 1]
             }
             function popCurrent() {
-                current.pop()
+                if ( current.length > 0 ) current.pop()
             }
             function pushCurrent(d) {
                 current.push(d)
             }
 
-            function getNewSeries() {
+            function getNewSeries(first) {
 
                 var url = '{{url_for('base.files.viewers.next', id_=file.id_, count=10 )}}'
                 $.get(  url , function(dd) {
                     $('#treeLoading').toggle(false);
                     var r = dd['data']
+
+                    if (r.length > 0 && first) {
+                       updateIpState(r[0].id , {{file.id_}} )
+                    }
+
                     r.forEach(function (item, index) {
 
                        if (item.type == "end") {
@@ -47,14 +52,15 @@
 
                     }
                     if ( ( r.length == 0 || !("done" in r[r.length -1]) ) ){
-
-                         chartInterval = window.setTimeout(getNewSeries,3000)
+                         chartInterval = window.setTimeout(function() {
+                            getNewSeries(false)
+                         },3000)
                     }
 
                 });
             }
             $(document).ready(function() {
-                getNewSeries()
+                getNewSeries(true)
                 $('#treeview1').on("select_node.jstree", function (e, data) {
                     updateIpState(data.node.id , {{file.id_}} )
                 });

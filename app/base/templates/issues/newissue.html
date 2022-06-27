@@ -2,7 +2,7 @@
     <h4 style="flex:1"> Local Application Issues and Comments:</h4>
     {% if not readonly %}
         <button id="new_issue" class="btn btn-primary" style="margin-right:10px;">New</button>
-        <button id="issues_enabled_btn" onclick="toggle_issues({{file.id_}})" class="btn btn-primary" style="margin-right:10px;">{% if file.issues_enabled %}Disable {%else%}Enable {%endif%} Issues</button>
+        <button id="issues_enabled_btn" onclick="toggle_issues({{file.id_}})" class="btn btn-primary" style="z-index:30; margin-right:10px;">{% if file.issues_enabled %}Disable {%else%}Enable {%endif%} Issues</button>
     {%endif%}
 </div>
 
@@ -44,12 +44,13 @@
 function toggle_issues(fileId) {
     {% if not readonly %}
         $.post('/inputfiles/toggle_issues/' + fileId, function(data) {
-            $('#main_issue_container').toggle(data)
             $('#new_issue').toggle(data)
 
             if (data === "show") {
+                $('#issuesDarkLayer').toggle('hide')
                 $('#issues_enabled_btn').html("Disable Issues")
             } else {
+                $('#issuesDarkLayer').toggle('show')
                 $('#issues_enabled_btn').html("Enable Issues")
             }
         })

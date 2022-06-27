@@ -63,10 +63,6 @@ function add_file(event) {
    event.preventDefault();
 }
 
-function update_file_display_name(id,current){
-
-    alert("Not implemented " + id + " " + current )
-}
 
 function show_ip_rst_editor(fileId, testId, atestId ) {
      $.get('/files/viewers/rst/raw/' + fileId + '/' + testId, function(data) {

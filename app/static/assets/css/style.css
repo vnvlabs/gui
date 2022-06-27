@@ -1013,7 +1013,23 @@ pre code {
 
 .pre-scrollable {
     max-height: 340px;
-    overflow-y: scroll;
+    overflow-y: auto;
+}
+
+.darkClass
+{
+    background-color: white;
+    filter:alpha(opacity=50); /* IE */
+    opacity: 0.5; /* Safari, Opera */
+    -moz-opacity:0.50; /* FireFox */
+    z-index: 20;
+    height: 100%;
+    width: 100%;
+    background-repeat:no-repeat;
+    background-position:center;
+    position:absolute;
+    top: 0px;
+    left: 0px;
 }
 
 .container {
@@ -1028,7 +1044,6 @@ pre code {
     .container {
         max-width: 540px;
     }
-}
 
 @media (min-width: 768px) {
     .container {
@@ -6640,7 +6655,7 @@ a.close.disabled {
     top: -9999px;
     width: 50px;
     height: 50px;
-    overflow: scroll;
+    overflow: auto;
 }
 
 @media (min-width: 576px) {
@@ -18198,12 +18213,12 @@ padding: 0px 3px 0px 2px;
 
 .vnv_terminalviewer {
     height: 800px;
-    overflow: scroll;
+    overflow: auto;
     padding: 15px;
     background: #3c465b;
 }
 .term {
-   overflow:scroll;
+   overflow:auto;
    font-family: monospace;
    color: white;
 }
@@ -19291,7 +19306,7 @@ strong {
     margin-bottom: 1rem;
 }
 
-/* Code snippets */
+/* Code snippets
 .highlight {
     padding: 1rem;
     margin-top: 1rem;
@@ -19299,7 +19314,7 @@ strong {
     background-color: #f3f2fb;
     -ms-overflow-style: -ms-autohiding-scrollbar;
 }
-
+ */
 @media only screen and (max-height: 575px) {
     .highlight {
         padding: 1.5rem;
@@ -19317,7 +19332,7 @@ strong {
         margin-left: 0;
     }
 }
-
+/*
 .highlight pre {
     padding: 0;
     margin-top: 0;
@@ -19330,11 +19345,11 @@ strong {
     font-size: inherit;
     color: #333;
 }
-
 :not(pre) > code[class*="language-"],
 pre[class*="language-"] {
     background: transparent;
 }
+*/
 
 /* =======================================================================
  ===============     Ui kit copy model style      ====================== */
