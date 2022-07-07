@@ -996,6 +996,7 @@ class VnVFile:
     def get_conclusion(self):
         return render_template(self.templates.get_conclusion())
 
+    # IDO render injection point
     def render_ip(self, id):
         if self.templates is None:
             return None
@@ -1054,6 +1055,7 @@ class VnVFile:
         node_type_START: "start",
         node_type_END: "end"
     }
+    # IDO? lowest reasonable number is intro and largest is conclusion
     INJECTION_INTRO = -100
     INJECTION_CONC = -101
 

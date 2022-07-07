@@ -1,13 +1,14 @@
-<!-- IDO? why does this set the strip to be the processor when processor/chart.html does that? isn't communicator/chart.html pointless? -->
-
+<!-- FIXME do I need {% with strip ...} -->
 {% with strip = request.args.get("strip"), processor = request.args.get("processor","0")  %}
-<!-- title of side menu that has tree of Injection Points -->
-<h3>Injection Points</h3>
+{%with f=file.set_proc_iter(processor,strip)%}{%endwith%}
+
+<!-- FIXME if click link on left, display data on right -->
+{% with strip = request.args.get("strip"), processor = request.args.get("processor","0")  %}
+<h3>Stored Data</h3>
 <div id="treeLoading">Loading...</div>
 <div id="treeview1" class="treeview"></div>
 
 <script>
-
   $(function() {
             var data = []
             var current = [data]
@@ -78,4 +79,5 @@
 
 </script>
 
+{%endwith%}
 {%endwith%}

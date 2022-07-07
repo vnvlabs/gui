@@ -245,6 +245,7 @@ class PlotlyOptionsDict(MutableMapping):
         return len(self.store)
 
 
+# IDO? Plots data
 class PlotlyChartDirective(JsonChartDirective):
     script_template = '''
             <div id="{id_}" style="width:"100%"; height:"100%"></div>

@@ -2,12 +2,14 @@
 {% with filelist = file.get_prov().get_libraries() %}
 <div class="" >
     <div class="card-body">
+        <!-- searchbar in Libraries tab in Provenance -->
         <div style="flex" class="form-group">
-            <input type="text" class="form-control"  placeholder="Search by filename" value="" id="libfilefilter">
+            <input type="text" class="form-control"  placeholder="I AM A SEARCHBAR !" value="" id="libfilefilter">
         </div>
+        <!-- list of files in Libraries tab of Provenance -->
         {%if filelist | length > 0 %}
              {%for file in filelist %}
-                <div class="libfile" modified="{{file.modified()}}" name="{{file.getName()}}" style="margin:10px;">{%include "files/prov/file.html" %}</div>
+                <div class="libfile" modified="{{file.modified()}}" name="{{file.getName()}}" style="margin:15px;">{%include "files/prov/file.html" %}</div>
              {%endfor%}
         {% else %}
         <div style="margin:10px;">No files Detected.</div>

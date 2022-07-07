@@ -38,6 +38,7 @@ def register_blueprints(apps, config):
         return global_template_variables
 
 
+#NOTE set Presentation Logic
 def configure_error_handlers(app):
     @app.errorhandler(404)
     def fourohfour(e):

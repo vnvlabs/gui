@@ -20,12 +20,15 @@ from ...utils import mongo
 from ...utils.mongo import collection_exists
 from ...utils.utils import render_error
 
+#IDO create Blueprint for this directory
 blueprint = Blueprint(
     'files',
     __name__,
     template_folder='templates',
     url_prefix="/files"
 )
+
+
 blueprint.register_blueprint(viewers.blueprint, url_prefix="/viewers")
 
 
@@ -340,12 +343,14 @@ def data_root(id_):
     else:
         return make_response(jsonify([]), 200)
 
-
+#IDO renders view of Report
 @blueprint.route('/view/<int:id_>')
 def view(id_):
     try:
+        #IDO if there is a report with this id
         with VnVFile.find(id_) as file:
             if "full" in request.args:
+                #IDO render the Report with the tab-view-content.html's file as the requested file with the requested id
                 return render_template("files/tab-view-content.html", file=file,
                                        count=int(request.args.get("count", "0")))
             return render_template("files/tab-view.html", file=file)

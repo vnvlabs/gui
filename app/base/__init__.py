@@ -25,6 +25,9 @@ from .. import Directory
 from ..models.VnVFile import VnVFile
 from ..models.VnVInputFile import VnVInputFile
 
+#IDO define Blueprint for this directory
+#   first arg is name of dir
+#   template_folder is where templates are stored
 blueprint = Blueprint(
     'base',
     __name__,
@@ -160,21 +163,24 @@ def verify_cookie(cook):
     return False
 
 
+#IDO check if the user is logged in when they try anything
 @blueprint.before_request
 def check_valid_login():
     if not AUTHENTICATE:
         return
 
+    #IDO check if the user has the "logged in" cookie
     login_valid = verify_cookie(request.cookies.get("vnv-login"))
     if request.form.get("__token__") is not None:
         if not check_password_hash(PASSWORD, request.form["__token__"]):
             return make_response("Authorization Failed", 401)
 
+    #IDO let the user log in if they haven't tried to already
     elif request.endpoint and request.endpoint != "base.login" and 'static' not in request.endpoint and not login_valid:
         return render_template('login.html', next=request.url)
 
 
-
+#IDO set html to view when at vnvlabs.com/
 @blueprint.route('/')
 def default_route():
     return render_template('index.html', segment='index')
@@ -200,6 +206,7 @@ def avatar_route(username):
     return send_file("static/assets/images/user/AVATARS.png")
 
 
+#IDO render the login page
 @blueprint.route('/login', methods=["POST"])
 def login():
     if not AUTHENTICATE:
