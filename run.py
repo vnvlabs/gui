@@ -15,16 +15,18 @@ class Config:
     passw = "password"
     auth = False
     port = 5001
-    host = "localhost"
+    host = "0.0.0.0"
     DEFAULT_DATA_PREFIX = "../build/"
     THEIA_URL = "/theia"
     PARAVIEW_URL = "/paraview"
+    LOGOUT_COOKIE = "vnvnginxcode"
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--port", help="port to run on (default 5001)")
 parser.add_argument("--host", help="host to run on (default localhost)")
 parser.add_argument("--theia", help="url link to running eclipse theia instance")
 parser.add_argument("--paraview", help="url link to running eclipse theia instance")
+parser.add_argument("--logout", help="name of logout cookie")
 args = parser.parse_args()
 
 if args.port:
@@ -39,6 +41,8 @@ if args.paraview:
 if args.host:
     Config.host = args.host
 
+if args.logout:
+    Config.LOGOUT_COOKIE = args.logout
 
 app_config = Config()
 app = create_app(app_config)

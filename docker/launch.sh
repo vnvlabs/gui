@@ -1,9 +1,10 @@
 #!/bin/bash 
 
-# Launch without mapping Theia and Paraview. This is used by the serve app
-# Like serve.sh, this script starts the three servers on different ports. Unkike
-# serve.sh, the Theia and paraview ports are not routed to the different ports. This
-# configuration is designed to be used with an external proxy (as is used in the "serve" app).
+# Launch with mapping Theia and Paraview. This is used by the serve app
+
+HOST_PORT=$1
+AUTH_CODE=$2
+LOGOUT=$3
 
 PARAVIEW_PORT=9000
 THEIA_PORT=3000
@@ -23,13 +24,21 @@ node /theia/src-gen/backend/main.js ${SOURCE_DIR} --port ${THEIA_PORT} --hostnam
 cd /paraview
 $PVPYTHON -m paraview.apps.visualizer --host ${HOSTNAME} --data / --port ${PARAVIEW_PORT} --timeout 600000 &
 
+# Start the VnV Server
 cd /vnv-gui
 virt/bin/python ./run.py \
                 --host ${HOSTNAME} \
                 --port ${GUI_PORT} \
                 --theia=/theia \
-                --paraview=/paraview
+                --logout=${LOGOUT}\
+                --paraview=/paraview &
 
 
-
+# Launch the VnV Router on the Resource.
+virt/bin/python router/run.py \
+                --host ${HOSTNAME}\
+	              --port ${HOST_PORT}\
+	              --vnv ${GUI_PORT}  \
+                --theia ${THEIA_PORT} \
+                --paraview ${PARAVIEW_PORT}
 
