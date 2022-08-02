@@ -50,7 +50,7 @@
 
 
 <div class="pcoded-main-container fcolumn" style="padding-bottom:50px;" >
-    <div class="pcoded-content fcolumn fchild" >
+    <div class="pcoded-content fcolumn fchild" {% if no_padding %} style="padding:0px;" {% endif %} >
         <div id="formControlElm" class="page-block fcolumn fchild">
 
             {% block content %}{% endblock content %}

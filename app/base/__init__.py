@@ -157,6 +157,7 @@ def GET_COOKIE_TOKEN():
     return COOKIE_PASS
 
 
+
 def verify_cookie(cook):
     if cook is not None and cook == COOKIE_PASS:
         return True

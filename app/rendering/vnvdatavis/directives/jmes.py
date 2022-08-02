@@ -18,8 +18,8 @@ def get_target_node(directive):
     return targetnode, target_id
 
 
-def jmes_jinja_query(text):
-    if jmespath.compile(text):
+def jmes_jinja_query(text, nocheck=False):
+    if nocheck or jmespath.compile(text):
         return "{{ data.query('" + text + "') | safe }}"
     else:
         raise ExtensionError("Invalid jmes path query")

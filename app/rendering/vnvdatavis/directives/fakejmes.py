@@ -192,3 +192,14 @@ class VnVExpression:
 
 def compile(expression):
     return VnVExpression(parser.Parser().parse(expression))
+
+
+def jmespath_autocomplete(expression, data, value, pre):
+   return [
+       {
+          "caption" :expression,
+          "value" : "todo",
+          "meta": "jmespath",
+          "desc" : "Jmes path autocomplete is coming soon"
+       }
+        ]

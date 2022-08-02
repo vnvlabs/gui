@@ -57,7 +57,6 @@ $( document ).ready(function() {
     editor.setOptions({
         enableBasicAutocompletion: true
     });
-
     var staticWordCompleter = {
         getCompletions: function(editor, session, pos, prefix, callback) {
           if (ace.edit("rst_content") == editor ) {
@@ -65,9 +64,15 @@ $( document ).ready(function() {
             var f = $('#rst_fileId').val()
             var d = $('#rst_dataId').val()
             $.get(`/files/viewers/rst/auto/${f}/${d}?row=${pos.row}&col=${pos.column}&prefix=${prefix}&val=${encodeURIComponent(editor.getValue())}`, function(data) {
+                debugger;
                 callback(null, data );
             });
           }
+        },
+        getDocTooltip: function(item) {
+           if (item.desc.length > 0 ) {
+              item.docHTML = item.desc
+           }
         }
     }
     langTools.setCompleters([staticWordCompleter])

@@ -12,13 +12,115 @@ import math
 import numpy as np
 import json
 
+from .fakejmes import jmespath_autocomplete
+
+
+def gen_comp(cap, val, type, desc):
+    return {"caption": cap, "value": val, "meta": type, "desc": desc}
+
+
+def gen_list(schema, prefix, ops):
+    for k, v in schema.items():
+        if isinstance(v, dict):
+            if "valType" in v:
+                ops.append(
+                    gen_comp(f"{prefix}{k}", f"{prefix}{k}: {v.get('dflt', '')}", v["valType"], v.get("description")))
+            elif v.get("role", "") == "object":
+                gen_list(v, f"{prefix}{k}.", ops)
+
+
+def generate_options_list(schema):
+    cops = []
+    lops = []
+    trace_list = []  # List of available "trace" types (e.g., scatter, ....,...., etc.
+    trace_opts = {}
+
+    gen_list(schema["layout"]["layoutAttributes"], "layout.", lops)
+    gen_list(schema["config"], "config.", cops)
+
+    for k, v in schema["traces"].items():
+        if isinstance(v, dict):
+            trace_list.append(gen_comp(k, k, "plot type <string>", v.get("meta", {}).get("description", "")))
+
+            trace_o = []
+            gen_list(v.get("attributes", {}), "", trace_o)
+            gen_list(v.get("layoutAttributes", {}), "", trace_o)
+            trace_opts[k] = trace_o
+
+    return {"config": cops, "layout": lops, "traces": trace_opts, "traceList": trace_list,
+            "default": [
+                gen_comp("layout", "layout", "Layout Options", ""),
+                gen_comp("config", "config", "Config Options", ""),
+                gen_comp("trace", "trace.unnamed: scatter", "Plot Type <str>", "Define a new Plot")
+            ]}
+
+
+def get_plotly_options_for(directive, option, value, pre, data) :
+    if option.startswith("trace."):
+        return plotly_options["traceList"]
+
+    a = value.rfind("{{")
+    if a > 0 and a > value.rfind("}}"):
+        jmesp = value[a+2:]
+        return jmespath_autocomplete(jmesp, data, value, pre)
+
+
+    return []
+
 try:
     plotly_schema
 except:
     with open(os.path.join(os.path.dirname(__file__), "plot-schema.json")) as f:
         plotly_schema = json.load(f)["schema"]
 
+    plotly_options = generate_options_list(plotly_schema)
 
+
+def remove_prefix(li, pre, pref, trace=None):
+    # Pre is the full prefix for the option
+    # pref is the bit after the last dot.
+
+    # ppref is the prefix before the pref.
+    ppref = pre[0:-len(pref)]
+
+    def adder(k):
+        if trace is not None:
+            return f"{trace}.{k['caption']}".startswith(pre)
+        return k["caption"].startswith(pre)
+
+    return [gen_comp(k["caption"][len(ppref):], k["value"][len(ppref):], k["meta"], k["desc"]) for k in li if adder(k)]
+
+
+def plotly_options_list(pre, pref, all_opts):
+    layout = "layout"
+    if pre.startswith("layout") or pre in [layout[0:i] for i in range(1, len(layout))]:
+        return remove_prefix(plotly_options["layout"], pre, pref)
+
+    config = "config"
+    if pre.startswith("config") or pre in [config[0:i] for i in range(1, len(config))]:
+        return remove_prefix(plotly_options["config"], pre, pref)
+
+    trace = pre.split(".")
+
+    if len(pre) and len(trace) == 1:
+        ret = []
+        for k, v in all_opts.items():
+            if k.startswith("trace"):
+                ret.append(gen_comp(k[6:], k[6:] + ".", "Named Trace", ""))
+        return ret
+
+    elif len(trace) > 0:
+        tr = trace[0]
+        if f"trace.{tr}" in all_opts:
+            return remove_prefix(plotly_options["traces"].get(all_opts[f"trace.{tr}"].lstrip(), []), pre, pref,
+                                 trace=tr)
+
+    ret = []
+    for k, v in all_opts.items():
+        if k.startswith("trace"):
+            ret.append(gen_comp(k[6:], k[6:] + ".", "Named Trace", ""))
+
+    return remove_prefix(ret + plotly_options["default"], pre, pref)
 
 
 def plotly_array(ff, arrayOk=False):
@@ -35,6 +137,13 @@ def plotly_array(ff, arrayOk=False):
         return ff(t)
 
     return f
+
+
+def plotly_info_array(arrayOk=False, **kwargs):
+    def t(v):
+        return json.loads(v)
+
+    return t
 
 
 def plotly_enumerated(values, arrayOk=False, **kwargs):
@@ -98,7 +207,7 @@ def plotly_number_internal(cls, min=None, max=None, arrayOk=False):
     return plotly_array(plotly_number_, arrayOk)
 
 
-def plotly_number(min=None, max=None, arrayOk=False,**kwargs):
+def plotly_number(min=None, max=None, arrayOk=False, **kwargs):
     return plotly_number_internal(float, min, max, arrayOk)
 
 
@@ -106,7 +215,7 @@ def plotly_integer(min=None, max=None, arrayOk=False, **kwargs):
     return plotly_number_internal(int, min, max, arrayOk)
 
 
-def plotly_string(noBlank=False, values=None, arrayOk=False,**kwargs):
+def plotly_string(noBlank=False, values=None, arrayOk=False, **kwargs):
     def s(t):
         if values is not None and t not in values:
             raise ExtensionError(t + " not in " + values)
@@ -117,7 +226,7 @@ def plotly_string(noBlank=False, values=None, arrayOk=False,**kwargs):
     return plotly_array(s, arrayOk)
 
 
-def plotly_color(arrayOk=False,**kwargs):
+def plotly_color(arrayOk=False, **kwargs):
     def s(t):
         return t  # todo
 
@@ -144,14 +253,15 @@ def plotly_data_array(**kwargs):
             a = json.loads(t)
             if isinstance(a, list):
                 for i in a:
-                    if isinstance(i,list):
+                    if isinstance(i, list):
                         plotly_data_array()(json.dumps(i))
-                    elif isinstance(i, dict) :
+                    elif isinstance(i, dict):
                         raise ExtensionError("Not a data array")
                 return a
         except:
             pass
         raise ExtensionError("Must be an array")
+
     return func
 
 
@@ -165,7 +275,11 @@ def plotly_convert(keys, value, trace, data):
     else:
         s = plotly_schema["traces"][trace]["attributes"]
 
-    for i in keys: s = s[i]
+    for i in keys:
+        if i[0:5] in ["xaxis", "yaxis"]:
+            s = s[i[0:5]]
+        else:
+            s = s[i]
 
     m = f'plotly_{s["valType"]}'
     if m in globals():
@@ -178,18 +292,17 @@ def plotly_post_process_raw(text, data, file, ext):
     # Turn it into an object
     rdata = {}
 
-    textj = json.loads(text) if isinstance(text,str) else text
+    textj = json.loads(text) if isinstance(text, str) else text
 
     options = textj["options"]
 
     evalContent = textj["content"]
     try:
-        extra_data=eval(evalContent,{"np":np,"math":math,"json":json, "numpy":np});
-        if isinstance(extra_data,dict):
+        extra_data = eval(evalContent, {"np": np, "math": math, "json": json, "numpy": np});
+        if isinstance(extra_data, dict):
             options.update(extra_data)
     except:
         pass
-
 
     t = "trace."
     traces = {"layout": "layout",
@@ -198,7 +311,7 @@ def plotly_post_process_raw(text, data, file, ext):
 
     for k, v in options.items():
         if k[0:len(t)] == t:
-            traces[k[len(t):]] = render_template_string(v,data=data, file=file)
+            traces[k[len(t):]] = render_template_string(v, data=data, file=file)
 
     for k, v in options.items():
         a = k.split('.')
@@ -218,14 +331,14 @@ def plotly_post_process_raw(text, data, file, ext):
             try:
                 dc[a[-1]] = plotly_convert(a[1:], v, traces[a[0]], data)
             except Exception as e:
-                errors[k] = { "value" : v , "error" : str(e)}
+                errors[k] = {"value": v, "error": str(e)}
 
     # Raw data is in the correct format, but it is not
     rawdata = {
         "layout": {},
-        "config": {"responsive":True},
+        "config": {"responsive": True},
         "data": [],
-        "errors" : errors
+        "errors": errors
     }
 
     for k, v in rdata.items():
@@ -234,13 +347,14 @@ def plotly_post_process_raw(text, data, file, ext):
         elif k == "config":
             rawdata["config"] = v
         else:
-            v.setdefault("type", traces.get(k,"scatter"))
+            v.setdefault("type", traces.get(k, "scatter"))
             v.setdefault("name", k)
             rawdata["data"].append(v)
     return rawdata
 
+
 def plotly_post_process(text, data, file):
-    return json.dumps(plotly_post_process_raw(text,data,file, PlotlyDirec.external))
+    return json.dumps(plotly_post_process_raw(text, data, file, PlotlyDirec.external))
 
 
 class PlotlyOptionsDict(MutableMapping):
@@ -289,6 +403,7 @@ class PlotlyChartDirective(JsonChartDirective):
             }})
             </script>
             '''
+
 
 class PlotlyDirec(PlotlyChartDirective):
     required_arguments = 0
@@ -345,14 +460,13 @@ class PlotlyDirec(PlotlyChartDirective):
         return self.getContent()
 
     def getRawContent(self):
-        a = {"options" : self.options, "content" : "\n".join(self.content)}
+        a = {"options": self.options, "content": "\n".join(self.content)}
         return json.dumps(a)
 
 
 def setup(sapp):
     sapp.add_directive("vnv-plotly-raw", PlotlyChartDirective)
     sapp.add_directive("vnv-plotly", PlotlyDirec)
-
 
 
 '''

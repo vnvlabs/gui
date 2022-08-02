@@ -7,6 +7,7 @@ from flask import Blueprint, request, render_template, jsonify, make_response, r
 from app.base.utils.utils import render_error
 from app.models import VnVFile
 from app.rendering.vnvdatavis.directives.dataclass import DataClass
+from app.rendering.vnvdatavis.directives.plotly import plotly_options_list, get_plotly_options_for
 
 blueprint = Blueprint(
     'viewers',
@@ -179,6 +180,8 @@ def listDirectives():
     ]
 
 
+
+
 def getDirectiveOptions(directive, ops):
     if ":" in ops:
         return [] # TODO could supply enum values here if we want.
@@ -188,11 +191,11 @@ def getDirectiveOptions(directive, ops):
 
 
 def getDirectiveArgs(directive, prefix, args):
-    return [] #TPDP
+    return [{"caption" : directive, "value": "sdf", "meta": "direcitve argument"} ] #TPDP
 
 
 def getDirectiveBody(directive, val, row, col, start, end ):
-    return [] #TODO
+    return [{"caption": "body", "value": "sdf", "meta": "direcitve body"}]  # TPDP
 
 
 def getDirectiveCompletions(id_, dataId, prefix, value):
@@ -220,6 +223,7 @@ rst_rlist.append({"caption": "table",
 rst_list.append({"caption": "image", "value": "image:: <url>\n  :width: 300px\n  :height: 300px\n  :align: true\n\n", "meta": "directive"})
 rst_list.append({"caption": "figure", "value": "figure:: <url>\n  :width: 300px\n  :height: 300px\n  :align: true\n\n  This is the caption (must be indented 2 spaces)\n\n", "meta": "directive"})
 
+
 gg = ["tip","note","important","error","danger","warning","caution"]
 for i in gg:
     rst_list.append({"caption": i, "value": f"{i}:: This is the content\n\n", "meta": "directive"})
@@ -240,12 +244,18 @@ def getDirectiveList(prefix):
     return [ {"caption" : i["caption"], "value" : prefix + i["value"], "meta" : i["meta"]}  for i in rst_list]
 
 
-def getDirectiveOption(directive, option, value, pre):
-    return [] #Todo
+def getDirectiveOption(directive, option, value, pre, data):
 
-def getDirectiveOptionNames(directive, pre):
-    return [] #Todo
+    if directive in ["vnv-plotly", "vnv-animation"]:
+        return get_plotly_options_for(directive, option, value, pre, data)
 
+    return [{"caption" : directive, "value": "sdf", "meta": "direcitve option"} ] #TPDP
+
+
+def getDirectiveOptionNames(directive, pre, pref,  all_opts):
+    if directive in ["vnv-plotly","vnv-animation"]:
+        return plotly_options_list(pre, pref, all_opts)
+    return []
 
 def getAllRoles():
    return [
@@ -290,7 +300,7 @@ def rstauto(id_, dataId):
         # Check if its an option.
 
         #match an option
-        rt = re.compile('^ [ +]:(.*)?: (.*)$')
+        rt = re.compile('^[ ]+:(.*)?:(.*)$')
         mt = re.match(rt,val[row][0:col])
         if mt:
             b = row
@@ -299,19 +309,24 @@ def rstauto(id_, dataId):
             mm = re.match(reg,val[b])
             if mm:
                 directive = mm.group(1)
-                return make_response(jsonify(getDirectiveOption(directive,mt.group(1), mt.group(2),pre)),200)
+                return make_response(jsonify(getDirectiveOption(directive,mt.group(1), mt.group(2),pre, dataId)),200)
 
         # match a half finished option
-        rt = re.compile('^ [ +]:([a-zA-Z0-9_-]*$)')
-        mt = re.match(rt, val[row][0:col])
+        rtr = re.compile('^[ ]+:(.*)?$')
+        mt = re.match(rtr, val[row][0:col])
         if mt:
-            b = row
+            all_prev = {}
+            b = row -1
             while b > 0 and val[b].lstrip().startswith(":"):
+                mtt = re.match(rt,val[b])
+                if mtt:
+                    all_prev[mtt.group(1)] = mtt.group(2)
                 b -= 1
             mm = re.match(reg, val[b])
             if mm:
                 directive = mm.group(1)
-                return make_response(jsonify(getDirectiveOptionNames(directive, pre)), 200)
+
+                return make_response(jsonify(getDirectiveOptionNames(directive, mt.group(1), pre,  all_prev)), 200)
 
         # Check if its body content
         b = row

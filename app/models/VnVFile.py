@@ -824,8 +824,8 @@ class VnVFile:
         return LocalFile(self.get_cwd(), self.id_, self.connection, reader="directory")
 
     def hasInjectionPoints(self):
-        if self.templates is not None:
-            return self.has_introduction() or self.root.get
+        #if self.templates is not None:
+        #    return self.has_introduction() or self.root.getChildren().size()
         return True
 
     def getFirstPackage(self):

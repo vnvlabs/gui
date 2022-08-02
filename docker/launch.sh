@@ -2,10 +2,7 @@
 
 # Launch with mapping Theia and Paraview. This is used by the serve app
 
-HOST_PORT=$1
-AUTH_CODE=$2
-LOGOUT=$3
-
+HOST_PORT=5000
 PARAVIEW_PORT=9000
 THEIA_PORT=3000
 GUI_PORT=5001
@@ -30,7 +27,6 @@ virt/bin/python ./run.py \
                 --host ${HOSTNAME} \
                 --port ${GUI_PORT} \
                 --theia=/theia \
-                --logout=${LOGOUT}\
                 --paraview=/paraview &
 
 
@@ -40,5 +36,5 @@ virt/bin/python router/run.py \
 	              --port ${HOST_PORT}\
 	              --vnv ${GUI_PORT}  \
                 --theia ${THEIA_PORT} \
-                --paraview ${PARAVIEW_PORT}
+                --paraview ${PARAVIEW_PORT} ${@:1}
 

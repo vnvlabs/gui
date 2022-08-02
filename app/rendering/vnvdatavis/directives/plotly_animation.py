@@ -11,7 +11,7 @@ from .charts import JsonChartDirective, VnVChartNode
 from collections.abc import MutableMapping
 
 from .forr import VnVForDirective
-from .jmes import get_target_node
+from .jmes import get_target_node, jmes_jinja_query
 from .plotly import PlotlyDirec, PlotlyOptionsDict, plotly_post_process, \
     plotly_post_process_raw
 
@@ -102,6 +102,8 @@ class PlotlyAnimation(PlotlyDirec):
 
     script_template = '''
                      <div id="{{{{data.getAAId()}}}}-{uid}" style="width:100%; height:100%; min-height:500px"></div>
+                     <div id="{{{{data.getAAId()}}}}-{uid}-a" style="display:none; width:100%; height:100%; min-height:500px"></div>
+                     
                      <script>
                      $(document).ready(function() {{
                        url = "/directives/updates/{uid}/{{{{data.getFile()}}}}/{{{{data.getAAId()}}}}?context=animation"
@@ -111,7 +113,8 @@ class PlotlyAnimation(PlotlyDirec):
                        annotations: [{{font: {{size: 20}},showarrow: false, text: `${{load[0]}}%`,x: 0.5,y: 0.5}}] }},{{ }});
                        update_now(url, "{{{{data.getAAId()}}}}-{uid}", 1000, function(config) {{
                          var xx = JSON.parse(config)
-                         Plotly.react('{{{{data.getAAId()}}}}-{uid}',xx);                     
+                         $('#{{{{data.getAAId()}}}}-{uid}-a').html(config)          
+                         Plotly.react('{{{{data.getAAId()}}}}-{uid}',xx); 
                        }})
                      }})
                      </script>
@@ -137,13 +140,10 @@ class PlotlyAnimation(PlotlyDirec):
         a = json.loads(text)
         r, v = VnVForDirective.extract_range(a["range"], data)
 
-        if len(r) == 0:
-            return plotly_post_process(a["text"], data, file)
-
-        pcontent = VnVForDirective.substitute(r, v, a["text"])
+        pcontent =  VnVForDirective.substitute(r, v, text)
 
         if len(pcontent) == 1:
-            return json.dumps(plotly_post_process_raw(pcontent[0],data,file))
+            return json.dumps(plotly_post_process_raw(json.loads(pcontent[0]),data,file))
 
         try:
             labels = VnVForDirective.render_var(a["range"]["labels"],data, json.loads)
@@ -153,10 +153,10 @@ class PlotlyAnimation(PlotlyDirec):
         def get_label(n):
             return str(labels[n]) if n < len(labels) else str(r[n])
 
-
-        processedContent = { get_label(n) : plotly_post_process_raw({"options" : json.loads(i), "content" : "{}"}, data, file, PlotlyAnimation.external) for n, i in
-
-                            enumerate(pcontent)}
+        processedContent = {
+                             get_label(n) : plotly_post_process_raw(json.loads(i), data, file, PlotlyAnimation.external)
+                             for n, i in enumerate(pcontent)
+                            }
 
         first_pass = processedContent[get_label(0)]
         first_pass["layout"]["updatemenus"] = updatemenus
@@ -164,7 +164,7 @@ class PlotlyAnimation(PlotlyDirec):
                                          prefix=VnVForDirective.render_var(a["range"]["prefix"], data))
 
         frames = getFrames(processedContent)
-        first_pass["frames"] = [frames[0]] + [PlotlyAnimation.dict_pop(frame, first_pass) for frame in frames[1:]]
+        first_pass["frames"] = frames# [frames[0]] + [PlotlyAnimation.dict_pop(frame, first_pass) for frame in frames[1:]]
         return json.dumps(first_pass)
 
     # def run(self):
@@ -176,16 +176,27 @@ class PlotlyAnimation(PlotlyDirec):
     def register(self):
         return self.getContent()
 
+    def getContent(self):
+        return re.sub(
+            '{{(.*?)}}',
+            lambda x: jmes_jinja_query(
+                x.group(1), nocheck=True),
+            self.getRawContent())
+
     def getRawContent(self):
         if "values" in self.options:
-            return json.dumps({"text": json.dumps(self.options),
+            return json.dumps({"options": self.options,
                                "range": {"prefix": self.options.get("prefix", "Index"),
                                          "labels": self.options.get("labels"),
-                                         "values": self.options["values"]}})
+                                         "values": self.options["values"]
+                                         },
+                               "content": "\n".join(self.content)
+                               },
+                              )
         else:
-            return json.dumps({"text": json.dumps(self.options), "range": {
+            return json.dumps({"options": self.options, "content" : "\n".join(self.content), "range": {
                 "start": self.options.get("start", "0"),
-                "end": self.options.get("end", "0"),
+                "end": self.options.get("end", "1"),
                 "step": self.options.get("step", "1"),
                 "prefix": self.options.get("prefix", "Index"),
                 "labels" : self.options.get("labels")

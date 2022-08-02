@@ -243,7 +243,7 @@ def create_serve_app(config):
 
     app = Flask(__name__, static_url_path='/flask_static', static_folder="static")
     app.config.from_object(config)
-    socketio = SocketIO(app, cors_allowed_origins=config.HOSTCORS)
+    socketio = SocketIO(app, cors_allowed_origins="*")
     register(socketio, app, config)
     return socketio, app
 
@@ -271,7 +271,10 @@ if __name__ == "__main__":
     parser.add_argument("--theia",type=int, help="port running theia",default=3000)
     parser.add_argument("--paraview",type=int, help="port running paraview",default=9000)
     parser.add_argument("--vnv", type=int, help="port running vnv", default=5001)
-    parser.add_argument("--code", type=int, help="authorization-code", default="")
+    parser.add_argument("--code", type=str, help="authorization-code", default="")
+    parser.add_argument("--ssl", type=bool, help="should we use ssl", default=False)
+    parser.add_argument("--ssl_cert", type=str, help="file containing the ssl cert", default=None)
+    parser.add_argument("--ssl_key", type=str, help="file containing the ssl cert key", default=None)
 
     args = parser.parse_args()
     Config.port = args.port
@@ -299,4 +302,12 @@ if __name__ == "__main__":
     app_config.THEIA_FORWARDS = [a.strip() for a in forwards if len(a) > 0 and a != "index.html"]
 
     socketio, app = create_serve_app(app_config)
-    socketio.run(app, use_reloader=False, host=app_config.HOST, port=app_config.port)
+    opts = {
+        "use_reloader" : False,
+        "host" : app_config.HOST,
+        "port" : app_config.port
+    }
+    if args.ssl:
+        opts["ssl_context"] = (args.ssl_cert, args.ssl_key)
+
+    socketio.run(app, **opts)
