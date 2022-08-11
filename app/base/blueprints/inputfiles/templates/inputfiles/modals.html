@@ -1,3 +1,8 @@
+<!-- this HTML file
+  modal: "Create a new VnV Executable"
+    visible when "Create a new VnV Executable" is clicked
+ -->
+
 <div class="modal fade" id="new_inputfile_modal" tabindex="-1" role="dialog" aria-labelledby="new_inputfile_modal_label" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -6,6 +11,9 @@
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                         aria-hidden="true">&times;</span></button>
             </div>
+            <!-- 
+              text: "Description"
+             -->
             <div style="padding:20px;">
                 The VnV Executable view provides an interface for configuring your VnV application, including
                 features like a context aware input file editor (with autocomplete), a context aware command line
@@ -15,20 +23,31 @@
             </div>
             <div class="modal-body">
                 <form id="new_inputfile_form" action="/inputfiles/new" method="post">
+                    <!-- 
+                      input text field: "Executable Name"
+                     -->
                     <div class="form-group">
                         <label for="name" class="col-form-label">Executable Name</label>
                         <input type="text" class="form-control" name="name" id="name">
                         <small>The executable name is used to identify this executable in the user interface.</small>
                     </div>
+                    <!-- 
+                      drop down: "Select a VnV Executable"
+                     -->
                     <div class="form-group">
                         <label for="existing" class="col-form-label">Select A VnV Executable:</label>
                         <select type="text" class="form-control" id="existing" name="executable">
+                            <!-- iterates through all possible executables -->
                             {%for r in list_vnv_executables() %}
                             <option value="{{r[0]}}" {%if loop.index0 == 0 %} selected {%endif%}  data-message="{{r[1]}}" >{{r[2] + ": " + r[0]}}</option>
                             {%endfor%}
                         </select>
                         <small id="application_description"> {{list_vnv_executables()[0][1]}} </small>
                     </div>
+                     <!-- 
+                      input text field: "VnV Application Path"
+                        visible when "N/A: Custom" is selected for "Select a VnV Executable" drop down
+                     -->
                      <div class="form-group" id="inputfile_custom">
                         <label for="name" class="col-form-label">VnV Application Path</label>
                         <input type="text" class="form-control" name="path" id="path">
