@@ -1,3 +1,10 @@
+<!-- 
+  tab: "Dependencies" 
+-->
+
+<!-- 
+  button: "New Dependency"
+-->
 <div style="display:flex; align-items:center; ">
     <h2 style="flex:1">Input File Dependencies</h2>
     <button class="btn btn-primary" style="margin-right:10px;" onclick='create_new_dep()'>New Dependency</button>
@@ -9,25 +16,43 @@
     {% endwith %}
 </div>
 
+<!-- 
+  modal: "New Dependency" / "Edit Dependency"
+    modal used to create/edit a dependency
+-->
 <div class="modal fade" id="edit_dep_modal" tabindex="-1" role="dialog" aria-labelledby="edit_dep_modal_label"
      aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 95vw;">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" style="flex:1;" id="new_file_modal_label">Edit Dependency</h5>
+                <!-- 
+                  button: "Edit"
+                    closes the Edit Dependency modal
+                -->
                 <button type="button btn-primary" style="margin-right:10px;" class="btn btn-primary" data-dismiss="modal" aria-label="Close"><span
                         aria-hidden="true">Close</span></button>
+                <!-- 
+                  button: "Save"
+                    saves the Edit Dependency modal 
+                -->
                 <button type="button" class="btn btn-primary" accesskey="s" onclick="save_dependency()" aria-label="Save"><span
                         aria-hidden="true">Save</span></button>
-
             </div>
+            
             <div class="modal-body">
                 <form id="edit_dependency_form" method="post">
                     <input type="hidden" name="fileId" value="">
                     <input id="depId" type="hidden" name="depId" value="">
-
+                    <!-- 
+                      drop down menu: "Select the Dependency Type"
+                        chooses the type of dependency
+                    -->
                     <div class="form-group">
                         <label for="dep_type" class="col-form-label">Select The Dependency Type:</label>
+                        <!-- 
+                         drop down menu:  "Select the Dependency Type"
+                        -->
                         <select type="text" class="form-control" id="dep_type" name="type">
                             <option value="text" selected>Text</option>
                             <option value="upload" >Upload</option>
@@ -38,37 +63,65 @@
                         </select>
                         <small id="application_description"> {{list_vnv_executables()[0][1]}} </small>
                     </div>
-
+                    <!-- 
+                      input text field: "Remote Name"
+                        populates the "Remote Name" field 
+                    -->
                     <div class="form-group">
                         <label for="remoteName" class="col-form-label">Remote Name</label>
                         <input type="text" class="form-control" name="remoteName" id="remoteName">
                         <small>The location on the remote machine to store the file prior to execution.</small>
                     </div>
+                    <!-- 
+                      input text field: "Remote File"
+                        visible when the "Dependency Type" is "Copy"
+                     -->
                     <div id="rfgroup" class="form-group">
                         <label for="linkValue" class="col-form-label">Remote File</label>
                         <input type="text" class="form-control" name="linkValue" id="linkValue">
                         <small>The file name on the remote machine to copy</small>
                     </div>
+                    <!-- 
+                      version of modal: "Upload"
+                        visible when the "Dependency Type" is "Upload"
+                    -->
                     <div id="fupgroup" class="form-group">
-
+                        <!-- 
+                          button: "Browse"
+                            uploads a file 
+                        -->
                         <div class="input-group cust-file-button">
                             <div class="custom-file">
                                 <label for="fileDepUpload" class="col-form-label">File To Upload</label>
                                 <input type="file" class="custom-file-input" id="fileDepUpload">
                                 <label id="fuploadlabel" class="custom-file-label" for="fileDepUpload">Choose the file you want to upload</label>
                             </div>
+                            <!-- 
+                              button: "View"
+                                views the uploaded file
+                            -->
                             <div class="input-group-append">
                                 <button class="btn  btn-primary" onclick='view_uploaded_file()' type="button">View</button>
                             </div>
                         </div>
                     </div>
-
+                    
+                    <!-- 
+                      version of modal: "HIVE File"
+                        visible when the "Dependency Type" is "HIVE File"
+                     -->
                     <div id="tagroup" class="form-group" style="">
+                        <!-- 
+                          input text field: "HIVE Specification Dump"
+                         -->
                         <div id="hivegroup" class="form-group">
                             <label for="linkValue" class="col-form-label">HIVE Specification Dump</label>
                             <input type="text" class="form-control" name="linkValue" value="${application} --json" id="hiveCommand">
                             <small>Command to dump the HIVE Specification</small>
                         </div>
+                        <!-- 
+                          input text area: "HIVE Specification"
+                         -->
                         <div style="position:relative">
                              <button type="button" id="hivevalidate" style="position: absolute; top: 5px; right:5px; z-index:2000"  accesskey="v" onclick="validate_hive(false)" class="btn btn-secondary">Validate</button>
                              <div style="height:800px" id="inputtextarea"></div>
@@ -145,6 +198,7 @@ function getInputTextValue(){
     return ace.edit('inputtextarea').getValue()
 }
 
+// ran upon clicking "Save" button when in the "Edit Dependency" modal
 function save_dependency() {
 
     var formData = new FormData()
@@ -180,6 +234,7 @@ function save_dependency() {
 
 
 }
+// ran upon clicking the "Delete" button to delete an existing dependency
 function delete_dependency(depId) {
     url = "/inputfiles/dependency/delete/{{file.id_}}/" + depId
     $.post(url,function(data) {
