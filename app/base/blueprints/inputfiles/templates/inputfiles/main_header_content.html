@@ -1,3 +1,8 @@
+<!-- header that shows the input file name and various buttons (Configure, Preview, Save, Execute) -->
+
+<!-- 
+  header: "Name of input file" 
+-->
 <div style="flex:1;" >
    <h1 contenteditable=true id="inputfile_display_name" >{{file.displayName}}</h1>
 
@@ -6,21 +11,36 @@
 
 </div>
 <div style="display:flex; position:relative; top:5px; right:5px">
+   <!-- 
+    button: Configure 
+   -->
    <button id="exec_config" class="btn btn-secondary input-save-button" style="margin-left:10px"
             onclick="$('#config-file-modal').modal('show')">Configure
    </button>
+   <!-- 
+    button: Preview 
+   -->
    <button id="exec_prev" class="btn btn-secondary input-save-button" style="margin-left:10px"
             onclick='preview_the_job({{file.id_}})'>Preview
    </button>
+   <!-- 
+    button: Save 
+   -->
    <button id="exec_save" class="btn btn-secondary input-save-button" style="margin-left:10px"
             onclick='save_the_job({{file.id_}})'>Save
    </button>
+   <!-- 
+    button: Execute 
+   -->
    <button id="exec_exec" class="btn btn-primary input-save-button" style="margin-left:10px"
             onclick='execute_the_job({{file.id_}})'>Execute
    </button>
 </div>
 
-
+<!-- 
+  modal: "Configuration" 
+    visible after clicking "Configure" button
+-->
 <div id="config-file-modal" class="modal fade" tabindex="-1" style="height:98vh;" role="dialog"
      aria-labelledby="rst-modal-label"
      aria-hidden="true">
