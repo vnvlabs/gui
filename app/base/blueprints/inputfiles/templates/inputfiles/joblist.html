@@ -1,9 +1,22 @@
+<!-- this HTML file
+  tab: "Results"
+    visible when "Results" tab is opened
+ -->
+
+<!-- 
+  header: "Jobs"
+ -->
 {%with jobs = file.get_jobs() %}
 <h4 style="flex:1">Jobs</h4>
 
+<!-- 
+  text: "No Jobs Found"
+    outputs if there are no jobs
+ -->
 {% if jobs | length == 0 %}
 <div>No Jobs Found</div>
 {%else%}
+
 
 <table class="table">
     <thead>
@@ -15,6 +28,7 @@
     </tr>
     </thead>
     <tbody>
+    <!-- iterates through all jobs then creates buttons for them -->
     {% for job in file.get_jobs() %}
     <tr style="cursor:pointer;" title="click to expand" onclick='expand_job_section("{{job.getId()|safe}}")'>
         <td style="vertical-align:middle;">
@@ -29,16 +43,28 @@
         <td style="vertical-align:middle;">{{job.dispDate()}}</td>
         <td>
             <div style="display:flex; justify-content:flex-end">
+                <!-- 
+                  button: "Cancel"
+                    cancels a job while it's executing
+                 -->
                 <button class="{{job.getId()|safe}}_rn btn btn-primary" style="margin-right:10px;" {%if not
                         job.running()%}
                         hidden {%endif%} onclick='cancel_exe_job(event, {{file.id_}},"{{job.getId()}}")'>Cancel
                 </button>
+                <!-- 
+                  button: "VnV Report"
+                    creates/opens a report from a completed job
+                 -->
                 <button class="{{job.getId()|safe}}_nn btn btn-primary" style="margin-right:10px;" {%if job.running()%}
                         hidden
                         {%endif%}
                         onclick='open_vnv_report(event, "{{job.metadata.get("workflow_id")}}","{{job.metadata.get("workflow_dir")}}")'>
                     VnV Report
                 </button>
+                <!-- 
+                  button: "Delete"
+                    deletes a job
+                 -->
                 <button class="{{job.getId()|safe}}_nn btn btn-primary" style="margin-right:10px;" {%if job.running()%}
                         hidden
                         {%endif%} onclick='delete_exe_job(event, {{file.id_}},"{{job.getId()}}")'>Delete
