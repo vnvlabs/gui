@@ -7,6 +7,8 @@ PARAVIEW_PORT=9000
 THEIA_PORT=3000
 GUI_PORT=5001
 HOSTNAME=0.0.0.0
+WS_PATH="wss://vnvlabs.com/ws"
+THEIA_URL="https://vnvlabs.com/?theia"
 
 export PYTHONPATH=${VNV_DIR}
 
@@ -26,7 +28,7 @@ cd /vnv-gui
 virt/bin/python ./run.py \
                 --host ${HOSTNAME} \
                 --port ${GUI_PORT} \
-                --theia=/theia \
+                --theia=${THEIA_URL} \
                 --paraview=/paraview &
 
 
@@ -36,5 +38,6 @@ virt/bin/python router/run.py \
 	              --port ${HOST_PORT}\
 	              --vnv ${GUI_PORT}  \
                 --theia ${THEIA_PORT} \
+                --wspath ${WS_PATH} \
                 --paraview ${PARAVIEW_PORT} ${@:1}
 

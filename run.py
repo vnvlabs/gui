@@ -17,7 +17,7 @@ class Config:
     port = 5001
     host = "0.0.0.0"
     DEFAULT_DATA_PREFIX = "../build/"
-    THEIA_URL = "/theia"
+    THEIA_URL = "/?theia"
     PARAVIEW_URL = "/paraview"
     LOGOUT_COOKIE = "vnvnginxcode"
 
