@@ -1,8 +1,13 @@
-<li class="nav-item pcoded-hasmenu">
+<!-- Input file's "VnV Executables" drop down list that is visible after clicking the hamburger icon-->
 
+<li class="nav-item pcoded-hasmenu">
+    <!-- 
+      button: "VnV Executables"
+    -->
     <a href="#!" class="nav-link "><span class="pcoded-micon"><i class="fa fa-pen-fancy"></i></span><span
             class="pcoded-mtext">VnV Executables</span>
     </a>
+    <!-- Creates button for each Input File -->
     <ul class="pcoded-submenu" id="inputfiles_list">
         {% for file in inputfiles.values() %}
         <li id="inputfile-{{file.id_ | safe}}"><a href="{{url_for('base.inputfiles.view',id_=file.id_)}}">
@@ -17,6 +22,9 @@
         </a></li>
         {% endfor %}
         <li>
+            <!-- 
+              button: "Create A New Executable"
+            -->
             <a href="#!" onclick='add_input_file(event)' style="cursor:pointer">
                 <i class="feather icon-file-plus"></i> Create A New Executable
             </a>

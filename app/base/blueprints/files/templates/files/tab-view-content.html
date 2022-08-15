@@ -1,3 +1,5 @@
+
+<!-- defines clickable tabs (and more) on a report -->
 {%with
 tablist = {
     "home": ["Injection","viewers/view.html", file.hasInjectionPoints()],
@@ -12,15 +14,23 @@ tablist = {
 }
 %}
 
+<!-- set the opened tab to the "Home" tab (which is displayed as "Injection") by default -->
 {%with active_tab = request.args.get("atab", "home") %}
 
 <div id="tab-view-content" style="position:relative; max-width:1400px;">
 {%if file.setupNow() %}
 {% with actionFiles = file.getActions() %}
 
-
+<!-- 
+  column: "Report"
+    displays the content for the report, but not the sidebar or the upper-most navbar (the one with the hamburger icon)
+ -->
 <div class=" fcolumn fchild">
 
+        <!-- 
+          header: "Report display name"
+            input text field that controls the display name of the report file
+         -->
         <div class="page-header-title">
             <div style="display:flex; align-items:center;">
                 {%if file.isProcessing() %}
@@ -36,20 +46,27 @@ tablist = {
 
             </div>
         </div>
-        <script>
 
+        <script>
             document.getElementById("file_display_name").addEventListener("input", function() {
                 $.post('/files/update_display_name/{{file.id_}}?new=' + encodeURIComponent($(this).val()), function(data) {
                     $('#file-display-name-side-{{file.id_}}').html(data)
                 });
             }, false);
-
         </script>
 
-
+        <!-- 
+          tab list: "Report tabs"
+            lists pill buttons for navigating around tabs in the report
+         -->
         <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+            <!-- iterate through tabs to create a button for each one -->
             {% for tab in tablist %}
             {% if tablist[tab][2] %}
+            <!-- 
+              button: "Tab list tab"
+                clickable tab to navigate to content in the report
+             -->
             <li class="nav-item">
                 <a class="nav-link {% if active_tab == tab %} active {%endif %}" state="main-tab" id="pills-{{tab}}-tab" data-toggle="pill" href="#pills-{{tab}}" role="tab"
                    aria-controls="pills-{{tab}}" aria-selected="true">{{tablist[tab][0]}}</a>
@@ -58,6 +75,10 @@ tablist = {
             {%endfor%}
             {% if actionFiles | length > 0 %}
             {% for action in actionFiles %}
+            <!-- 
+              button: "Action tab"
+                clickable tab to navigate to an action in the report
+             -->
             <li class="nav-item">
                 <a class="nav-link {% if active_tab == 'action-{{action.id_}}' %} active {%endif %}" state="main-tab" id="pills-action-{{action.id_}}-tab" data-toggle="pill" href="#pills-action-{{action.id_}}" role="tab"
                    aria-controls="pills-action-{{action.id_}}" aria-selected="true">{{action.display_name}}</a>
@@ -66,6 +87,10 @@ tablist = {
            {%endif%}
         </ul>
 
+        <!-- 
+          column: "Tab content"
+            displays main content within tab (not the sidebar, upper-most navbar, or "Report tab")
+         -->
         <div class="tab-content fcolumn fchild " id="pills-tabContent">
             {%for tab in tablist %}
             {% if tablist[tab][2] %}
@@ -88,6 +113,8 @@ tablist = {
 
 </div>
 {%endwith%}
+
+<!-- if report is still loading -->
 {%else%}
     {% with listOptions = [
         "Loading Data",
@@ -99,12 +126,15 @@ tablist = {
     <div style="width:100%; height:90vh; display:flex; flex-direction:column; justify-content:center; align-items:center;">
         <div class="lds-ring"><div></div><div></div><div></div><div></div></div>
 
+        <!-- if the report is not specified -->
         {%if file.nospec() %}
             <h1 style="color:#12355f;">Searching for VnV Output Files in: {{file.filename}} </h1>
         {%else %}
+        <!-- if there are possible files -->
             <h1 style="color:#12355f;">{{listOptions[count % ( listOptions | length )] }}</h1>
         {%endif%}
 
+        <!-- if there are 10+ possible files -->
         {%if file.nospec() and count > 10 %}
         <ul style="float:left;width:100%; margin-top:40px; color:#12355f;"><h4>No Files Found.</h4>
                      <li style="margin-left:40px;"> <h6>Are you sure you entered the correct path?</h6>

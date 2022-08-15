@@ -1,15 +1,25 @@
-
+<!-- set the list of files that are later referrenced in a for loop -->
 {% with filelist = file.get_prov().get_libraries() %}
 <div class="" >
     <div class="card-body">
+        <!-- 
+          input text field: "Search by filename"
+            use this to search for a file in filelist
+         -->
         <div style="flex" class="form-group">
             <input type="text" class="form-control"  placeholder="Search by filename" value="" id="libfilefilter">
         </div>
+        <!-- if there are "file" objects, then create a "row" under the Libraries for them -->
         {%if filelist | length > 0 %}
              {%for file in filelist %}
+                <!-- 
+                  row: "File"
+                    listed file that looks like a card, or one of possibly many rows in a single column
+                 -->
                 <div class="libfile" modified="{{file.modified()}}" name="{{file.getName()}}" style="margin:10px;">{%include "files/prov/file.html" %}</div>
              {%endfor%}
         {% else %}
+        <!-- if there are NO "file" objects, then say so -->
         <div style="margin:10px;">No files Detected.</div>
         {%endif%}
     </div>

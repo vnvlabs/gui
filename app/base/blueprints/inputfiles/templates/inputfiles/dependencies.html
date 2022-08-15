@@ -1,3 +1,10 @@
+<!-- 
+  tab: "Dependencies" 
+-->
+
+<!-- 
+  button: "New Dependency"
+-->
 <div style="display:flex; align-items:center; ">
     <h2 style="flex:1">Input File Dependencies</h2>
     <button class="btn btn-primary" style="margin-right:10px;" onclick='create_new_dep()'>New Dependency</button>
@@ -9,25 +16,43 @@
     {% endwith %}
 </div>
 
+<!-- 
+  modal: "New Dependency" / "Edit Dependency"
+    modal used to create/edit a dependency
+-->
 <div class="modal fade" id="edit_dep_modal" tabindex="-1" role="dialog" aria-labelledby="edit_dep_modal_label"
      aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document" style="max-width: 95vw;">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" style="flex:1;" id="new_file_modal_label">Edit Dependency</h5>
+                <!-- 
+                  button: "Edit"
+                    closes the Edit Dependency modal
+                -->
                 <button type="button btn-primary" style="margin-right:10px;" class="btn btn-primary" data-dismiss="modal" aria-label="Close"><span
                         aria-hidden="true">Close</span></button>
+                <!-- 
+                  button: "Save"
+                    saves the Edit Dependency modal 
+                -->
                 <button type="button" class="btn btn-primary" accesskey="s" onclick="save_dependency()" aria-label="Save"><span
                         aria-hidden="true">Save</span></button>
-
             </div>
+            
             <div class="modal-body">
                 <form id="edit_dependency_form" method="post">
                     <input type="hidden" name="fileId" value="">
                     <input id="depId" type="hidden" name="depId" value="">
-
+                    <!-- 
+                      drop down menu: "Select the Dependency Type"
+                        chooses the type of dependency
+                    -->
                     <div class="form-group">
                         <label for="dep_type" class="col-form-label">Select The Dependency Type:</label>
+                        <!-- 
+                         drop down menu:  "Select the Dependency Type"
+                        -->
                         <select type="text" class="form-control" id="dep_type" name="type">
                             {% for k,v in input_file_types().items() %}
                                 <option value="{{k}}" >{{v["display"]}}</option>
@@ -35,7 +60,10 @@
                         </select>
                         <small id="application_description"> {{list_vnv_executables()[0][1]}} </small>
                     </div>
-
+                    <!-- 
+                      input text field: "Remote Name"
+                        populates the "Remote Name" field 
+                    -->
                     <div class="form-group">
                         <label for="remoteName" class="col-form-label">Remote Name</label>
                         <input type="text" class="form-control" name="remoteName" id="remoteName">
@@ -97,6 +125,7 @@ function view_uploaded_file() {
     alert("Not implemented yet")
 }
 
+// ran upon clicking "Save" button when in the "Edit Dependency" modal
 function save_dependency() {
 
     var formData = new FormData()
@@ -128,6 +157,7 @@ function save_dependency() {
 
 
 }
+// ran upon clicking the "Delete" button to delete an existing dependency
 function delete_dependency(depId) {
     url = "/inputfiles/dependency/delete/{{file.id_}}/" + depId
     $.post(url,function(data) {
