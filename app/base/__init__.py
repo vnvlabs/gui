@@ -236,7 +236,7 @@ def login():
     return render_template("login.html", error=True)
 
 
-@blueprint.route('/logout', methods=["GET"])
+@blueprint.route('/logout', methods=["POST"])
 def logout():
     global COOKIE_PASS
     COOKIE_PASS = uuid.uuid4().hex
