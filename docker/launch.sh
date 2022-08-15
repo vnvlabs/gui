@@ -17,7 +17,7 @@ service mongodb start
 
 # Start Theia in the source directory.
 cd /theia
-node /theia/src-gen/backend/main.js ${SOURCE_DIR} --port ${THEIA_PORT} --hostname=${HOSTNAME} &
+node /theia/src-gen/backend/main.js ${SOURCE_DIR} --port ${THEIA_PORT} --hostname=${HOSTNAME} --plugins=local-dir:/theia/plugins &
 
 # Start the paraview visualizer server
 cd /paraview
