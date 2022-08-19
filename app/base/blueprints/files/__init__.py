@@ -15,10 +15,16 @@ from app.models.VnVConnection import VnVLocalConnection, VnVConnection, MAIN_CON
     SetFileConnection
 from app.rendering.readers import LocalFile
 from . import viewers
-from app.models.VnVFile import VnVFile
+from app.models.VnVFileWrapper import VnVFile, VnVFileActive
 from ...utils import mongo
 from ...utils.mongo import collection_exists
 from ...utils.utils import render_error
+
+try:
+    from app.models.VnV import DumpReaders
+except:
+    def DumpReaders():
+        return [] 
 
 blueprint = Blueprint(
     'files',
@@ -377,6 +383,8 @@ def template_globals(globs):
     viewers.template_globals(globs)
     globs["files"] = VnVFile.FILES
     globs["uniquefiles"] = unique_files
+    globs["list_vnv_readers"] : DumpReaders,
+
 
 
 def load_defaults(CONFIG):

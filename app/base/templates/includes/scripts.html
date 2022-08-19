@@ -72,8 +72,16 @@
             }
             $('#viz-modal').modal('toggle')
         }
-
-
+        
+        function show_glvis_window() {
+            if ( $('#glviz-iframe').attr("src") === undefined ) {
+                $('#glvis-iframe').attr("src","/glvis")
+            }
+            $('#glvis-modal').show();
+        }
+        function hide_glvis_window() {
+            $('#glvis-modal').hide();
+        }
 
 </script>
 
@@ -84,6 +92,9 @@
 
         });
 
+
+
+   
 </script>
 
 

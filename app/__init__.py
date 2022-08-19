@@ -21,10 +21,8 @@ def register_blueprints(apps, config):
 
     import app.base
     from .base.utils.mongo import Configured
-    from .models.VnV import DumpReaders
 
     global_template_variables.update({
-        "list_vnv_readers": DumpReaders,
         "mongo_configured": Configured
     })
 

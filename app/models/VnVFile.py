@@ -14,9 +14,10 @@ from pygments.lexers import guess_lexer, guess_lexer_for_filename
 from app.base.utils import mongo
 from app.base.utils.mongo import validate_name, Configured
 from app.models.VnVConnection import VnVConnection, VnVLocalConnection
+
 from python_api.VnVReader import node_type_START, node_type_POINT, node_type_DONE, node_type_ITER, node_type_ROOT, \
-    node_type_LOG, \
-    node_type_END, node_type_WAITING
+    node_type_LOG, node_type_END, node_type_WAITING
+
 from flask import render_template, make_response, render_template_string
 
 from app.models import VnV

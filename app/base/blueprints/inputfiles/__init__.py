@@ -13,9 +13,12 @@ from flask import Blueprint, make_response, jsonify
 from flask import render_template, redirect, url_for, request
 
 from app.Directory import STATIC_FILES_DIR
-from app.models import VnVFile
 from app.models.VnVInputFile import VnVInputFile, VNV_INPUT_FILE_TYPES
-from ..files import get_file_from_runinfo
+try:
+    from ..files import get_file_from_runinfo
+    NoVnV=False
+except:
+    NoVnV=True
 from ...utils import mongo
 from ...utils.utils import render_error
 from pygments import highlight
@@ -366,7 +369,7 @@ def openreport(id_):
             pref = os.path.join(request.args["dir"], "vnv_" + request.args["id"] + "_")
             reports = file.connection.autocomplete(pref)
 
-            if "confirmed" in request.args:
+            if "confirmed" in request.args and not NoVnV:
                 for i in reports:
                     with open(file.connection.download(i), 'r') as ff:
                         ff = get_file_from_runinfo(json.load(ff))

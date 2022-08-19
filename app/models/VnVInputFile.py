@@ -10,7 +10,11 @@ from flask import jsonify
 from jsonschema.exceptions import ErrorTree, ValidationError, SchemaError
 
 from app.base.utils import mongo
-from app.models import VnV
+try:
+    from app.models import VnV
+    NoVnV=False
+except:
+    NoVnV=True
 from app.models.VnVConnection import VnVLocalConnection, VnVConnection, connectionFromJson
 from app.models.json_heal import autocomplete
 from app.rendering import render_rst_to_string
@@ -154,9 +158,11 @@ class VnVInputFile:
         # Set the default Input file values.
         if "input" in defs:
             self.value = json.dumps(defs["input"], indent=4)
-        else:
+        elif not NoVnV:
             self.value = json.dumps(VnV.getVnVConfigFile_1(), indent=4)
-
+        else:
+            self.value = "{}"
+            
         # Update my plugins -- based on the input file.
         self.plugs = plugs
 

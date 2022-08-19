@@ -11,7 +11,8 @@ from flask import Blueprint, render_template, make_response, request, jsonify, r
 from jinja2 import FileSystemLoader
 
 from app import Directory
-from app.models.VnVFile import VnVFile
+from app.models.VnVFileWrapper import VnVFile, VnVFileActive
+
 from app.models.VnVInputFile import VnVInputFile
 from app.rendering.vnvdatavis.directives.chartsjs import chartsjs_post_process
 from app.rendering.vnvdatavis.directives.dataclass import DataClass
@@ -70,6 +71,7 @@ def chartupdates(updateId, fileid, dataid):
             d = {"more": data.getopen(), "config": config}
             return make_response(json.dumps(d), 200)
 
+            
     except Exception as e:
         return render_error(501, "Error Loading File")
 

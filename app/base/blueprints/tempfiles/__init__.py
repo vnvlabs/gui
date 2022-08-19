@@ -12,7 +12,6 @@ from flask import Blueprint, render_template, make_response, request, jsonify, r
 from jinja2 import FileSystemLoader
 
 from app import Directory
-from app.models.VnVFile import VnVFile
 from app.rendering.vnvdatavis.directives.dataclass import DataClass
 from app.rendering.vnvdatavis.directives.plotly import plotly_post_process
 from ...utils.utils import render_error

@@ -47,6 +47,18 @@
 </div>
 
 
+
+<div id="glvis-modal" class="glvis" 
+     
+     tabindex="-1" role="dialog" aria-labelledby="glvis-modal-label"
+     aria-hidden="true">
+     <button title="close" type="button" class="close glvisexit" style="top:18px; right:18px;" onclick="hide_glvis_window();" aria-label="Close"><span aria-hidden="true"><i class="feather icon-minimize"></i></span></button>
+     <button title="move" type="button" class="close glvisexit" style="top:58px; right:18px;" onclick="hide_glvis_window();" aria-label="Close"><span aria-hidden="true"><i class="feather icon-move"></i></span></button>
+     <button title="resize" type="button" class="close glvisexit" style="top: calc(100% - 50px);right: 6px; transform: rotate(270deg);" onclick="hide_glvis_window();" aria-label="Close"><span aria-hidden="true"><i class="feather icon-maximize-2"></i></span></button>
+     <iframe id="glvis-iframe" src="" style="height:100%; width:100%;"></iframe>
+    
+</div>
+
 <script>
 function confirm_modal(title, body, yes, no, onclick) {
        m = $('#confirm-modal')

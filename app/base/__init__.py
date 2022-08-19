@@ -14,7 +14,6 @@ from werkzeug.utils import redirect
 from pygments.lexers import guess_lexer, guess_lexer_for_filename, get_lexer_by_name
 
 from . import blueprints
-from .blueprints.files import get_file_template_root
 from .utils.mongo import list_mongo_collections, Configured, BrandNew
 
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -22,7 +21,6 @@ from app.Directory import VNV_DIR_PATH
 from .utils.utils import render_error
 
 from .. import Directory
-from ..models.VnVFile import VnVFile
 from ..models.VnVInputFile import VnVInputFile, add_input_file_type
 
 blueprint = Blueprint(
@@ -124,14 +122,7 @@ if FIRST_TIME is None:
     HOME_FILE = "includes/intro.html"
     TITLE_NAME = "VnV Toolkit"
 
-    ALL_BLUEPRINTS = {
-        "inputfiles": blueprints.inputfiles,
-        "files": blueprints.files,
-        "temp": blueprints.tempfiles,
-        "help": blueprints.help,
-        "notifications": blueprints.notifications,
-        "directives": blueprints.directives
-    }
+    ALL_BLUEPRINTS = blueprints.all_blueprints
 
     a = os.getenv("VNV_CONFIG")
     if a is not None:
@@ -197,6 +188,13 @@ def paraview_route():
     # serving, this should never be called. This button is just a placeholder
     # for the serve app -- should really allow the serve app to add buttons.
     return render_error(200, "Visualzier is not configured", nohome=True)
+
+@blueprint.route('/glvis')
+def glvis_route():
+    # This route should get intercepted by the "serve" app, so, when
+    # serving, this should never be called. This button is just a placeholder
+    # for the serve app -- should really allow the serve app to add buttons.
+    return render_error(200, "Glvis is not configured", nohome=True)
 
 
 @blueprint.route("/ide")
