@@ -144,12 +144,7 @@ def register(socketio, apps, config):
             else:
                 socketio.emit("Could not connect", namespace=f"/{self.pty}", to=self.sid)
 
-    socks = {
-        "pty": {},
-        "pypty": {},
-        "theia": {},
-        "pv": {}
-    }
+    socks = {}
 
     sock = Sock(apps)
 
@@ -204,37 +199,36 @@ def register(socketio, apps, config):
 
         @socketio.on(f"{pty}-input", namespace=f"/{pty}")
         def pty_input(data):
-            socks[pty].to_docker_container(f"{pty}-input", data)
+            socks[request.sid].to_docker_container(f"{pty}-input", data)
 
         @socketio.on("resize", namespace=f"/{pty}")
         def pyresize(data):
-            socks[pty].to_docker_container(f"resize", data)
+            socks[request.sid].to_docker_container(f"resize", data)
 
         @socketio.on("connect", namespace=f"/{pty}")
         def pyconnect():
-            socks[pty] = SocketContainer(pty)
+            socks[request.sid] = SocketContainer(pty)
 
         @socketio.on("disconnect", namespace=f"/{pty}")
         def pydisconnect():
             try:
-                socks.pop(pty)
+               socks.pop(request.sid)
             except:
                 pass
 
     wrap("pty")
-    wrap("pypty")
 
     @socketio.on("connect", namespace=f"/services")
     def theiaconnect(**kwargs):
-        socks["theia"] = SocketContainer("services", True)
+        socks[request.sid] = SocketContainer("services", True)
 
     @socketio.on('message', namespace="/services")
     def catch_message(data, **kwargs):
-        socks["theia"].to_docker_container(f"message", data)
+        socks[request.sid].to_docker_container(f"message", data)
 
     @socketio.on('disconnect', namespace="/services")
     def abcatch_disconnect(**kwargs):
-        socks.pop("theia")
+        socks.pop(request.sid)
 
 
 def configure_error_handlers(app):
