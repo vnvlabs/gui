@@ -34,7 +34,7 @@ def paraview_o():
 
 @blueprint.route("/glvis", methods=["POST"])
 def glvis():
-    return render_template("glvis.html", host=f"{current_app.config['WSPATH']}/gws")
+    return render_template("glvis.html", websocket_address=f"{current_app.config['WSPATH']}/gws")
 
 def get_ports():
     container = current_app.config["CONTAINER_PORT"]

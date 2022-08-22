@@ -27,9 +27,11 @@ $PVPYTHON -m paraview.apps.visualizer --host ${HOSTNAME} --data / --port ${PARAV
 # Start the VnV Server
 cd /vnv-gui
 
+# Run glvis server.
+virt/bin/python glvis/glvis.py --ws-port ${GLVIS_PORT} &
 
-virt/bin/python glvis/glvis.py --ws-port ${GLVIS_PORT}
 
+# Run the vnv gui.
 virt/bin/python ./run.py \
                 --host ${HOSTNAME} \
                 --port ${GUI_PORT} \
