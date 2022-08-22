@@ -21,3 +21,4 @@ flask-socketio~=5.1.1
 flask-sock
 websocket-client
 asyncio
+websockets

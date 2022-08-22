@@ -28,8 +28,13 @@ def home():
 
 @blueprint.route("/paraview/", methods=["POST"])
 def paraview_o():
-    return make_response(jsonify({"sessionURL": current_app.config["WSPATH"]}), 200)
+    return make_response(jsonify({"sessionURL": f"{current_app.config['WSPATH']}/ws"}), 200)
 
+
+
+@blueprint.route("/glvis", methods=["POST"])
+def glvis():
+    return render_template("glvis.html", host=f"{current_app.config['WSPATH']}/gws")
 
 def get_ports():
     container = current_app.config["CONTAINER_PORT"]
@@ -152,7 +157,7 @@ def register(socketio, apps, config):
 
     class WSockApp:
         def __init__(self, ip, ws):
-            self.wsock = websocket.create_connection("ws://localhost:" + str(ip) + "/ws")
+            self.wsock = websocket.create_connection(ip)
             self.killed = False
             self.ws = ws
 
@@ -176,7 +181,19 @@ def register(socketio, apps, config):
     @sock.route("/ws")
     def echo(ws):
         container, theia, paraview = get_ports()
-        wsock = WSockApp(paraview, ws)
+        wsock = WSockApp(f"ws://localhost:{paraview}/ws", ws)
+        wsock.serve()
+        while wsock.running():
+            try:
+                greeting = ws.receive()
+                wsock.send(greeting)
+            except Exception as e:
+                wsock.kill()
+
+    @sock.route("/gws")
+    def echo(ws):
+        glvis_port = current_app.config["GLVIS_PORT"]
+        wsock = WSockApp(f"ws://localhost:{glvis_port}", ws)
         wsock.serve()
         while wsock.running():
             try:
@@ -252,12 +269,13 @@ class Config:
     DEBUG=False
     port = 5000
     HOST = "0.0.0.0"
-    WSPATH = f"ws://{HOST}:{port}/ws"
+    WSPATH = f"ws://{HOST}:{port}"
     HOSTCORS = f"http://localhost:{port}"
 
     THEIA_LIB_DIR="/theia/lib"
     PARAVIEW_LIB_DIR="/paraview/share/paraview-5.10/web/visualizer/www"
     THEIA_PORT = 5003
+    GLVIS_PORT = 5007
     PARAVIEW_PORT = 5005
     CONTAINER_PORT = 5000
 
@@ -270,8 +288,9 @@ if __name__ == "__main__":
     parser.add_argument("--host", help="host to run on (default localhost)", default="0.0.0.0")
     parser.add_argument("--theia",type=int, help="port running theia",default=3000)
     parser.add_argument("--paraview",type=int, help="port running paraview",default=9000)
+    parser.add_argument("--glvis", type=int, help="port running glvis", default=5007)
     parser.add_argument("--vnv", type=int, help="port running vnv", default=5001)
-    parser.add_argument("--wspath", type=str, help="ws path to use when connecting to paraview", default="wss://vnvlabs.com/ws")
+    parser.add_argument("--wspath", type=str, help="ws path to use when connecting to websockets", default="wss://vnvlabs.com")
     parser.add_argument("--code", type=str, help="authorization-code", default="")
     parser.add_argument("--ssl", type=bool, help="should we use ssl", default=False)
     parser.add_argument("--ssl_cert", type=str, help="file containing the ssl cert", default=None)
@@ -283,6 +302,7 @@ if __name__ == "__main__":
     Config.PARAVIEW_PORT = args.paraview
     Config.CONTAINER_PORT = args.vnv
     Config.AUTH_CODE = args.code
+    Config.GLVIS_PORT = args.glvis
 
 
     forwards = []
