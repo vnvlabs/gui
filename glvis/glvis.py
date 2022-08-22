@@ -92,7 +92,7 @@ async def create_mfem_server(queue):
         await mfem_handler(queue, reader, writer)
 
     server = await asyncio.create_task(
-        asyncio.start_server(handler_wrap, host="localhost", port=args.port)
+        asyncio.start_server(handler_wrap, host="127.0.0.1", port=args.port)
     )
     await server.serve_forever()
     print("mfem server: complete")

@@ -212,10 +212,8 @@ def viz_route():
 def glvis_route():
     return render_template("glvis_full.html")
 @blueprint.route("/glvis")
-def glvis_route():
+def glvis_render_route():
     return make_response("error",201)
-
-
 
 @blueprint.route("/browse")
 def browse_route():

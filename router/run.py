@@ -30,12 +30,6 @@ def home():
 def paraview_o():
     return make_response(jsonify({"sessionURL": f"{current_app.config['WSPATH']}/ws"}), 200)
 
-
-
-@blueprint.route("/glvis", methods=["POST"])
-def glvis():
-    return render_template("glvis.html", websocket_address=f"{current_app.config['WSPATH']}/gws")
-
 def get_ports():
     container = current_app.config["CONTAINER_PORT"]
     theia = current_app.config["THEIA_PORT"]
@@ -63,6 +57,10 @@ def proxy(path):
 
     elif path == "paraview" or (path == "" and "paraview" in request.args):
         return render_template("pvindex.html")
+
+    elif path == "glvis" or (path == "" and "glvis" in request.args):
+        return  render_template("glvis.html", websocket_address=f"{current_app.config['WSPATH']}/gws")
+
 
     elif path in current_app.config["THEIA_FORWARDS"]:
         PROXIED_PATH = ppath(theia, request.full_path)
@@ -191,7 +189,7 @@ def register(socketio, apps, config):
                 wsock.kill()
 
     @sock.route("/gws")
-    def echo(ws):
+    def echo1(ws):
         glvis_port = current_app.config["GLVIS_PORT"]
         wsock = WSockApp(f"ws://localhost:{glvis_port}", ws)
         wsock.serve()
@@ -303,6 +301,7 @@ if __name__ == "__main__":
     Config.CONTAINER_PORT = args.vnv
     Config.AUTH_CODE = args.code
     Config.GLVIS_PORT = args.glvis
+    Config.WSPATH = args.wspath
 
 
     forwards = []

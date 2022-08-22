@@ -84,7 +84,7 @@ def chartupdates(updateId, fileid, dataid):
 @blueprint.route("/glvis_render", methods=["GET"])
 def glvisrender():
     stream = request.args.get("stream")
-    return render_template("glvis_render.html", data = base64.b64decode(stream).decode("ascii"))
+    return render_template("glvis_render.html", content = base64.b64decode(stream).decode("ascii"))
 
 @blueprint.route('/roles', methods=["POST"])
 def roleupdates():

@@ -8,8 +8,6 @@ THEIA_PORT=3000
 GUI_PORT=5001
 GLVIS_PORT=5007
 HOSTNAME=0.0.0.0
-WS_PATH="wss://vnvlabs.com/ws"
-THEIA_URL="https://vnvlabs.com/?theia"
 
 export PYTHONPATH=${VNV_DIR}
 
@@ -34,18 +32,14 @@ virt/bin/python glvis/glvis.py --ws-port ${GLVIS_PORT} &
 # Run the vnv gui.
 virt/bin/python ./run.py \
                 --host ${HOSTNAME} \
-                --port ${GUI_PORT} \
-                --theia=${THEIA_URL} \
-                --paraview=/paraview &
-
+                --port ${GUI_PORT} &
 
 # Launch the VnV Router on the Resource.
 virt/bin/python router/run.py \
                 --host ${HOSTNAME}\
-	        --port ${HOST_PORT}\
-	        --glvis ${GLVIS_PORT}\
-		--vnv ${GUI_PORT}  \
+	              --port ${HOST_PORT}\
+	              --glvis ${GLVIS_PORT}\
+		            --vnv ${GUI_PORT}  \
                 --theia ${THEIA_PORT} \
-                --wspath ${WS_PATH} \
                 --paraview ${PARAVIEW_PORT} ${@:1}
 

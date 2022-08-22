@@ -24,19 +24,11 @@ class Config:
 parser = argparse.ArgumentParser()
 parser.add_argument("--port", help="port to run on (default 5001)")
 parser.add_argument("--host", help="host to run on (default localhost)")
-parser.add_argument("--theia", help="url link to running eclipse theia instance")
-parser.add_argument("--paraview", help="url link to running eclipse theia instance")
 parser.add_argument("--logout", help="name of logout cookie")
 args = parser.parse_args()
 
 if args.port:
     Config.port = args.port
-
-if args.theia:
-    Config.THEIA_URL = args.theia
-
-if args.paraview:
-    Config.PARAVIEW_URL = args.paraview
 
 if args.host:
     Config.host = args.host
