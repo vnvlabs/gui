@@ -27,7 +27,12 @@ parser.add_argument("--host", help="host to run on (default localhost)")
 parser.add_argument("--theia", help="url link to running eclipse theia instance")
 parser.add_argument("--paraview", help="url link to running eclipse theia instance")
 parser.add_argument("--logout", help="name of logout cookie")
-args = parser.parse_args()
+parser.add_argument("--theiapath", type=str, help="Theia Path")
+
+args, unknown = parser.parse_known_args()
+
+if args.theiapath:
+    Config.THEIA_URL = args.theiapath
 
 if args.port:
     Config.port = args.port

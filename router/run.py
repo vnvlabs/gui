@@ -11,7 +11,7 @@ from flask_sock import Sock
 import socketio as sio
 from flask_socketio import SocketIO
 from werkzeug.utils import redirect
-
+import os
 
 blueprint = Blueprint(
     'base',
@@ -255,38 +255,51 @@ class Config:
     WSPATH = f"ws://{HOST}:{port}/ws"
     HOSTCORS = f"http://localhost:{port}"
 
-    THEIA_LIB_DIR="/theia/lib"
-    PARAVIEW_LIB_DIR="/paraview/share/paraview-5.10/web/visualizer/www"
+    THEIA_DIR="/theia/lib"
+    PARAVIEW_DIR="/vnv-gui/paraview"
     THEIA_PORT = 5003
     PARAVIEW_PORT = 5005
     CONTAINER_PORT = 5000
 
+
+
 if __name__ == "__main__":
 
-    app_config = Config()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--port", type=int, help="port to run on (default 5001)", default=5001)
+    parser.add_argument("--port", type=int, help="port to run on (default 5001)", default=5000)
     parser.add_argument("--host", help="host to run on (default localhost)", default="0.0.0.0")
     parser.add_argument("--theia",type=int, help="port running theia",default=3000)
     parser.add_argument("--paraview",type=int, help="port running paraview",default=9000)
     parser.add_argument("--vnv", type=int, help="port running vnv", default=5001)
-    parser.add_argument("--wspath", type=str, help="ws path to use when connecting to paraview", default="wss://vnvlabs.com/ws")
+    parser.add_argument("--wspath", type=str, help="ws path to use when connecting to paraview" )
     parser.add_argument("--code", type=str, help="authorization-code", default="")
     parser.add_argument("--ssl", type=bool, help="should we use ssl", default=False)
     parser.add_argument("--ssl_cert", type=str, help="file containing the ssl cert", default=None)
     parser.add_argument("--ssl_key", type=str, help="file containing the ssl cert key", default=None)
+    parser.add_argument("--paraview_dir", type=str, help="file containing the ssl cert key", default="/vnv-gui/paraview")
+    parser.add_argument("--theia_dir", type=str, help="file containing the ssl cert key", default="/theia")
+    
 
-    args = parser.parse_args()
+    args, unknown = parser.parse_known_args()
     Config.port = args.port
+    Config.HOST = args.host
     Config.THEIA_PORT = args.theia
     Config.PARAVIEW_PORT = args.paraview
     Config.CONTAINER_PORT = args.vnv
-    Config.AUTH_CODE = args.code
+    Config.AUTH_CODE = args.code    
+    Config.PARAVIEW_DIR = args.paraview_dir
+    Config.THEIA_DIR = args.theia_dir
 
+    if args.wspath:
+        Config.WSPATH = args.wspath
+    else:
+        Config.WSPATH = f"ws://{Config.HOST}:{Config.port}/ws"
+
+    app_config = Config()
 
     forwards = []
-    pvforwards = subprocess.run(["ls", app_config.PARAVIEW_LIB_DIR], stdout=subprocess.PIPE).stdout.decode(
+    pvforwards = subprocess.run(["ls", os.path.join(app_config.PARAVIEW_DIR,"share/paraview-5.10/web/visualizer/www")], stdout=subprocess.PIPE).stdout.decode(
         'ascii').split("\n")
 
     for line in pvforwards:
@@ -296,7 +309,7 @@ if __name__ == "__main__":
     app_config.PARAVIEW_FORWARDS = [a.strip() for a in forwards if len(a) > 0 and a != "index.html"]
 
     forwards = []
-    theiaforwards = subprocess.run(["ls", app_config.THEIA_LIB_DIR], stdout=subprocess.PIPE).stdout.decode(
+    theiaforwards = subprocess.run(["ls", os.path.join(app_config.THEIA_DIR,"lib")], stdout=subprocess.PIPE).stdout.decode(
         'ascii').split("\n")
     for line in theiaforwards:
         kk = line.replace("\t", " ")
