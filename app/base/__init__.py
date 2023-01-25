@@ -11,19 +11,15 @@ from flask import Blueprint, render_template, request, make_response, jsonify, s
 from pygments import highlight
 from pygments.formatters.html import HtmlFormatter
 from werkzeug.utils import redirect
-from pygments.lexers import guess_lexer, guess_lexer_for_filename, get_lexer_by_name
+from pygments.lexers import get_lexer_by_name
 
 from . import blueprints
-from .blueprints.files import get_file_template_root
-from .utils.mongo import list_mongo_collections, Configured, BrandNew
+from .utils.mongo import list_mongo_collections
 
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.Directory import VNV_DIR_PATH
 from .utils.utils import render_error
 
-from .. import Directory
-from ..models.VnVFile import VnVFile
-from ..models.VnVInputFile import VnVInputFile, add_input_file_type
 
 blueprint = Blueprint(
     'base',
@@ -89,21 +85,22 @@ def updateBranding(config, pd):
             threading.Event().wait(1)
             ALL_BLUEPRINTS[k] = importlib.import_module("app.temp.blueprints." + k)
 
-    if config.get("exclude_parents", False):
-        blueprints.inputfiles.vnv_executables = {}
+    if blueprints.HAS_VNV:
+        if config.get("exclude_parents", False):
+            blueprints.inputfiles.vnv_executables = {}
 
-    for key, value in config.get("executables", {}).items():
-        blueprints.inputfiles.vnv_executables[key] = [
-            os.path.join(pd, value["filename"]),
-            value.get("description", "No Description Available"),
-            value.get("defaults", {}),
-            value.get("packageName", "VnV")
-        ]
+        for key, value in config.get("executables", {}).items():
+            blueprints.inputfiles.vnv_executables[key] = [
+                os.path.join(pd, value["filename"]),
+                value.get("description", "No Description Available"),
+                value.get("defaults", {}),
+                value.get("packageName", "VnV")
+            ]
 
-    for key, value in config.get("plugins", {}).items():
-        blueprints.inputfiles.vnv_plugins[key] = os.path.join(pd, value.get("filename", ""))
+        for key, value in config.get("plugins", {}).items():
+            blueprints.inputfiles.vnv_plugins[key] = os.path.join(pd, value.get("filename", ""))
 
-    blueprints.files.load_defaults(config.get("reports", {}))
+        blueprints.files.load_defaults(config.get("reports", {}))
 
 
 FIRST_TIME = None
@@ -124,39 +121,41 @@ if FIRST_TIME is None:
     HOME_FILE = "includes/intro.html"
     TITLE_NAME = "VnV Toolkit"
 
-    ALL_BLUEPRINTS = {
-        "inputfiles": blueprints.inputfiles,
-        "files": blueprints.files,
-        "temp": blueprints.tempfiles,
-        "help": blueprints.help,
-        "notifications": blueprints.notifications,
-        "directives": blueprints.directives
-    }
+    ALL_BLUEPRINTS = {}
+    
+    if blueprints.HAS_VNV:
+        
+
+        ALL_BLUEPRINTS = {
+            "inputfiles": blueprints.inputfiles,
+            "files": blueprints.files,
+            "temp": blueprints.tempfiles,
+            "help": blueprints.help,
+            "directives": blueprints.directives
+        }
+        
+        blueprints.inputfiles.vnv_executables["Custom"] = ["", "Custom Application", {}, "N/A"]
+
 
     a = os.getenv("VNV_CONFIG")
     if a is not None:
+       for file in a.split(":"):
+          try:
+            print("Loading configuration from: ", file)
+            with open(file, 'r') as w:
+              updateBranding(json.load(w), os.path.dirname(file))
 
-        for file in a.split(":"):
-            try:
-
-                print("Loading configuration from: ", file)
-                with open(file, 'r') as w:
-                    updateBranding(json.load(w), os.path.dirname(file))
-
-            except Exception as e:
-                print(e)
-                pass
-
-    blueprints.inputfiles.vnv_executables["Custom"] = ["", "Custom Application", {}, "N/A"]
-
+          except Exception as e:
+            print(e)
+            pass
+        
+    ALL_BLUEPRINTS["notifications"] = blueprints.notifications
     for k, v in ALL_BLUEPRINTS.items():
         blueprint.register_blueprint(v.blueprint)
 
 
 def GET_COOKIE_TOKEN():
     return COOKIE_PASS
-
-
 
 def verify_cookie(cook):
     if cook is not None and cook == COOKIE_PASS:
@@ -208,12 +207,15 @@ def ide_route():
 def viz_route():
     return render_template("para.html")
 
+
 @blueprint.route("/glvis_full")
 def glvis_route():
     return render_template("glvis_full.html")
+
 @blueprint.route("/glvis")
 def glvis_render_route():
     return make_response("error",201)
+
 
 @blueprint.route("/browse")
 def browse_route():
@@ -343,12 +345,16 @@ def template_globals(d):
     d["logo_small"] = logo_small
     d["logo_icon"] = logo_icon
     d["theia_url"] = theia_url
-
     d["home_template"] = home_file
     d["paraview_url"] = paraview_url
     d["title_name"] = title_name
     d["highlight_code"] = highlight_code
+    d["HASVNV"] = blueprints.HAS_VNV
 
+    if blueprints.HAS_VNV:
+        from ..models.VnV import DumpReaders
+        d["list_vnv_readers"]: DumpReaders
+    
     for kk, vv in ALL_BLUEPRINTS.items():
         if hasattr(vv, "template_globals"):
             vv.template_globals(d)

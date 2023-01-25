@@ -21,11 +21,6 @@
 
         <ul class="navbar-nav ml-auto">
             <li>
-                <a href="/term"><i class="icon fa fa-terminal"></i> Command</a>
-            </li>
-        </ul>
-        <ul class="navbar-nav ml-auto">
-            <li>
                 <a href="/browse"><i class="icon fa fa-folder"> </i> Browse</a>
             </li>
         </ul>
@@ -39,16 +34,22 @@
                 <a href="/viz"><i class="fa fa-chart-bar"></i> Visualize</a>
             </li>
         </ul>
+        {% if SHOW_GLVIS_IN_NAV %}
         <ul class="navbar-nav ml-auto">
             <li>
                 <a href="#" onclick="show_glvis()"><i class="feather icon-bar-chart"></i>Glvis</a>
             </li>
         </ul>
+        {%endif%}
+        {%if HASVNV %}
+        
         <ul class="navbar-nav ml-auto">
             <li>
                 <a href="/"><i class="feather icon-cpu"></i> Validate</a>
             </li>
         </ul>
+        
+        {% endif %}
 
         {% for k,v in ALL_BLUEPRINTS.items() %}
         {%with get_template_file = v.get_template_file %}

@@ -10,8 +10,6 @@ from logging import DEBUG
 from flask_socketio import SocketIO
 from flaskext.markdown import Markdown
 
-from app.base.utils.mongo import BrandNew
-
 global_template_variables = {
 
 }
@@ -21,11 +19,10 @@ def register_blueprints(apps, config):
 
     import app.base
     from .base.utils.mongo import Configured
-    from .models.VnV import DumpReaders
 
     global_template_variables.update({
-        "list_vnv_readers": DumpReaders,
-        "mongo_configured": Configured
+        "mongo_configured": Configured,
+        "SHOW_GLVIS_IN_NAV" : config.GLVIS_IN_NAVBAR
     })
 
     base.config(config)

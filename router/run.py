@@ -264,8 +264,8 @@ class Config:
     WSPATH = f"ws://{HOST}:{port}"
     HOSTCORS = f"http://localhost:{port}"
 
-    THEIA_DIR="/theia/lib"
-    PARAVIEW_DIR="/vnv-gui/paraview"
+    THEIA_DIR="/vnvgui/theia"
+    PARAVIEW_DIR="/vnvgui/paraview"
     THEIA_PORT = 5003
     GLVIS_PORT = 5007
     PARAVIEW_PORT = 5005
@@ -288,8 +288,8 @@ if __name__ == "__main__":
     parser.add_argument("--ssl", type=bool, help="should we use ssl", default=False)
     parser.add_argument("--ssl_cert", type=str, help="file containing the ssl cert", default=None)
     parser.add_argument("--ssl_key", type=str, help="file containing the ssl cert key", default=None)
-    parser.add_argument("--paraview_dir", type=str, help="file containing the ssl cert key", default="/vnv-gui/paraview")
-    parser.add_argument("--theia_dir", type=str, help="file containing the ssl cert key", default="/theia")
+    parser.add_argument("--paraview_dir", type=str, help="file containing the ssl cert key", default="/vnvgui/paraview")
+    parser.add_argument("--theia_dir", type=str, help="file containing the ssl cert key", default="/vnvgui/theia")
     
 
     args, unknown = parser.parse_known_args()
@@ -307,7 +307,7 @@ if __name__ == "__main__":
     if args.wspath:
         Config.WSPATH = args.wspath
     else:
-        Config.WSPATH = f"ws://{Config.HOST}:{Config.port}/ws"
+        Config.WSPATH = f"ws://{Config.HOST}:{Config.port}"
 
     app_config = Config()
 
