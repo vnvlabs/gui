@@ -1,5 +1,5 @@
 {% set no_padding = 1 %}
-{% extends "layouts/base.html" %}
+{% extends "layouts/base_no_sidebar.html" %}
 
 {% block title %} {{title_name()}} {% endblock %}
 
@@ -7,7 +7,14 @@
 {% block stylesheets %}{% endblock stylesheets %}
 
 {% block content %}
-<iframe id='paraview' src="{{paraview_url()}}" style="flex: 1; margin-bottom: 0px; border: none;"></iframe>
+
+{% if PARAVIEW_READY() %}
+    <iframe id='paraview' src="{{paraview_url()}}" style="flex: 1; margin-bottom: 0px; border: none;"></iframe>
+{% else %}
+    <div style="font-size: 20px;display: flex;align-items: center;justify-content: center; height: 100%;">
+        Paraview is still be initialized. Please try again in a few minutes.
+    </div>
+{%endif%}
 {% endblock content %}
 
 <!-- Specific Page JS goes HERE  -->

@@ -51,7 +51,7 @@ RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
     && rm yarn-v$YARN_VERSION.tar.gz
 
 #Copy theia config Leave this seperate so we can cache that god awfull thing above. 
-COPY theia.package.json /vnvgui/theia/package.json
+COPY docker/theia.package.json /vnvgui/theia/package.json
 
 ENV PATH=/vnvgui/node/bin/:$PATH 
 
@@ -78,8 +78,6 @@ COPY ./requirements.txt /vnvgui/gui/requirements.txt
 RUN cd /vnvgui/gui \
     && virtualenv virt \
     && virt/bin/pip install -r ./requirements.txt 
-
-RUN apt-get install -y vim
 
 COPY . /vnvgui/gui
 

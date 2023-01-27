@@ -1,35 +1,17 @@
 
 	<!-- [ navigation menu ] start -->
-	<nav id="NAV" class="pcoded-navbar menupos-fixed menu-light ">
+	<nav class="pcoded-navbar menupos-fixed menu-light ">
 		<div class="navbar-wrapper  ">
 			<div class="navbar-content scroll-div " >
 				<ul class="nav pcoded-inner-navbar " style="font-size:15px">
-                  {% if HASVNV %}	
-					<li class="nav-item pcoded-menu-caption exe_header">
-						<label>Reports And Executables</label>
-					</li>
+                 
 					{% for k,v in ALL_BLUEPRINTS.items() %}
-					    {% if k in ["inputfiles","files"] %}
-					      {%with get_template_file = v.get_template_file %}
-                		    {% include k + "/sidebar.html"  ignore missing %}
-					      {% endwith %}
-					    {%endif%}
-                	{%endfor%}
-				  {% endif %}	
-				  <div id="HELPHEADER">   
-				  <li class="nav-item pcoded-menu-caption help_header">
-						<label>Help And Documentation</label>
-					</li>
-
-					{% for k,v in ALL_BLUEPRINTS.items() %}
-							{% if k not in ["inputfiles","files"] %}
-						    	{%with get_template_file = v.get_template_file %}
-                					{% include k + "/sidebar.html"  ignore missing %}
-								{% endwith %}
-							{%endif%}
-					{%endfor%}
-					</div>	
-
+				      {%with get_template_file = v.get_template_file %}
+              		    {% include k + "/sidebar.html"  ignore missing %}
+				      {% endwith %}
+			    	{%endfor%}
+				    
+			
 				</ul>
 			</div>
 			<div class="navbar-content scroll-div " >
@@ -39,19 +21,7 @@
 		</div>
 	</nav>
 
-	<script>
-       $(document).ready(function(){
-		   if ($('#HELPHEADER').children().length == 1) {
-			  $('#HELPHEADER').hide()
-			  {% if not HASVNV %}
-				 $('#NAV').hide();
-			  {%endif%}
-			}
-		   
-        });
 
-		
-	</script>
 
 	{%include "includes/modals.html"  %}
 	{% for k,v in ALL_BLUEPRINTS.items() %}

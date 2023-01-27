@@ -3,7 +3,6 @@ import argparse
 import os
 import sys
 from app import create_app
-from app.sockets import create_socket_app
 
 import sys
 
@@ -21,6 +20,7 @@ class Config:
     PARAVIEW_URL = "/paraview"
     LOGOUT_COOKIE = "vnvnginxcode"
     GLVIS_IN_NAVBAR = False
+    PARAVIEW_STATUS = None
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--port", help="port to run on (default 5001)")
@@ -28,6 +28,8 @@ parser.add_argument("--host", help="host to run on (default localhost)")
 parser.add_argument("--logout", help="name of logout cookie")
 parser.add_argument("--theiapath", type=str, help="Theia Path")
 parser.add_argument("--glvis", type=bool, help="Should we show glvis in nav bar", default=False)
+parser.add_argument("--pvstatus", type=str, help="Paraview Status file", default=None)
+
 args, unknown = parser.parse_known_args()
 
 if args.theiapath:
@@ -43,7 +45,8 @@ if args.host:
 if args.logout:
     Config.LOGOUT_COOKIE = args.logout
 
+Config.PARAVIEW_STATUS = args.pvstatus
+
 app_config = Config()
 app = create_app(app_config)
-socketio = create_socket_app(app)
-socketio.run(app, use_reloader=False, host=app_config.host, port=app_config.port)
+app.run(use_reloader=False, host=app_config.host, port=app_config.port)

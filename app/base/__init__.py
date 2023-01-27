@@ -177,9 +177,6 @@ def check_valid_login():
         return render_template('login.html', next=request.url)
 
 
-@blueprint.route('/')
-def default_route():
-    return render_template('index.html', segment='index')
 
 
 @blueprint.route('/theia')
@@ -263,8 +260,10 @@ def icon():
 
 @blueprint.route("/")
 def home():
-    return render_template("index.html", segment="index")
-
+    if blueprints.HAS_VNV:
+        return render_template("index.html", segment="index")
+    else:
+        return render_template("ide.html")
 
 def available_ports():
     return range(14000, 14010)
@@ -332,15 +331,25 @@ def template_globals(d):
     def title_name():
         return TITLE_NAME
 
+    def paraview_ready():
+       statfile = current_app.config["PARAVIEW_STATUS"]
+       if statfile is None:
+           return true
+       
+       return not os.path.exists(statfile)
+    
+
     def theia_url():
         return current_app.config["THEIA_URL"]
 
+        
     def paraview_url():
         return current_app.config["PARAVIEW_URL"]
 
     d["COPYRIGHT_LINK"] = DelayCopyRightLink()
     d["COPYRIGHT_MESSAGE"] = DelayCopyRightMessage()
     d["ALL_BLUEPRINTS"] = ALL_BLUEPRINTS
+    d["PARAVIEW_READY"] = paraview_ready
     d["logo_large"] = logo_large
     d["logo_small"] = logo_small
     d["logo_icon"] = logo_icon

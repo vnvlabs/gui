@@ -25,6 +25,39 @@ blueprint = Blueprint(
 def home():
     return proxy("")
 
+def set_paraview_forwards():
+   try:
+     app_config = current_app.config
+     if app_config["PARAVIEW_STATUS"] is not None and os.path.exists(app_config["PARAVIEW_STATUS"]):
+         print("YTYYYYYYY")
+         return 
+     
+     forwards = []
+     pvforwards = subprocess.run(["ls", os.path.join(app_config["PARAVIEW_DIR"],"share/paraview-5.10/web/visualizer/www")], stdout=subprocess.PIPE).stdout.decode('ascii').split("\n")
+
+     for line in pvforwards:
+        kk = line.replace("\t", " ")
+        forwards = forwards + line.split(" ")
+
+     app_config["PARAVIEW_FORWARDS"] = [a.strip() for a in forwards if len(a) > 0 and a != "index.html"]
+     print("11111111YTYYYYYYY")
+       
+   except:
+       pass
+
+def set_theia_forwards():
+   try:
+    app_config = current_app.config
+    forwards = []
+    theiaforwards = subprocess.run(["ls", os.path.join(app_config["THEIA_DIR"],"lib")], stdout=subprocess.PIPE).stdout.decode(
+        'ascii').split("\n")
+    for line in theiaforwards:
+        kk = line.replace("\t", " ")
+        forwards = forwards + kk.split(" ")
+    app_config["THEIA_FORWARDS"] = [a.strip() for a in forwards if len(a) > 0 and a != "index.html"]
+   
+   except:
+       pass 
 
 @blueprint.route("/paraview/", methods=["POST"])
 def paraview_o():
@@ -49,6 +82,12 @@ def proxy(path):
 
     container, theia, paraview = get_ports()
 
+    if len(current_app.config["PARAVIEW_FORWARDS"]) == 0:
+        set_paraview_forwards()    
+    
+    if len(current_app.config["THEIA_FORWARDS"]) == 0:
+        set_theia_forwards()
+             
     if path == "theia":
         return redirect("/?theia")
 
@@ -60,7 +99,6 @@ def proxy(path):
 
     elif path == "glvis" or (path == "" and "glvis" in request.args):
         return  render_template("glvis.html", websocket_address=f"{current_app.config['WSPATH']}/gws")
-
 
     elif path in current_app.config["THEIA_FORWARDS"]:
         PROXIED_PATH = ppath(theia, request.full_path)
@@ -270,8 +308,9 @@ class Config:
     GLVIS_PORT = 5007
     PARAVIEW_PORT = 5005
     CONTAINER_PORT = 5000
-
-
+    PARAVIEW_FORWARDS = []
+    THEIA_FORWARDS = []
+    PARAVIEW_STATUS = None
 
 if __name__ == "__main__":
 
@@ -290,7 +329,8 @@ if __name__ == "__main__":
     parser.add_argument("--ssl_key", type=str, help="file containing the ssl cert key", default=None)
     parser.add_argument("--paraview_dir", type=str, help="file containing the ssl cert key", default="/vnvgui/paraview")
     parser.add_argument("--theia_dir", type=str, help="file containing the ssl cert key", default="/vnvgui/theia")
-    
+    parser.add_argument("--pvstatus", type=str, help="file that pv downloader writes to", default=None)
+
 
     args, unknown = parser.parse_known_args()
     Config.port = args.port
@@ -303,7 +343,8 @@ if __name__ == "__main__":
     Config.WSPATH = args.wspath
     Config.PARAVIEW_DIR = args.paraview_dir
     Config.THEIA_DIR = args.theia_dir
-
+    Config.PARAVIEW_STATUS = args.pvstatus
+    
     if args.wspath:
         Config.WSPATH = args.wspath
     else:
@@ -311,25 +352,9 @@ if __name__ == "__main__":
 
     app_config = Config()
 
-    forwards = []
-    pvforwards = subprocess.run(["ls", os.path.join(app_config.PARAVIEW_DIR,"share/paraview-5.10/web/visualizer/www")], stdout=subprocess.PIPE).stdout.decode(
-        'ascii').split("\n")
-
-    for line in pvforwards:
-        kk = line.replace("\t", " ")
-        forwards = forwards + line.split(" ")
-
-    app_config.PARAVIEW_FORWARDS = [a.strip() for a in forwards if len(a) > 0 and a != "index.html"]
-
-    forwards = []
-    theiaforwards = subprocess.run(["ls", os.path.join(app_config.THEIA_DIR,"lib")], stdout=subprocess.PIPE).stdout.decode(
-        'ascii').split("\n")
-    for line in theiaforwards:
-        kk = line.replace("\t", " ")
-        forwards = forwards + kk.split(" ")
-    app_config.THEIA_FORWARDS = [a.strip() for a in forwards if len(a) > 0 and a != "index.html"]
-
+   
     socketio, app = create_serve_app(app_config)
+    
     opts = {
         "use_reloader" : False,
         "host" : app_config.HOST,
