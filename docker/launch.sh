@@ -37,14 +37,13 @@ virt/bin/python ./run.py \
                 # VnVLabs--theia https://vnvlabs.com/?theia
 
 # Launch the VnV Router on the Resource.
-virt/bin/python router/run.py \
+virt/bin/python router.py \
             --host ${HOSTNAME}\
-	        --port ${HOST_PORT}\
-	        --vnv ${GUI_PORT}  \
+	          --port ${HOST_PORT}\
+	          --vnv ${GUI_PORT}  \
             --theia ${THEIA_PORT} \
             --paraview ${PARAVIEW_PORT} \
-            --pvstatus ${PARAVIEW_STATUS_FILE} \
-            --wspath ws://0.0.0.0:5000  ${@:1}
+            --pvstatus ${PARAVIEW_STATUS_FILE}  ${@:1}
 ###For VnVLabs.com use this option --wspath wss://vnvlabs.com/ws
 
 

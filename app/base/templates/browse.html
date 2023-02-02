@@ -14,7 +14,7 @@
 
 <script>
 $(document).ready(function(){
-    $.get("/files/reader/1000", function(data) {
+    $.get("/files/reader/1000?modal=browser", function(data) {
         $('#browser').html(data)
     })
 })

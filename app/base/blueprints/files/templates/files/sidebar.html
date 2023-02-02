@@ -1,8 +1,5 @@
 <!-- input file's "VnV Reports" drop down list that is visible after clicking the hamburger icon-->
 
-<li class="nav-item pcoded-menu-caption exe_header">
-  <label>The VnV Toolkit</label>
-</li>
 <li class="nav-item pcoded-hasmenu">
 
     <!-- 
@@ -12,6 +9,7 @@
     <a href="#!" class="nav-link "><span class="pcoded-micon"><i class="feather icon-file-text"></i></span><span
             class="pcoded-mtext">VnV Reports</span>
     </a>
+
     <!-- create list of reports -->
     <ul class="pcoded-submenu" id="files_list">
         {% for file in uniquefiles() %}

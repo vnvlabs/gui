@@ -16,9 +16,10 @@ tar -xf pv.tar.gz -C /vnvgui/paraview --strip-components=1  >> $1
 echo "Cleaning up" > /vnvgui/paraview/.vnvstatus  >> $1
 rm pv.tar.gz  >> $1
 
+fi
+
 rm $1
 
-fi
 # Start the paraview visualizer server
 cd /vnvgui/paraview
 bin/pvpython -m paraview.apps.visualizer --host $2 --data / --port $3 --timeout 600000 &

@@ -216,13 +216,7 @@ def glvis_render_route():
 
 @blueprint.route("/browse")
 def browse_route():
-    return render_template("browse.html")
-
-
-@blueprint.route("/term")
-def term_route():
-    return render_template("terminal_.html")
-
+    return render_template("browse.html", model="inline-")
 
 @blueprint.route('/avatar/<username>')
 def avatar_route(username):
@@ -362,7 +356,7 @@ def template_globals(d):
 
     if blueprints.HAS_VNV:
         from ..models.VnV import DumpReaders
-        d["list_vnv_readers"]: DumpReaders
+        d["list_vnv_readers"] = DumpReaders
     
     for kk, vv in ALL_BLUEPRINTS.items():
         if hasattr(vv, "template_globals"):

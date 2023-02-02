@@ -222,6 +222,7 @@ function upload_file_b(vnvfileid, filename, type, options) {
 }
 
 function show_file_reader(vnvfileid, filename, reader , type, options) {
+       
        if (type.length == 0 ) {
          $('#file_viewer_modal').modal('show')
          if (options && !("noload" in options)) {
