@@ -76,6 +76,10 @@ def authorize():
 
     if request.cookies.get("vnv-gui-code") == current_app.config["AUTH_CODE"]:
         return None
+    elif "code" in request.args and request.args.get("code") == current_app.config["AUTH_CODE"]:
+        r = make_response(redirect("/"), 302)
+        r.set_cookie("vnv-gui-code", code)
+        return r
     elif request.endpoint and 'static' in request.endpoint:
         return None
     elif request.endpoint == "base.login":
