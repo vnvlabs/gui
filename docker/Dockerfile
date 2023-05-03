@@ -68,10 +68,9 @@ RUN cd /vnvgui/theia && mkdir plugins \
     yarn cache clean 
 
 #Install Pavaview server (used for visualization) 
+COPY data/pv.tar.gz /data/pv.tar.gz
 RUN mkdir /vnvgui/paraview
-RUN wget -O pv.tar.gz "https://www.paraview.org/paraview-downloads/download.php?submit=Download&version=v5.10&type=binary&os=Linux&downloadFile=ParaView-5.10.1-osmesa-MPI-Linux-Python3.9-x86_64.tar.gz"   
-RUN tar -xf pv.tar.gz -C /vnvgui/paraview --strip-components=1 && rm pv.tar.gz 
-
+RUN tar -xf /data/pv.tar.gz -C /vnvgui/paraview --strip-components=1 && rm /data/pv.tar.gz 
 
 #Install the vnv guo
 COPY ./requirements.txt /vnvgui/gui/requirements.txt
