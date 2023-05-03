@@ -57,7 +57,7 @@ ENV PATH=/vnvgui/node/bin/:$PATH
 
 RUN cd /vnvgui/theia && mkdir plugins \
     && yarn --pure-lockfile && \
-    NODE_OPTIONS="--max_old_space_size=4096" yarn theia build && \
+    yarn theia build && \
     yarn theia download:plugins && \
     yarn --production && \
     yarn autoclean --init && \
@@ -80,6 +80,7 @@ RUN cd /vnvgui/gui \
     && virt/bin/pip install -r ./requirements.txt 
 
 COPY . /vnvgui/gui
+LABEL VNV_GUI_EQUIPT=1
 
 WORKDIR /vnvgui/gui
 RUN mv docker/*.sh ./ 
