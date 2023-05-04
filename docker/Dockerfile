@@ -9,7 +9,7 @@ ENV TZ=America/New_York
 
 
 ENV THEIA_DEFAULT_PLUGINS=local-dir:/vnvgui/theia/plugins
-ENV NODE_VERSION=18.12.1
+ENV NODE_VERSION=16.20.0
 ENV YARN_VERSION=1.22.5
 ENV PARAVIEW_DIR=/vnvgui/paraview 
 ENV PVPYTHON=${PARAVIEW_DIR}/bin/pvpython 
@@ -18,6 +18,7 @@ ENV PVPYTHON=${PARAVIEW_DIR}/bin/pvpython
 RUN apt-get -y update && apt-get -y upgrade && apt-get -y install \
     wget \
     curl \
+    git \
     libssl-dev \
     python3-dev \
     python3-pip \
@@ -25,6 +26,7 @@ RUN apt-get -y update && apt-get -y upgrade && apt-get -y install \
     libgsl-dev \
     libglapi-mesa pkg-config libsecret-1-dev \
     && pip3 install virtualenv  
+
 
 # Install Node.js
 RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
@@ -51,7 +53,7 @@ RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
     && rm yarn-v$YARN_VERSION.tar.gz
 
 #Copy theia config Leave this seperate so we can cache that god awfull thing above. 
-COPY docker/theia.package.json /vnvgui/theia/package.json
+COPY theia /vnvgui/theia
 
 ENV PATH=/vnvgui/node/bin/:$PATH 
 
@@ -67,19 +69,18 @@ RUN cd /vnvgui/theia && mkdir plugins \
     yarn autoclean --force && \
     yarn cache clean 
 
-#Install Pavaview server (used for visualization) 
-COPY data/pv.tar.gz /data/pv.tar.gz
-RUN mkdir /vnvgui/paraview
-RUN tar -xf /data/pv.tar.gz -C /vnvgui/paraview --strip-components=1 && rm /data/pv.tar.gz 
-
 #Install the vnv guo
 COPY ./requirements.txt /vnvgui/gui/requirements.txt
 RUN cd /vnvgui/gui \
     && virtualenv virt \
     && virt/bin/pip install -r ./requirements.txt 
 
+#Install Pavaview server (used for visualization) 
 COPY . /vnvgui/gui
 LABEL VNV_GUI_EQUIPT=1
+RUN  mkdir /vnvgui/paraview
+RUN tar -xf /vnvgui/gui/pv.tar.gz -C /vnvgui/paraview --strip-components=1 && rm /vnvgui/gui/pv.tar.gz 
+
 
 WORKDIR /vnvgui/gui
 RUN mv docker/*.sh ./ 

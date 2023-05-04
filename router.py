@@ -26,8 +26,6 @@ blueprint = Blueprint(
 def set_paraview_forwards():
    try:
      app_config = current_app.config
-     if app_config["PARAVIEW_STATUS"] is not None and os.path.exists(app_config["PARAVIEW_STATUS"]):
-         return 
      
      forwards = []
      pvforwards = subprocess.run(["ls", os.path.join(app_config["PARAVIEW_DIR"],"share/paraview-5.10/web/visualizer/www")], stdout=subprocess.PIPE).stdout.decode('ascii').split("\n")
@@ -112,6 +110,7 @@ def logout():
 
 @blueprint.route('/<path:path>', methods=["GET", "POST"])
 def proxy(path):
+    
     def ppath(port, path=""):
         return f'http://{current_app.config["HOST"]}:{port}{path}'
 
@@ -345,7 +344,6 @@ class Config:
     CONTAINER_PORT = 5000
     PARAVIEW_FORWARDS = []
     THEIA_FORWARDS = []
-    PARAVIEW_STATUS = None
 
 if __name__ == "__main__":
 
@@ -364,7 +362,6 @@ if __name__ == "__main__":
     parser.add_argument("--ssl_key", type=str, help="file containing the ssl cert key", default=None)
     parser.add_argument("--paraview_dir", type=str, help="file containing the ssl cert key", default="/vnvgui/paraview")
     parser.add_argument("--theia_dir", type=str, help="file containing the ssl cert key", default="/vnvgui/theia")
-    parser.add_argument("--pvstatus", type=str, help="file that pv downloader writes to", default=None)
 
 
     args, unknown = parser.parse_known_args()
@@ -378,7 +375,6 @@ if __name__ == "__main__":
     Config.WSPATH = args.wspath
     Config.PARAVIEW_DIR = args.paraview_dir
     Config.THEIA_DIR = args.theia_dir
-    Config.PARAVIEW_STATUS = args.pvstatus
     
     if args.wspath:
         Config.WSPATH = args.wspath

@@ -326,12 +326,7 @@ def template_globals(d):
         return TITLE_NAME
 
     def paraview_ready():
-       statfile = current_app.config["PARAVIEW_STATUS"]
-       if statfile is None:
-           return true
-       
-       return not os.path.exists(statfile)
-    
+       return True
 
     def theia_url():
         return current_app.config["THEIA_URL"]
