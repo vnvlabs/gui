@@ -59,9 +59,11 @@ ENV PATH=/vnvgui/node/bin/:$PATH
 
 RUN cd /vnvgui/theia && mkdir plugins \
     && yarn --pure-lockfile && \
-    yarn theia build && \
-    yarn theia download:plugins && \
-    yarn --production && \
+    yarn theia build  
+
+WORKDIR /vnvgui/theia
+RUN yarn theia download:plugins --parallel false 
+RUN yarn --production && \
     yarn autoclean --init && \
     echo *.ts >> .yarnclean && \
     echo *.ts.map >> .yarnclean && \
