@@ -100,7 +100,7 @@ def updateBranding(config, pd):
         for key, value in config.get("plugins", {}).items():
             blueprints.inputfiles.vnv_plugins[key] = os.path.join(pd, value.get("filename", ""))
 
-        blueprints.files.load_defaults(config.get("reports", {}))
+        blueprints.files.load_defaults(config.get("reports", {}),  config.get("exclude_parents", False))
 
 
 FIRST_TIME = None

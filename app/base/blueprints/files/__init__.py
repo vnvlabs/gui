@@ -379,7 +379,10 @@ def template_globals(globs):
     globs["uniquefiles"] = unique_files
 
 
-def load_defaults(CONFIG):
+def load_defaults(CONFIG, exclude):
+    if exclude:
+        VnVFile.delete_all()
+    
     for key,value in CONFIG.items():
         VnVFile.add(key, value["filename"], value["reader"],  get_file_template_root(), value.get("config",{}))
 
