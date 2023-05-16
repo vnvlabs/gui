@@ -48,7 +48,9 @@ def render_html(filename, **kwargs):
 def render_pdf(filename, **kwargs):
     return f"<iframe class='card' src='/temp/files/{getUID(filename)}' style='width: 100%;height:80vh;'>"
 
-
+def render_paraview(filename, **kwargs):
+    return f"<iframe class='card' src='/pv?file={filename}' style='width: 100%;height:80vh;'>"
+    
 def render_glvis(filename, **kwargs):
     path = urllib.request.pathname2url(f"/temp/files/{getUID(filename)}")
     return f"<iframe class='card' src='/static/glvis/index.html?stream={path}' style='width: 100%;height:80vh;'>"
@@ -121,7 +123,8 @@ ext_map = {
     ".png": "image",
     ".gif": "image",
     ".svg": "image",
-    ".md": "markdown"
+    ".md": "markdown",
+    ".e" : "paraview"
 }
 
 

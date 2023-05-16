@@ -11,6 +11,7 @@ from flask_sock import Sock
 import socketio as sio
 from flask_socketio import SocketIO
 from werkzeug.utils import redirect
+import signal
 import os
 
 blueprint = Blueprint(
@@ -58,9 +59,53 @@ def home():
     return proxy("")
 
 
+paraview_sessions = {
+        "CURR_PORT" : 6000,
+}
+
+def start_paraview_server(filename):
+    paraview_sessions["CURR_PORT"] += 1
+    port = paraview_sessions["CURR_PORT"] - 1
+   
+    cmd =  [
+        "bin/pvpython", "-m", "paraview.apps.visualizer", "--host", "0.0.0.0", "--port", str(port), "--data" , "/", "--timeout", str(600000)
+    ]
+   
+    if filename is not None and os.path.exists(filename):
+        f = os.path.abspath(filename)
+        cmd += ["--load-file", f[1:] ]
+    
+    paraview_sessions[port] = subprocess.Popen(cmd, cwd="/vnvgui/paraview", stdout=subprocess.PIPE, stderr=subprocess.STDOUT,preexec_fn=os.setsid)
+    
+    paraview_sessions[port].stdout
+    while paraview_sessions[port].returncode is None:
+        line = paraview_sessions[port].stdout.readline()
+        print(line)
+        if "Starting factory" in line.decode("ascii"):
+            break  
+        else:
+            print("Nope")
+    
+    return port
+   
+@blueprint.route("/pv")
+def vis_file():
+    src_url = f'/paraview?file={request.args.get("file","")}'
+    iframe = f"""<iframe id='paraview' src="{src_url}" style="flex: 1; width:100%; height:100%; margin-bottom: 0px; border: none;"></iframe>"""
+    return iframe,200
+
 @blueprint.route("/paraview/", methods=["POST"])
 def paraview_o():
-    return make_response(jsonify({"sessionURL": f"{current_app.config['WSPATH']}/ws"}), 200)
+    uid = current_app.config["PARAVIEW_PORT"]
+    if len(request.args.get("file",""))>0:
+        
+        filename = request.args["file"]
+        if os.path.exists(filename):
+            uid = start_paraview_server(filename)
+        else:
+            uid = start_paraview_server(None)
+             
+    return make_response(jsonify({"sessionURL": f"{current_app.config['WSPATH']}/ws/{uid}"}), 200)
 
 def get_ports():
     container = current_app.config["CONTAINER_PORT"]
@@ -129,6 +174,8 @@ def proxy(path):
         PROXIED_PATH = ppath(theia)
 
     elif path == "paraview" or (path == "" and "paraview" in request.args):
+        if "file" in request.args:
+            return render_template("pvindex1.html", sessionManagerURL="/paraview/?file=" + request.args.get("file"))
         return render_template("pvindex.html")
 
     elif path == "glvis" or (path == "" and "glvis" in request.args):
@@ -243,10 +290,13 @@ def register(socketio, apps, config):
         def serve(self):
             threading.Thread(target=self.run).start()
 
-    @sock.route("/ws")
-    def echo(ws):
-        container, theia, paraview = get_ports()
-        wsock = WSockApp(f"ws://localhost:{paraview}/ws", ws)
+    def kill_and_kill_children(pid):
+        os.killpg(os.getpgid(pid), signal.SIGKILL) 
+        
+        
+    @sock.route("/ws/<uid>")
+    def echo(ws, uid):
+        wsock = WSockApp(f"ws://localhost:{uid}/ws", ws)
         wsock.serve()
         while wsock.running():
             try:
@@ -254,6 +304,13 @@ def register(socketio, apps, config):
                 wsock.send(greeting)
             except Exception as e:
                 wsock.kill()
+        
+        wsock.kill()
+        if int(uid) != current_app.config["PARAVIEW_PORT"]:
+            proces = paraview_sessions.pop(int(uid))
+            kill_and_kill_children(proces.pid)
+            
+            
 
     @sock.route("/gws")
     def echo1(ws):

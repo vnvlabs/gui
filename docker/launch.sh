@@ -22,7 +22,7 @@ node /vnvgui/theia/src-gen/backend/main.js / --port ${THEIA_PORT} --hostname=${H
 
 # Launch paraview, downloading it if DOWNLOAD_PARAVIEW is defined. 
 cd /vnvgui/paraview
-bin/pvpython -m paraview.apps.visualizer --host ${HOSTNAME} --data / --port ${PARAVIEW_PORT} --timeout 600000 > /vnvgui/logs/paraview_logs &
+bin/pvpython -m paraview.apps.visualizer --host ${HOSTNAME} --data /home/user --port ${PARAVIEW_PORT} --timeout 600000 > /vnvgui/logs/paraview_logs &
 
 # Start the GLVIS SERVER
 cd /vnvgui/gui

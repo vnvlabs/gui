@@ -202,8 +202,14 @@ def ide_route():
 
 @blueprint.route("/viz")
 def viz_route():
-    return render_template("para.html")
+    src_url = current_app.config["PARAVIEW_URL"]
+    return render_template("para.html", src_url=src_url)
 
+@blueprint.route("/viz-file")
+def vis_file():
+    src_url = f'{current_app.config["PARAVIEW_URL"]}?file={request.args.get("file","none")}'  
+    iframe = f"""<iframe id='paraview' src="{src_url}" style="flex: 1; margin-bottom: 0px; border: none;"></iframe>"""
+    return render_template(iframe,200)
 
 @blueprint.route("/glvis_full")
 def glvis_route():
