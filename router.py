@@ -191,7 +191,13 @@ def proxy(path):
         PROXIED_PATH = ppath(container, request.full_path)
 
     if request.method == "GET":
-        resp = requests.get(PROXIED_PATH)
+        resp = requests.get(PROXIED_PATH, allow_redirects=False)
+        
+        if resp.status_code == 302:
+            from urllib.parse import urlparse
+            p = urlparse(resp.headers["Location"])
+            return redirect(p.path),302
+        
         excluded_headers = ["content-encoding", "content-length", "transfer-encoding", "connection"]
         headers = [(name, value) for (name, value) in resp.raw.headers.items() if
                    name.lower() not in excluded_headers]
@@ -205,10 +211,15 @@ def proxy(path):
             print("What")
 
         if not request.is_json:
-            resp = requests.post(PROXIED_PATH, data=request.form)
+            resp = requests.post(PROXIED_PATH, data=request.form, allow_redirects=False)
         else:
-            resp = requests.post(PROXIED_PATH, json=request.get_json())
-
+            resp = requests.post(PROXIED_PATH, json=request.get_json(), allow_redirects=False)
+        
+        if resp.status_code == 302:
+            from urllib.parse import urlparse
+            p = urlparse(resp.headers["Location"])
+            return redirect(p.path),302
+         
         excluded_headers = ["content-encoding", "content-length", "transfer-encoding", "connection"]
         headers = [(name, value) for (name, value) in resp.raw.headers.items() if
                    name.lower() not in excluded_headers]

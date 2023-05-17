@@ -5,11 +5,13 @@
 -->
 <div style="flex:1;" >
    <h1 contenteditable=true id="inputfile_display_name" >{{file.displayName}}</h1>
-
-
-
+   <div style="    font-size: 14px; margin-top: -13px;margin-left: 1px; margin-bottom: 10px;" >
+      <span title="{% if file.connection.connected()%}Connected{%else%}Not Connected{%endif%}" style="color:{% if file.connection.connected()%}green{%else%}red{%endif%};">{{file.connection.describe()}}:/</span><span style="color:{{file.getFileStatus()[0]}};">{{file.filename}}</span> 
+   </div>
+   <div id="main_desc">{{file.get_executable_description()|safe}}</div>
 
 </div>
+
 <div style="display:flex; position:relative; top:5px; right:5px">
    <!-- 
     button: Configure 

@@ -158,6 +158,7 @@ class LocalFile:
         self.options = kwargs
 
     def render_reader(self):
+        print("SDFSDFSDF", self.reader)
         if has_reader(self.reader):
             a = globals()[f'render_{self.reader}'](self.download(), **self.options)
             return a
@@ -197,8 +198,8 @@ class LocalFile:
 
     def children(self):
         if self.children_ is None:
-            self.children_ = [LocalFile(i, self.vnvfileid, self.connection) for i in
-                              self.connection.children(self.abspath)]
+            self.children_ = [LocalFile(i, self.vnvfileid, self.connection) for i in self.connection.children(self.abspath)]
+            self.children_.sort(key=lambda x: x.name)
         return self.children_
 
     def download(self):

@@ -178,10 +178,19 @@ def reader(id_):
         reader = request.args.get("reader")
         filename = request.args.get("filename", "")
         modal = request.args.get("modal", "")
-        if id_ != 1000:
-            connection = VnVFile.FILES[id_].connection
-        else:
+        connection = None
+        if id_ == 1000:
             connection = MAIN_CONNECTION()
+        
+        
+        if connection is None and id_ in VnVFile.FILES:
+            connection = VnVFile.FILES[id_].connection
+        
+        if connection is None :
+            from app.models.VnVInputFile import VnVInputFile
+            if id_ in VnVInputFile.FILES:
+                connection = VnVInputFile.FILES[id_].connection
+        
 
         render_args = {a[7:]: request.args[a] for a in request.args if a.startswith("render_")}
 

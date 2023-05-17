@@ -7,6 +7,7 @@
 
 {%endwith%}
 
+
 <h5 style="margin-top:10px;" title="{% if file.connection.connected()%}Connected{%else%}Not Connected{%endif%}">Hostname: <span style="color:{% if file.connection.connected()%}green{%else%}red{%endif%};"> {{file.connection.describe()}}  </span>  </h5>
 <h5 style="margin-top:10px;" title="{{file.getFileStatus()[1]}}" >Path: <span style="color:{{file.getFileStatus()[0]}};"> {{file.filename}}  </span>  </h5>
 
@@ -30,7 +31,7 @@
              -->
             <a class="nav-link" id="config-spec-tab"
                data-toggle="pill" href="#config-spec" role="tab"
-               aria-controls="config-spec" aria-selected="true">Specification</a>
+               aria-controls="config-spec" aria-selected="true">VnV Schema</a>
         </li>
 
     </ul>

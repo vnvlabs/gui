@@ -94,7 +94,7 @@ class Dependency:
 
 
 class VnVInputFile:
-    COUNTER = 0
+    COUNTER = 5000
 
     FILES = {}
 
@@ -126,11 +126,17 @@ class VnVInputFile:
             self.specDump = defs["specDump"]
 
         # Set the execution file
-        self.exec = json.dumps(self.defaultExecution, indent=4)
-        self.exec = json.dumps(self.defaultExecution, indent=4)
+        if "empty_exec" in defs and defs["empty_exec"]:
+            execObj = {}
+        else:
+            execObj = self.defaultExecution
+            
         if "exec" in defs:
-            self.exec = json.dumps(defs["exec"], indent=4)
-
+            for key, value in defs["exec"].items():
+                execObj[key] = value
+        
+        self.exec = json.dumps(execObj, indent=4)
+            
         # Set the PSIP configuration if it exists.
         self.psip = GET_DEFAULT_PSIP()
         self.psip_enabled = defs.get("psip_enabled", True)
@@ -185,6 +191,12 @@ class VnVInputFile:
         a["plugs"] = self.plugs
         a["rendered"] = self.rendered
         return a
+
+    def browse(self):
+        import os
+        from app.rendering.readers import LocalFile
+        return LocalFile(os.path.dirname(self.filename), self.id_, self.connection, reader="directory")
+
 
     @staticmethod
     def fromJson(a):
