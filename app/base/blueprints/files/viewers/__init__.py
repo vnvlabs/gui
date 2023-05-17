@@ -485,4 +485,5 @@ def next():
             endtime = file.root.getEndTime()
             return jsonify({"data": data, "endtime": endtime}), 200
     except BaseException as e:
+        print(e)
         return render_error(501, "Error Loading File")

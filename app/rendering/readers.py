@@ -55,11 +55,9 @@ def render_glvis(filename, **kwargs):
     path = urllib.request.pathname2url(f"/temp/files/{getUID(filename)}")
     return f"<iframe class='card' src='/static/glvis/index.html?stream={path}' style='width: 100%;height:80vh;'>"
 
-
 def render_vti(filename, **kwargs):
     path = urllib.request.pathname2url(f"/temp/files/{getUID(filename)}")
     return f"<iframe class='card' src='/static/volume/index.html?fileURL={path}' style='width: 100%;height:80vh;'>"
-
 
 def render_rst(filename, **kwargs):
     with open(filename, 'r') as f:

@@ -12,10 +12,12 @@ from . import fakejmes as jmespath
 
 
 def render_vnv_template(template, data, file, id=None):
+   try: 
     if id is None:
         return render_template(template, data=DataClass(data, data.getId(), file))
     return render_template(template, data=DataClass(data, id, file))
-
+   except Exception as e:
+       return "<h2>Error: Could not find template</h2>" 
 
 class DataClass:
     statsMethods = ["min", "max", "avg","str"]

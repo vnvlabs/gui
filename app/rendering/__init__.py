@@ -62,14 +62,22 @@ class TemplateBuild:
         self.codeblocks = None
 
     def read(self, f):
-        with open(os.path.join(self.root_dir, f), 'r') as ff:
+        try:
+          with open(os.path.join(self.root_dir, f), 'r') as ff:
             r = ff.readlines()
             return "".join(r)
-
+        except:
+            return ""
+        
     def get_code_block(self,codeblock):
         if self.codeblocks is None:
-            with open(os.path.join(self.root_dir,"codeblocks.json")) as f:
+           
+           try:
+             with open(os.path.join(self.root_dir,"codeblocks.json")) as f:
                 self.codeblocks = json.load(f)
+           except:
+                self.codeblocks = {}
+                
         return self.codeblocks.get(codeblock , "<error>")
 
     def getSourceMap(self,package, name):
@@ -83,8 +91,11 @@ class TemplateBuild:
 
     def get_type_description(self, type, package, name):
         if self.descrip is None:
-            with open(os.path.join(self.root_dir, "descriptions.json"), 'r') as w:
+           try:
+             with open(os.path.join(self.root_dir, "descriptions.json"), 'r') as w:
                 self.descrip = json.load(w)
+           except:
+                self.descrip = {}
         return self.descrip.get(type, {}).get(package + ":" + name)
 
     def get_html_file_name(self, type, package, name):

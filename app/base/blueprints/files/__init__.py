@@ -352,7 +352,7 @@ def view(id_):
             return render_template("files/tab-view.html", file=file)
     except Exception as e:
         print(e)
-        return render_error(501, e.what())
+        return render_error(501, str(e))
 
 
 @blueprint.route('/processing/<int:id_>')
