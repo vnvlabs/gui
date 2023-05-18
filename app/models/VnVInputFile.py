@@ -129,7 +129,7 @@ class VnVInputFile:
         if "empty_exec" in defs and defs["empty_exec"]:
             execObj = {}
         else:
-            execObj = self.defaultExecution
+            execObj = self.defaultExecution()
             
         if "exec" in defs:
             for key, value in defs["exec"].items():
@@ -452,7 +452,8 @@ class VnVInputFile:
 
         return VnVInputFile.EXECUTION_SCHEMA
 
-    defaultExecution = {
+    def defaultExecution(self):
+        return {
         "shell": "bash",
         "load-vnv": True,
         "working-directory": "${application_dir}",
@@ -460,13 +461,10 @@ class VnVInputFile:
         "input-file-name": "./vv-input.json",
         "input-staging": [],
         "output-staging": [],
-        "active_overrides": ["run"],
-        "overrides": {
-            "run": {
-                "command-line": "${application}",
-                "name": "Hello"
-            }
-        }
+        "command-line": "${application}",
+        "name": self.name,
+        "active_overrides": [],
+        "overrides": {}
     }
 
     def validateExecution(self, newVal):

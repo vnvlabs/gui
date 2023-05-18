@@ -93,26 +93,9 @@ def render_code(filename, **kwargs):
             return pygments.highlight(d, pygments.lexers.get_lexer_by_name("bash", stripnl=False), form)
 
 def render_csv(filename, **kwargs):
-    divid = "table-table"
     with open(filename, 'r') as f:
         reader = csv.DictReader(f)
-        tabledata = [r for r in reader]
-        columndata = [{'title': a, "field": a} for a in tabledata[0]]
-
-    return f'''
-    <div id='{divid}' style='width:100%'></div>
-    <script>
-       var tabledata = JSON.parse('{json.dumps(tabledata)}')
-       var columndata = JSON.parse('{json.dumps(columndata)}')
-       var table = new Tabulator("#{divid}", {{
- 	   height:205,
- 	   data:tabledata,
- 	   columns:columndata,
- 	   layout:"fitColumns"
-
- 	}});
- 	</script>
-    '''
+        return render_template("csv/template.html", RAWDATA=json.dumps([r for r in reader]))
 
 
 ext_map = {

@@ -1,0 +1,70 @@
+<div id="bubbleplots">
+  <div class="bubbleplot" data-num="0">
+     <div class="plot" id="plotdiv"></div>       
+      <div class="control-row" style="display:flex; justify-content:center;">
+         <div>Xaxis:</div>
+         <div style="width:90%;" ><select style="width:100%; flex:1" class="xaxis"></select></div>
+      </div>
+  </div>
+</div>
+ 
+<script>
+
+var csvdata = {}
+for (const obj in columnData) {
+      val = columnData[+obj]["title"]
+      csvdata[val]  = {
+          "data" : tabledata.map(function(r) { return r[val];}),
+          "string" : isNaN(tabledata[0][val])
+      }
+}
+
+// Default Country Data
+setBubblePlot(Object.keys(csvdata)[0]);
+       
+function setBubblePlot(xaxis) {
+    
+    xaxis_data = csvdata[xaxis]["data"]
+
+    var data = []
+
+    for ( key in csvdata) {
+        if (!csvdata[key]["string"]) {
+            data.push({
+                x: xaxis_data,
+                y: csvdata[key]["data"],
+                mode: 'lines+markers',
+                name: key,
+                marker: {
+                  size: 12, 
+                  opacity: 0.5
+                }
+            })
+        } 
+    }
+
+    var layout = {
+      title: 'VnV CSV Plotter'
+    };
+
+    Plotly.newPlot('plotdiv', data, layout, {showSendToCloud: false});
+};
+
+function assignOptions(textArray, selector) {
+  for (var i = 0; i < textArray.length;  i++) {
+      var currentOption = document.createElement('option');
+      currentOption.text = textArray[i];
+      selector.appendChild(currentOption);
+  }
+}
+
+var xaxisSelector = document.querySelector('.xaxis');
+assignOptions(Object.keys(csvdata), xaxisSelector);
+
+function updateXAxis(){
+    setBubblePlot(xaxisSelector.value);
+}  
+xaxisSelector.addEventListener('change', updateXAxis, false);
+  
+
+</script>

@@ -1,0 +1,12 @@
+
+
+<div id="rawDiv">
+  <pre id="rawDivPre"></pre>
+</div>
+
+<script>
+  const dictValuesAsCsv = tabledata.map(function(e){return columnData.map(function(ee){ return e[ee["title"]]}).join(",")})
+  
+  const result = [columnData.map(function(row){return row["title"]}).join(","), ...dictValuesAsCsv].join('\n');
+  $('#rawDivPre').html(result);
+</script>
