@@ -9,8 +9,8 @@ ENV TZ=America/New_York
 
 
 ENV THEIA_DEFAULT_PLUGINS=local-dir:/vnvgui/theia/plugins
-ENV NODE_VERSION=16.20.0
-ENV YARN_VERSION=1.22.5
+ENV NODE_VERSION=18.0.0
+ENV YARN_VERSION=1.22.19
 ENV PARAVIEW_DIR=/vnvgui/paraview 
 ENV PVPYTHON=${PARAVIEW_DIR}/bin/pvpython 
 
@@ -57,19 +57,8 @@ COPY theia /vnvgui/theia
 
 ENV PATH=/vnvgui/node/bin/:$PATH 
 
-RUN cd /vnvgui/theia && mkdir plugins \
-    && yarn --pure-lockfile && \
-    yarn theia build  
+RUN cd /vnvgui/theia && yarn --pure-lockfile && cd browser-app && yarn theia download:plugins 
 
-WORKDIR /vnvgui/theia
-RUN yarn theia download:plugins --parallel false 
-RUN yarn --production && \
-    yarn autoclean --init && \
-    echo *.ts >> .yarnclean && \
-    echo *.ts.map >> .yarnclean && \
-    echo *.spec.* >> .yarnclean && \
-    yarn autoclean --force && \
-    yarn cache clean 
 
 #Install the vnv guo
 COPY ./requirements.txt /vnvgui/gui/requirements.txt

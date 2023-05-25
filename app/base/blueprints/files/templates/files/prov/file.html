@@ -4,23 +4,23 @@
     lists path to Executable, whether it's up-to-date, and other info
  -->
 
-<div style="display: flex">
+<div style="display: flex; align-items:center;">
     <!-- display Executable prefix, it's path, and its size -->
-    <h6 style="flex:1"> {{prefix}} {{ file.getName() }} ({{file.getSize()}} Bytes)</h6>
+    <h6 style="flex:1;"> {{prefix}} {{ file.getName() }} ({{file.getSize()}} Bytes)</h6>
     <!-- 
       pill: "Modified"
         visible if file modified since Executable ran
         hover over it to see the title
     -->
     {% if file.modified() %}
-    <p  class="badge badge-warning" title="The file has been modified since this report was created">Modified</p>
+    <div class="badge badge-warning" title="The file has been modified since this report was created">Modified</div>
     <!-- 
       pill: "Up to date"
         visible if file NOT modified since Executable ran
         hover over it to see the title
     -->
     {% else %}
-    <p class="badge badge-success" title="The file has not been changed since the report was created">Up to date</a>
+    <div class="badge badge-success" title="The file has not been changed since the report was created">Up to date</div>
     {% endif %}
     <!-- 
       button: "View"
@@ -28,8 +28,7 @@
         visible if file is readable
      -->
     {%if file.readable() %}
-    <a href="#!" onclick='show_file_reader({{file.getVnVFileId()}},"{{file.getUrl()}}","{{file.reader()}}","")' class="badge badge-info"
-       style="margin-left:10px" ;>View</a>
+    <div href="#!" onclick='show_file_reader({{file.getVnVFileId()}},"{{file.getUrl()}}","{{file.reader()}}","")' class="badge badge-info" style="margin-left:10px" ;>View</div>
     {% endif %}
 
 

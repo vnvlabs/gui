@@ -21,7 +21,7 @@ from flask import render_template, make_response, render_template_string
 
 from app.models import VnV
 import app.rendering as r
-from app.rendering.readers import has_reader, LocalFile
+from app.models.readers import has_reader, LocalFile
 from app.rendering.vnvdatavis.directives.dataclass import render_vnv_template, DataClass
 
 
@@ -485,7 +485,11 @@ class ActionRender:
 
     def getHtml(self):
         t = self.templates.get_action(self.data.getPackage(), self.data.getName())
+
+        print(t)
+        print(self.templates.file)
         a = render_vnv_template(t, data=self.data.getData(), file=self.templates.file)
+
         if len(a) > 0:
             return a
         else:
@@ -736,12 +740,30 @@ class VnVFile:
     def getDataRoot(self):
         return self.getDataChildren("#")
 
+    def getDataChildren1(self, nodeId):
+        if nodeId == "#":
+            return {
+            "text" : self.filename,
+            "icon" : "feather icon-folder",
+            "li_attr" : {
+                    "fileId": self.id_,
+                    "nodeId": self.root.getId()
+            },
+            "children" : True
+        }
+
+        node = self.getById(int(nodeId)).cast()
+        return [
+
+        ]
+
     def getDataChildren(self, nodeId):
         if nodeId == "#":
             return [
                 f"Filename: {self.filename}",
                 f"Reader: {self.reader}",
                 {
+                    "icon" : "feather icon-folder",
                     "text": self.root.getName(),
                     "li_attr": {
                         "fileId": self.id_,

@@ -33,7 +33,6 @@ blueprint = Blueprint(
     url_prefix="/inputfiles"
 )
 
-
 @blueprint.route('/new', methods=["POST"])
 def new():
     try:
@@ -83,56 +82,6 @@ def save_exec(id_):
         return make_response("", 200)
 
 
-@blueprint.route('/save-issues/<int:id_>', methods=["POST"])
-def save_issues(id_):
-    try:
-        with VnVInputFile.find(id_) as file:
-            if "data" in request.args:
-                try:
-                    a = json.loads(request.args["data"])
-                    file.issues = json.dumps(a)
-                    return make_response("", 200)
-                except:
-                    return make_response("", 201)
-            return make_response("", 202)
-    except:
-        return make_response("", 203)
-
-
-@blueprint.route('/save_psip/<int:id_>', methods=["POST"])
-def save_psip(id_):
-    try:
-        with VnVInputFile.find(id_) as file:
-            if "data" in request.args:
-                try:
-                    a = json.loads(request.args["data"])
-                    file.psip = request.args["data"]
-                    return make_response("", 200)
-                except:
-                    return make_response("", 201)
-            return make_response("", 202)
-    except:
-        return make_response("", 203)
-
-
-@blueprint.route('/toggle_psip/<int:id_>', methods=["POST"])
-def enable_psip(id_):
-    try:
-        with VnVInputFile.find(id_) as file:
-            file.psip_enabled = not file.psip_enabled
-            return make_response("show" if file.psip_enabled else "hide", 200)
-    except:
-        return make_response("", 203)
-
-
-@blueprint.route('/toggle_issues/<int:id_>', methods=["POST"])
-def enable_issues(id_):
-    try:
-        with VnVInputFile.find(id_) as file:
-            file.issues_enabled = not file.issues_enabled
-            return make_response("show" if file.issues_enabled else "hide", 200)
-    except:
-        return make_response("", 203)
 
 
 @blueprint.route('/validate/<string:comp>/<int:id_>', methods=["POST"])
@@ -317,11 +266,16 @@ def configure(id_):
 
 @blueprint.route('/view/<int:id_>')
 def view(id_):
+    print("GGGGGGGGGGGGGGGGGGGGGGGGGGGGG")
+
     try:
         with VnVInputFile.find(id_) as file:
+            print("GGGGGGGGGGGGGGGGGGGGGGGGGGGGG")
+
             return render_template("inputfiles/view.html", file=file, error=request.args.get("error"))
     except Exception as e:
-        print(e)
+        import traceback
+        traceback.print_exc()
         return render_error(501, "Error Loading File")
 
 
@@ -332,6 +286,7 @@ def joblist(id_):
             return render_template("inputfiles/joblist.html", file=file)
     except Exception as e:
         return render_error(501, "Error Loading File")
+
 
 
 @blueprint.route('/delete_job/<int:id_>/<jobid>', methods=["POST"])
@@ -390,6 +345,7 @@ def update_display_name(id_):
     with VnVInputFile.find(id_) as file:
         file.displayName = request.args.get("new", file.displayName)
         return make_response(file.displayName, 200)
+
 
 
 def highlight_code(code, type):

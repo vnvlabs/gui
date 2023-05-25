@@ -11727,37 +11727,6 @@ padding: 0px 3px 0px 2px;
 
 }
 
-.glvisexit {
-    position: absolute;
-    width: 41px;
-    height: 41px;
-    margin: 1px;
-
-    font-size: 25px !important;
-    color: black !important;
-    border-radius: 100%;
-    background: #f5f5f5;
-    box-shadow: 0 3px 1px -2px rgba(0,0,0,.2),0 2px 2px 0 rgba(0,0,0,.14),0 1px 5px 0 rgba(0,0,0,.12)!important;
-}
-
-.glvis {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    width: 600px;
-    height: 500px;
-    z-index: 10000;
-    display:none;
-    padding: 10px;
-    border-radius: 10px;
-    margin: 10px;
-    background: white;
-    box-shadow: 0 1px 2.94px 6.06px rgb(4 26 55 / 81%);
-}
-
-.glvis iframe {
-    border: none;
-}
 
 
 .icon-chevron-up:before {

@@ -5,7 +5,6 @@
  -->
 <div class="fcolumn fchild"  style="padding:15px;    border: 1px solid #80808038; ">
 
-  \
     <!-- 
       header: "Provenance tab"
         lists info about Executable path, command line path, and date of executable compilation
@@ -20,11 +19,11 @@
             <!-- 
               text: "Command line path"
              -->
-            <h6>Command Line: {{ file.get_prov().get_command_line() }}</h6>
+            <h6 style="margin-bottom:4px">Command Line: {{ file.get_prov().get_command_line() }}</h6>
             <!-- 
               text: "Date of compilation"
              -->
-            <h6>Date: {{ file.get_prov().get_timestamp() }} </h6>
+            <h6 style="margin-bottom:4px">Date: {{ file.get_prov().get_timestamp() }} </h6>
     </div>
     
     <!-- 

@@ -44,7 +44,7 @@ def set_theia_forwards():
    try:
     app_config = current_app.config
     forwards = []
-    theiaforwards = subprocess.run(["ls", os.path.join(app_config["THEIA_DIR"],"lib")], stdout=subprocess.PIPE).stdout.decode(
+    theiaforwards = subprocess.run(["ls", os.path.join(app_config["THEIA_DIR"],"browser-app/lib")], stdout=subprocess.PIPE).stdout.decode(
         'ascii').split("\n")
     for line in theiaforwards:
         kk = line.replace("\t", " ")
@@ -116,12 +116,15 @@ def get_ports():
 @blueprint.before_request
 def authorize():
 
+    AUTHCODE = current_app.config["AUTH_CODE"]
+    if AUTHCODE is None or len(AUTHCODE) == 0:
+        return
 
-    if request.cookies.get("vnv-gui-code") == current_app.config["AUTH_CODE"]:
+    if request.cookies.get("vnv-gui-code") == AUTHCODE:
         return None
-    elif "code" in request.args and request.args.get("code") == current_app.config["AUTH_CODE"]:
+    elif "code" in request.args and request.args.get("code") == AUTHCODE:
         r = make_response(redirect("/"), 302)
-        r.set_cookie("vnv-gui-code", code)
+        r.set_cookie("vnv-gui-code", AUTHCODE)
         return r
     elif request.endpoint and 'static' in request.endpoint:
         return None
@@ -177,9 +180,6 @@ def proxy(path):
         if "file" in request.args:
             return render_template("pvindex1.html", sessionManagerURL="/paraview/?file=" + request.args.get("file"))
         return render_template("pvindex.html")
-
-    elif path == "glvis" or (path == "" and "glvis" in request.args):
-        return  render_template("glvis.html", websocket_address=f"{current_app.config['WSPATH']}/gws")
 
     elif path in current_app.config["THEIA_FORWARDS"]:
         PROXIED_PATH = ppath(theia, request.full_path)
@@ -320,43 +320,6 @@ def register(socketio, apps, config):
         if int(uid) != current_app.config["PARAVIEW_PORT"]:
             proces = paraview_sessions.pop(int(uid))
             kill_and_kill_children(proces.pid)
-            
-            
-
-    @sock.route("/gws")
-    def echo1(ws):
-        glvis_port = current_app.config["GLVIS_PORT"]
-        wsock = WSockApp(f"ws://localhost:{glvis_port}", ws)
-        wsock.serve()
-        while wsock.running():
-            try:
-                greeting = ws.receive()
-                wsock.send(greeting)
-            except Exception as e:
-                wsock.kill()
-
-    def wrap(pty):
-
-        @socketio.on(f"{pty}-input", namespace=f"/{pty}")
-        def pty_input(data):
-            socks[request.sid].to_docker_container(f"{pty}-input", data)
-
-        @socketio.on("resize", namespace=f"/{pty}")
-        def pyresize(data):
-            socks[request.sid].to_docker_container(f"resize", data)
-
-        @socketio.on("connect", namespace=f"/{pty}")
-        def pyconnect():
-            socks[request.sid] = SocketContainer(pty)
-
-        @socketio.on("disconnect", namespace=f"/{pty}")
-        def pydisconnect():
-            try:
-               socks.pop(request.sid)
-            except:
-                pass
-
-    wrap("pty")
 
     @socketio.on("connect", namespace=f"/services")
     def theiaconnect(**kwargs):
@@ -407,7 +370,6 @@ class Config:
     THEIA_DIR="/vnvgui/theia"
     PARAVIEW_DIR="/vnvgui/paraview"
     THEIA_PORT = 5003
-    GLVIS_PORT = 5007
     PARAVIEW_PORT = 5005
     CONTAINER_PORT = 5000
     PARAVIEW_FORWARDS = []
@@ -421,7 +383,6 @@ if __name__ == "__main__":
     parser.add_argument("--host", help="host to run on (default localhost)", default="0.0.0.0")
     parser.add_argument("--theia",type=int, help="port running theia",default=3000)
     parser.add_argument("--paraview",type=int, help="port running paraview",default=9000)
-    parser.add_argument("--glvis", type=int, help="port running glvis", default=5007)
     parser.add_argument("--vnv", type=int, help="port running vnv", default=5001)
     parser.add_argument("--wspath", type=str, help="ws path to use when connecting to paraview" )
     parser.add_argument("--code", type=str, help="authorization-code", default="")
@@ -439,7 +400,6 @@ if __name__ == "__main__":
     Config.PARAVIEW_PORT = args.paraview
     Config.CONTAINER_PORT = args.vnv
     Config.AUTH_CODE = args.code
-    Config.GLVIS_PORT = args.glvis
     Config.WSPATH = args.wspath
     Config.PARAVIEW_DIR = args.paraview_dir
     Config.THEIA_DIR = args.theia_dir
@@ -465,3 +425,4 @@ if __name__ == "__main__":
         opts["ssl_context"] = (args.ssl_cert, args.ssl_key)
 
     socketio.run(app, **opts)
+

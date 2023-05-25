@@ -13,15 +13,7 @@
 
 <!-- defines clickable tabs and their HTML paths -->
 {%with
-tablist = {
-    "browse" : ["Browse", "files/file_browser.html"],
-    "inputfile": ["VnV Input File","inputfiles/input.html"],
-    "exec": ["Execution Config","inputfiles/execute.html"],
-    "dependencies" : ["Dependencies", "inputfiles/dependencies.html"],
-    "psip" : ["PSIP", "inputfiles/psip.html"],
-    "issues" : ["Notes/Issues" , "inputfiles/issues.html"],
-    "jobs" : ["Results", "inputfiles/jobs.html"]
-}
+tablist = file.tablist()
 %}
 <!-- inclues main header HTML -->
 <div id="main_header" style="display:flex; align-items:start; margin-bottom:20px;max-width:1400px;">

@@ -15,7 +15,6 @@ from app.models.VnVConnection import VnVLocalConnection, VnVConnection, connecti
 from app.models.json_heal import autocomplete
 from app.rendering import render_rst_to_string
 from app.rendering.vnvdatavis.directives.dataclass import DataClass
-from app.rendering.vnvdatavis.directives.psip import GET_DEFAULT_PSIP
 
 
 def get_current_path(newVal, row, col):
@@ -93,12 +92,37 @@ class Dependency:
         return d
 
 
+
+
 class VnVInputFile:
     COUNTER = 5000
 
     FILES = {}
 
     DEFAULT_SPEC = {}
+
+    EXTRA_TABS = {}
+
+    def tablist(self):
+       try:
+
+            a = {
+            "exec": ["Execution Configuration", "inputfiles/execute.html"],
+            "inputfile": ["VnV Input File", "inputfiles/input.html"],
+            "dependencies": ["Dependencies", "inputfiles/dependencies.html"],
+            "browse": ["Browse", "files/file_browser.html"],
+            }
+
+            for k,v in self.extra.items():
+              if v is not None:
+                for kk,vv in v.tablist().items():
+                    a[kk] = vv
+
+            a["jobs"] =["Results", "inputfiles/jobs.html"]
+            return a
+       except Exception as e:
+           print("HEy YO ", e)
+           return {}
 
     def __init__(self, name, path=None, defs={}, plugs={}):
         self.name = name
@@ -136,19 +160,9 @@ class VnVInputFile:
                 execObj[key] = value
         
         self.exec = json.dumps(execObj, indent=4)
-            
-        # Set the PSIP configuration if it exists.
-        self.psip = GET_DEFAULT_PSIP()
-        self.psip_enabled = defs.get("psip_enabled", True)
-        if "psip" in defs:
-            self.psip = json.dumps(defs["psip"])
 
-        # Add the issues if we have them
-        self.issues = "[]"
-        self.issues_enabled = defs.get("issues_enabled", True)
+        self.extra = {}
 
-        if "issues" in defs:
-            self.issues = json.dumps(defs["issues"])
 
         # Add all the dependencies. If it is an upload depdendency then
         # we have to special case it.
@@ -162,6 +176,10 @@ class VnVInputFile:
             self.value = json.dumps(defs["input"], indent=4)
         else:
             self.value = json.dumps(VnV.getVnVConfigFile_1(), indent=4)
+
+        for k, v in VnVInputFile.EXTRA_TABS.items():
+            self.extra[k] = v(self, name, path, defs, plugs)
+
 
         # Update my plugins -- based on the input file.
         self.plugs = plugs
@@ -180,21 +198,22 @@ class VnVInputFile:
         a["value"] = self.value
         a["spec"] = self.spec
         a["specDump"] = self.specDump
-        a["psip"] = self.psip
-        a["psip_enabled"] = self.psip_enabled
-        a["issues"] = self.issues
-        a["issues_enabled"] = self.issues_enabled
         a["deps"] = self.dump_dependencies()
         a["specValid"] = self.specValid
         a["exec"] = self.exec
         a["execFile"] = self.execFile
         a["plugs"] = self.plugs
         a["rendered"] = self.rendered
+
+        a["extra"] = {}
+        for k,v in self.extra.items():
+            a["extra"][k] = v.toJson()
+
         return a
 
     def browse(self):
         import os
-        from app.rendering.readers import LocalFile
+        from app.models.readers import LocalFile
         return LocalFile(os.path.dirname(self.filename), self.id_, self.connection, reader="directory")
 
 
@@ -208,10 +227,6 @@ class VnVInputFile:
         r.load_dependencies(a.get("deps", "{}"))
         r.loadfile = a["loadfile"]
         r.value = a["value"]
-        r.psip = a.get("psip", "{}")
-        r.psip_enabled = a.get("psip_enabled", True)
-        r.issues = a.get("issues", "[]")
-        r.issues_enabled = a.get("issues_enabled", True)
         r.spec = a["spec"]
         r.specDump = a["specDump"]
         r.specValid = a["specValid"]
@@ -219,6 +234,9 @@ class VnVInputFile:
         r.exec = a["exec"]
         r.execFile = a["execFile"]
         r.plugs = a["plugs"]
+
+        for k,v in r.extra.items():
+            v.fromJson(a["extra"][k])
 
         try:
             r.specLoad = json.loads(r.spec)
@@ -519,11 +537,8 @@ class VnVInputFile:
         if "actions" not in j:
             j["actions"] = {}
 
-        if self.psip_enabled:
-            j["actions"]["VNV:PSIP"] = json.loads(self.psip)
-
-        if self.issues_enabled:
-            j["actions"]["VNV:issues"] = json.loads(self.issues)
+        for k,v in self.extra.items():
+            v.fullInputFile(j)
 
         return json.dumps(j, indent=4)
 
@@ -541,14 +556,7 @@ class VnVInputFile:
 
         return self.connection.execute_script(script, name=name, metadata=meta)
 
-    def get_psip(self):
-        if "sa" in self.psip and "ptc" in self.psip:
-            return self.psip
-        else:
-            return GET_DEFAULT_PSIP()
 
-    def get_issues(self):
-        return self.issues  # .replace('\n', '\\\\n')
 
     def write_deps(self, workdir):
         # This script is called inside the working directory.

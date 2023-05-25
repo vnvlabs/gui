@@ -1,0 +1,23 @@
+
+<div id="view_read_only_file" style="font-size:20px; height:1000px; width:100%; margin-bottom:20px;">{{TEXT}}</div>
+
+<script>
+
+$( document ).ready(function(){
+
+
+    let aceModeList = ace.require("ace/ext/modelist");
+    let mode = aceModeList.getModeForPath('{{filename}}');
+
+    var input_editor = ace.edit('view_read_only_file',
+    {
+        theme: "ace/theme/tomorrow_night_blue",
+        autoScrollEditorIntoView: true,
+        minLines: 40,
+        mode : mode.mode,
+        readOnly: true
+    });
+});
+
+</script>
+

@@ -1,0 +1,23 @@
+<div style="padding:10px; overflow:auto; display: flex; width:100% ">
+    <div id="data_tree_render" style="width:100%; overflow:auto; margin-right:10px;"></div>
+</div>
+<script>
+
+$(document).ready( function () {
+
+$('#data_tree_render').jstree(
+{
+  "core" : {
+    "animation" : 0,
+    "check_callback" : true,
+    "themes" : { "stripes" : true },
+    'data' : {{RAWDATA | safe }}
+  },
+  "plugins" : [ "wholerow" ]
+});
+
+ $("#data_tree_render").jstree("open_all");
+
+
+});
+</script>

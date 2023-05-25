@@ -18,8 +18,7 @@ def register_blueprints(apps, config):
     from .base.utils.mongo import Configured
 
     global_template_variables.update({
-        "mongo_configured": Configured,
-        "SHOW_GLVIS_IN_NAV" : config.GLVIS_IN_NAVBAR
+        "mongo_configured": Configured
     })
 
     base.config(config)

@@ -31,12 +31,6 @@ blueprint = Blueprint(
     url_prefix="/directives"
 )
 
-def glvis_process(text,data : DataClass,file):
-    content = data.query(text)
-    message_bytes = content.encode('ascii')
-    base64_bytes = base64.b64encode(message_bytes)
-    return f"/glvis_render?stream={base64_bytes}"
-
 
 context_map = {
     "plotly" : plotly_post_process,
@@ -46,7 +40,6 @@ context_map = {
     "apex": apex_post_process,
     "jscharts" : chartsjs_post_process,
     "include" : post_process_include,
-    "glvis" : glvis_process
 }
 
 @blueprint.route('/updates/<updateId>/<int:fileid>/<int:dataid>', methods=["GET"])
@@ -81,10 +74,6 @@ def chartupdates(updateId, fileid, dataid):
     except Exception as e:
         return render_error(501, "Error Loading File")
 
-@blueprint.route("/glvis_render", methods=["GET"])
-def glvisrender():
-    stream = request.args.get("stream")
-    return render_template("glvis_render.html", content = base64.b64decode(stream).decode("ascii"))
 
 @blueprint.route('/roles', methods=["POST"])
 def roleupdates():

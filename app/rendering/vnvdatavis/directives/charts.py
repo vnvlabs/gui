@@ -154,26 +154,6 @@ class TerminalDirective(JsonChartDirective):
     def register(self):
         return self.getContent()
 
-class GlvisDirective(JsonChartDirective):
-    required_arguments = 1
-    has_content = False
-    script_template = '''
-            <div  class='card' style="height:100%;">
-              <iframe id="{id_}" src="" style="flex: 1; margin-bottom: 0px; border: none;"></iframe>
-            </div>
-            <script>
-            {{
-                $(document).ready(function() {{
-                    url = "/directives/updates/{uid}/{{{{data.getFile()}}}}/{{{{data.getAAId()}}}}&context=glvis"
-                    update_now(url, "{id_}", 3000, function(config) {{
-                          $('#{id_}').attr("src",config)
-                    }});    
-               }});
-            }}
-            </script> '''
-
-    def register(self):
-        return " ".join(self.arguments)
 
 
 class TerminalDirective(JsonChartDirective):
@@ -224,7 +204,6 @@ class TerminalDirective(JsonChartDirective):
 vnv_directives["vnv-table"] = TableChartDirective
 vnv_directives["vnv-tree"] = TreeChartDirective
 vnv_directives["vnv-terminal"] = TerminalDirective
-vnv_directives["vnv-glvis"] = GlvisDirective
 
 try:
     the_app

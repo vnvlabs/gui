@@ -1,6 +1,7 @@
 try:
-    from . import notifications, files, inputfiles, directives, tempfiles, help
+    from . import browser, notifications, files, inputfiles, directives, tempfiles, help
     HAS_VNV=True
-except:
+except Exception as e:
+    print(e)
     HAS_VNV=False
     

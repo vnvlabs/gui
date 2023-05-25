@@ -13,6 +13,7 @@ from pygments.formatters.html import HtmlFormatter
 from werkzeug.utils import redirect
 from pygments.lexers import get_lexer_by_name
 
+import app.extensions.psip
 from . import blueprints
 from .utils.mongo import list_mongo_collections
 
@@ -150,9 +151,14 @@ if FIRST_TIME is None:
             pass
         
     ALL_BLUEPRINTS["notifications"] = blueprints.notifications
+    ALL_BLUEPRINTS["browser"] = blueprints.browser
+    ALL_BLUEPRINTS["psip"] = app.extensions.psip
+    ALL_BLUEPRINTS["issues"] = app.extensions.issues
+    ALL_BLUEPRINTS["moose"] = app.extensions.moose
+
+
     for k, v in ALL_BLUEPRINTS.items():
         blueprint.register_blueprint(v.blueprint)
-
 
 def GET_COOKIE_TOKEN():
     return COOKIE_PASS
@@ -197,7 +203,7 @@ def paraview_route():
 
 @blueprint.route("/ide")
 def ide_route():
-    return render_template("ide.html")
+    return render_template("ide.html", filename=request.args.get("filename",""))
 
 
 @blueprint.route("/viz")
@@ -211,18 +217,6 @@ def vis_file():
     iframe = f"""<iframe id='paraview' src="{src_url}" style="flex: 1; margin-bottom: 0px; border: none;"></iframe>"""
     return render_template(iframe,200)
 
-@blueprint.route("/glvis_full")
-def glvis_route():
-    return render_template("glvis_full.html")
-
-@blueprint.route("/glvis")
-def glvis_render_route():
-    return make_response("error",201)
-
-
-@blueprint.route("/browse")
-def browse_route():
-    return render_template("browse.html", model="inline-")
 
 @blueprint.route('/avatar/<username>')
 def avatar_route(username):

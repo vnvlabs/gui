@@ -1,0 +1,70 @@
+<!-- content shown when Report's "File Browser" tab is opened -->
+<div class="" style="padding:20px; min-height:80vh; width:100%; overflow-x:auto;" >
+
+
+{%if file.exists() %}
+
+<!-- 
+  container: "Browser buttons"
+    holds "Configure" button, "Upload" button, and the path to the build directory (which is a ul)
+ -->
+<div id ="browser-buttons" style="display:flex; position:relative; align-items:center;margin-bottom:5px; ">
+
+  <!-- 
+    list: "Path to build directory"
+      list of links to navigate to the build directory path
+      the "home" directory has an icon that looks like a house
+   -->
+<ul class="breadcrumb" style="margin-left:-15px; margin-bottom:-5px; flex:1">
+    <li class="breadcrumb-item"><a onclick='show_file_reader({{file.getVnVFileId()}},"{{file.root()}}","directory","{{modal}}")'><i class="feather icon-home" style="cursor:pointer"></i></a></li>
+    {% for i in file.crumb() %}
+         <li class="breadcrumb-item"><span style="cursor:pointer" onclick="show_file_reader({{i.getVnVFileId()}},'{{i.url()}}','{{i.reader}}','{{modal}}')">{{i.name}}</span></li>
+    {% endfor %}
+</ul>
+
+     <button class="btn btn-primary" title="edit file" style="margin-right:10px;" onclick='show_file_editor({{file.getVnVFileId()}},"{{file.url()}}")'>
+      Edit
+    </button>
+    <!-- 
+      button: "Configure"
+        configures connection by displaying input text fields for Username, Domain, and Port
+     -->
+    <button class="btn btn-primary" title="connection info" style="margin-right:10px;" onclick='show_file_reader({{file.getVnVFileId()}},"{{file.url()}}","connection","{{modal}}")'>
+      Configure
+    </button>
+
+    <!-- 
+      button: "Upload"
+        uploads new file by displaying an input text field for Filename and a button to choose the file
+     -->
+    <button class="btn btn-primary" title="upload file" style="" onclick='show_file_reader({{file.getVnVFileId()}},"{{file.url()}}","upload","{{modal}}")'>
+       Upload
+    </button>
+
+</div>
+
+<script>
+    function show_file_editor(fileId, fileurl) {
+        window.location.href = "/browser/edit/" + fileId + "?filename=" + fileurl
+    }
+</script>
+
+
+
+{% if error %}
+ <div class="alert alert-danger" role="alert">
+	{{error}}
+ </div>
+{% endif %}
+
+{{file.render(modal=modal) | safe }}
+
+</div>
+
+{% else %}
+<script>
+    $(document).ready(function(){
+        show_file_reader({{file.getVnVFileId()}},"{{file.url()}}","connection","{{modal}}")
+    });
+</script>
+{% endif %}

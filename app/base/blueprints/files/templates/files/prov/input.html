@@ -1,9 +1,13 @@
-{% with file = file.get_prov().get_input() %}
 <div class="" style="padding:15px;    border: 1px solid #80808038; ">
     <div class="card-body">
+        {% with file = file.get_prov().get_input() %}
         {% include 'files/prov/file.html' %}
         {% endwith %}
-
-        {{ file.get_prov().render_input_file() | safe }}
+        <div id="input-file-config"></div>
     </div>
 </div>
+<script>
+    $.get('/browser/render/{{file.id_}}?modal=input-file-config&reader=json&filename={{file.get_prov().get_input().getName()}}', function(data) {
+        $('#input-file-config').html(data)
+    })
+</script>

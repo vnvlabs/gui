@@ -49,7 +49,7 @@
                     {% for k,file in sourceMap.items() %}
                         {% if loop.index == 1 %}
                             {%with modal = "source-browser" %}
-                            {%include 'files/browser.html' %}
+                            {%include 'browser/browser.html' %}
                             {%endwith%}
                         {%endif%}
                     {%endfor%}
