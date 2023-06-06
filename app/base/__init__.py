@@ -37,6 +37,8 @@ def config(conf):
     AUTHENTICATE = conf.auth
 
 
+CUSTOM_BLUEPRINTS = []
+
 def updateBranding(config, pd):
     logo = config.get("logo", {})
     if "small" in logo and os.path.exists(os.path.join(pd, logo["small"])):
@@ -75,6 +77,11 @@ def updateBranding(config, pd):
         print("Update Copyright Link", COPYRIGHT_LINK)
 
     if "blueprints" in config:
+ 
+        if config.get("exclude_parents", False):
+           for k in CUSTOM_BLUEPRINTS:
+               ALL_BLUEPRINTS.pop(k)
+            
         bp = config["blueprints"]
         for k, v in bp.items():
             temp_bp_dir = os.path.join(VNV_DIR_PATH, "temp", "blueprints", k)
@@ -85,8 +92,10 @@ def updateBranding(config, pd):
             shutil.copytree(os.path.join(pd, v), temp_bp_dir, dirs_exist_ok=True)
             threading.Event().wait(1)
             ALL_BLUEPRINTS[k] = importlib.import_module("app.temp.blueprints." + k)
-
+            CUSTOM_BLUEPRINTS.append(k)
+            
     if blueprints.HAS_VNV:
+        
         if config.get("exclude_parents", False):
             blueprints.inputfiles.vnv_executables = {}
 
@@ -138,17 +147,18 @@ if FIRST_TIME is None:
         blueprints.inputfiles.vnv_executables["Custom"] = ["", "Custom Application", {}, "N/A"]
 
 
-    a = os.getenv("VNV_CONFIG")
-    if a is not None:
-       for file in a.split(":"):
-          try:
-            print("Loading configuration from: ", file)
-            with open(file, 'r') as w:
-              updateBranding(json.load(w), os.path.dirname(file))
-
-          except Exception as e:
-            print(e)
-            pass
+    #Load the users home registration file. 
+    global_reg_file = os.getenv("VNV_CONFIG", os.path.expanduser('~/.vnv'))
+    try:
+      with open(global_reg_file,'r') as g:
+        for line in g.readlines():
+          try:  
+            with open(file,'r') as w:
+                updateBranding(json.load(w), os.path.dirname(file))
+          except:
+              print("Failed to load config file specified in ", global_reg_file, ":", line )
+    except:
+        pass
         
     ALL_BLUEPRINTS["notifications"] = blueprints.notifications
     ALL_BLUEPRINTS["browser"] = blueprints.browser
