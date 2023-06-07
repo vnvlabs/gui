@@ -124,7 +124,8 @@ class VnVInputFile:
            print("HEy YO ", e)
            return {}
 
-    def __init__(self, name, path=None, defs={}, plugs={}):
+    def __init__(self, name, path=None):
+        
         self.name = name
         self.displayName = name
         self.filename = path if path is not None else "path/to/application"
@@ -143,11 +144,13 @@ class VnVInputFile:
         self.specValid = False
         self.desc = None
         self.rendered = None
-
-        # Set the command used to dump the specification
         self.specDump = "${application}"
-        if "specDump" in defs:
-            self.specDump = defs["specDump"]
+        self.plugs = {}
+
+        # Update my specification -- based on the input file.
+        self.updateSpec()
+
+        defs = self.get_executable_defaluts()
 
         # Set the execution file
         if "empty_exec" in defs and defs["empty_exec"]:
@@ -180,12 +183,10 @@ class VnVInputFile:
         for k, v in VnVInputFile.EXTRA_TABS.items():
             self.extra[k] = v(self, name, path, defs, plugs)
 
-
-        # Update my plugins -- based on the input file.
-        self.plugs = plugs
-
-        # Update my specification -- based on the input file.
-        self.updateSpec()
+        if "plugins" in defs and isinstance(defs["plugins"],dict):
+            self.plugs = defs["plugins"]
+            self.updateSpec()
+            
 
     def toJson(self):
         a = {}
@@ -354,7 +355,7 @@ class VnVInputFile:
             res = self.connection.execute(aa, env={**os.environ, "VNV_INPUT_FILE": path})
             a = res.find("===START SCHEMA DUMP===") + len("===START SCHEMA DUMP===")
             b = res.find("===END SCHEMA_DUMP===")
-            print(a, b, " sdfs")
+            
             if a > 0 and b > 0 and b > a:
                 self.spec = res[a:b]
                 self.specLoad = json.loads(self.spec)
@@ -380,7 +381,12 @@ class VnVInputFile:
 
         else:
             return self.NO_INFO
-
+        
+    def get_executable_defaluts(self):
+        if self.specLoad is not None:
+            desc = self.specLoad.get("definitions", {}).get("executable", {}).get("default",{})
+        return {}
+    
     VNVINPUTFILEDEF = 1022334234443
 
     def get_executable_description(self):
@@ -595,7 +601,7 @@ class VnVInputFile:
         if a is not None:
             raise Exception("Name is taken")
         else:
-            f = VnVInputFile(name, path=path, defs=defs, plugs=plugs)
+            f = VnVInputFile(name, path=path)
 
         VnVInputFile.FILES[f.id_] = f
         return f

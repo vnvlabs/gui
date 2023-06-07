@@ -148,17 +148,14 @@ if FIRST_TIME is None:
 
 
     #Load the users home registration file. 
-    global_reg_file = os.getenv("VNV_CONFIG", os.path.expanduser('~/.vnv'))
-    try:
-      with open(global_reg_file,'r') as g:
-        for line in g.readlines():
+    global_reg_file = os.getenv("VNV_CONFIG", "")
+    reg_files = global_reg_file.split(":")
+    for line in reg_files:
           try:  
             with open(file,'r') as w:
                 updateBranding(json.load(w), os.path.dirname(file))
           except:
-              print("Failed to load config file specified in ", global_reg_file, ":", line )
-    except:
-        pass
+              print("Failed to load declared config file: ", line )
         
     ALL_BLUEPRINTS["notifications"] = blueprints.notifications
     ALL_BLUEPRINTS["browser"] = blueprints.browser

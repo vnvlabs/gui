@@ -40,12 +40,10 @@ def new():
         c = request.form.get("executable")
         if c == "Custom":
             path = request.form["path"]
-            defs = {}
         else:
             path = os.path.join(VnVInputFile.VNV_PREFIX, vnv_executables.get(c)[0])
-            defs = vnv_executables.get(c)[2]
 
-        file = VnVInputFile.add(request.form["name"], path, defs=defs, plugs=vnv_plugins)
+        file = VnVInputFile.add(request.form["name"], path)
 
         return make_response(redirect(url_for("base.inputfiles.view", id_=file.id_)),302)
 
