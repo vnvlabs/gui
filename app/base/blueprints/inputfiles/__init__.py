@@ -41,7 +41,7 @@ def new():
         if c == "Custom":
             path = request.form["path"]
         else:
-            path = os.path.join(VnVInputFile.VNV_PREFIX, vnv_executables.get(c)[0])
+            path = os.path.join(VnVInputFile.VNV_PREFIX, vnv_executables.get(c)["filename"])
 
         file = VnVInputFile.add(request.form["name"], path)
 
@@ -372,7 +372,7 @@ def execute(id_):
 
 
 def list_vnv_executables():
-    return [[k, v[1], v[3]] for k, v in vnv_executables.items()]
+    return [[k, v["description"], v["package"]] for k, v in vnv_executables.items()]
 
 
 def list_input_file_types():

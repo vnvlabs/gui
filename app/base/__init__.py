@@ -13,7 +13,6 @@ from pygments.formatters.html import HtmlFormatter
 from werkzeug.utils import redirect
 from pygments.lexers import get_lexer_by_name
 
-import app.extensions.psip
 from . import blueprints
 from .utils.mongo import list_mongo_collections
 
@@ -39,7 +38,43 @@ def config(conf):
 
 CUSTOM_BLUEPRINTS = []
 
+
+DEFAULT_SCHEMA = {
+    "logo" : {
+        "small" : "<filename>",
+        "icon" : "<filename: image>",
+        "large" : "<filename: image>",
+ 
+    },
+    "home" : "<filename: html shown in main view after logging in.>",
+    "title" : "<string - title at top of window>",
+    "copyright" : {
+        "message" : "<string - copyright message bottom left >",
+        "link" : "<string http address to go to when copyright message is clicked"
+    },
+    "exclude_parent_blueprints" : "<bool - dont include any previously defined blueprints",
+    "exclude_parent_executables" : "<bool - dont include any previously defined executables",
+    "exclude_parent_reports" : "<bool - dont include any previously defined reports",
+    "blueprints" : {
+        "name" : "<directory containing a __init__.py file with the blueprint defined in it",
+        "name1" : "<directory containing a __init__.py file with the blueprint defined in it",  
+        "etc" : "for info on how to write a blueprint, see the psip example.", 
+    },
+    "executables" : {
+       "name" : {"filename" : "<path to executable>" , "description" : "<string>", "package" : "<string>"},
+       "name1" : {"filename" : "<path to executable>" , "description" : "<string>", "package" : "<string>"},  
+       "etc" : {"filename" : "<path to executable>" , "description" : "<string>", "package" : "<string>"}
+    },
+    "reports" : {
+        "name" : {"filename" : "<path to report file>" , "reader" : "reader used to read report", "description" : "<string>"},
+        "name1" : {"filename" : "<path to report file>" , "reader" : "reader used to read report", "description" : "<string>"},
+        "etc" : {"filename" : "<path to report file>" , "reader" : "reader used to read report", "description" : "<string>"}
+    }
+}
+
+
 def updateBranding(config, pd):
+    
     logo = config.get("logo", {})
     if "small" in logo and os.path.exists(os.path.join(pd, logo["small"])):
         global LOGO_SMALL
@@ -78,9 +113,9 @@ def updateBranding(config, pd):
 
     if "blueprints" in config:
  
-        if config.get("exclude_parents", False):
-           for k in CUSTOM_BLUEPRINTS:
-               ALL_BLUEPRINTS.pop(k)
+        if config.get("exclude_parent_blueprints", False):
+               for k in CUSTOM_BLUEPRINTS:
+                   ALL_BLUEPRINTS.pop(k)
             
         bp = config["blueprints"]
         for k, v in bp.items():
@@ -96,21 +131,18 @@ def updateBranding(config, pd):
             
     if blueprints.HAS_VNV:
         
-        if config.get("exclude_parents", False):
+        if config.get("exclude_parent_excutables", False):
             blueprints.inputfiles.vnv_executables = {}
 
         for key, value in config.get("executables", {}).items():
-            blueprints.inputfiles.vnv_executables[key] = [
-                os.path.join(pd, value["filename"]),
-                value.get("description", "No Description Available"),
-                value.get("defaults", {}),
-                value.get("packageName", "VnV")
-            ]
+                        
+            blueprints.inputfiles.vnv_executables[key] = {
+                "filename" :  os.path.join(pd, os.path.expandvars(value["filename"])),
+                "description" : value.get("description", "No Description Available"),
+                "package" :  value.get("package", "VnV")
+            }
 
-        for key, value in config.get("plugins", {}).items():
-            blueprints.inputfiles.vnv_plugins[key] = os.path.join(pd, value.get("filename", ""))
-
-        blueprints.files.load_defaults(config.get("reports", {}),  config.get("exclude_parents", False))
+        blueprints.files.load_defaults(config.get("reports", {}),  config.get("exclude_parent_reports", False))
 
 
 FIRST_TIME = None
@@ -141,11 +173,14 @@ if FIRST_TIME is None:
             "files": blueprints.files,
             "temp": blueprints.tempfiles,
             "help": blueprints.help,
-            "directives": blueprints.directives
+            "directives": blueprints.directives,
         }
         
-        blueprints.inputfiles.vnv_executables["Custom"] = ["", "Custom Application", {}, "N/A"]
-
+        blueprints.inputfiles.vnv_executables["Custom"] = {
+            "filename" : "",
+            "description" : "Custom Path",
+            "package" : ""   
+        }
 
     #Load the users home registration file. 
     global_reg_file = os.getenv("VNV_CONFIG", "")
@@ -156,12 +191,12 @@ if FIRST_TIME is None:
                 updateBranding(json.load(w), os.path.dirname(file))
           except:
               print("Failed to load declared config file: ", line )
-        
+    
+    
     ALL_BLUEPRINTS["notifications"] = blueprints.notifications
     ALL_BLUEPRINTS["browser"] = blueprints.browser
-    ALL_BLUEPRINTS["psip"] = app.extensions.psip
-    ALL_BLUEPRINTS["issues"] = app.extensions.issues
-    ALL_BLUEPRINTS["moose"] = app.extensions.moose
+    
+    
 
 
     for k, v in ALL_BLUEPRINTS.items():
