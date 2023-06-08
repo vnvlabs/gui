@@ -66,12 +66,14 @@ RUN cd /vnvgui/gui \
     && virtualenv virt \
     && virt/bin/pip install -r ./requirements.txt 
 
+
 #Install Pavaview server (used for visualization) 
 COPY . /vnvgui/gui
 LABEL VNV_GUI_EQUIPT=1
 RUN  mkdir /vnvgui/paraview
 RUN tar -xf /vnvgui/gui/pv.tar.gz -C /vnvgui/paraview --strip-components=1 && rm /vnvgui/gui/pv.tar.gz 
 
+RUN cd /vnvgui/gui/app/moose/pyhit/hitsrc && make hit bindings 
 
 WORKDIR /vnvgui/gui
 RUN mv docker/*.sh ./ 

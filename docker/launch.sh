@@ -27,8 +27,10 @@ bin/pvpython -m paraview.apps.visualizer --host ${HOSTNAME} --data /home/user --
 cd /vnvgui/gui
 virt/bin/python ./run.py \
                 --host ${HOSTNAME} \
-                --port ${GUI_PORT} ${@:1} > /vnvgui/logs/gui_logs &
+                --port ${GUI_PORT} ${@:1} &> /vnvgui/logs/gui_logs &
 
+
+echo "Now Running on port $HOST_PORT!"
 
 # Launch the VnV Router on the Resource.
 virt/bin/python router.py \
