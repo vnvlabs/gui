@@ -99,7 +99,7 @@ def hive_save_endpoint():
 
     return make_response(jsonify({"error" : "file not found"}), 404)
 
-@blueprint.route("/hive/format", methods=["POST"])
+@blueprint.route("/hive/format", methods=["GET"])
 def hive_format_endpoint():
     text = request.args.get("val")
     schemaId = request.args.get("schema")
@@ -131,6 +131,17 @@ def hive_schema_endpoint():
         result = hive.set_schema(exe, reload=True)
         return make_response(result,200)
     return make_response("Error: File not found ", 404)
+
+@blueprint.route("/hive/mesh", methods=["POST"])
+def hive_mesh_endpoint():
+    text = request.args.get("val")
+    schemaId = request.args.get("schema")
+
+    hive = get_hive_file(schemaId)
+    if hive is not None:
+        mess,code = hive.regenerate_mesh(text)
+        return make_response(mess,code)
+    return make_response(jsonify([]), 404)
 
 @blueprint.route("/reader/<int:id_>", methods=["GET", "POST"])
 def reader(id_):
