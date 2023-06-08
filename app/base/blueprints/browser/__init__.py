@@ -8,7 +8,7 @@ from werkzeug.utils import redirect
 from app.base.utils.utils import render_error
 
 from app.models.VnVConnection import MAIN_CONNECTION, SetMainConnection, SetFileConnection, VnVLocalConnection
-from app.models.readers import LocalFile
+from app.models.readers import LocalFile, get_hive_file
 
 try:
     from app.models.VnVFile import VnVFile
@@ -73,6 +73,64 @@ def render(id_):
 
     except Exception as e:
         return render_error(203,"Could not open file", nohome=True)
+
+@blueprint.route("/hive/autocomplete", methods=["GET"])
+def hive_autocomplete_endpoint():
+    text = request.args.get("val")
+    row = request.args.get("row")
+    col = request.args.get("col")
+    pre = request.args.get("pre")
+    schema = request.args.get("schema")
+    hive = get_hive_file(schema)
+    if hive is not None:
+        autocomplete = hive.autocomplete(text=text, row=row, col=col, prefix=pre)
+        return make_response(jsonify(autocomplete),200)
+    return make_response(jsonify([]), 404)
+
+
+@blueprint.route("/hive/save", methods=["POST"])
+def hive_save_endpoint():
+    text = request.args.get("val")
+    schemaId = request.args.get("schema")
+
+    hive = get_hive_file(schemaId)
+    if hive is not None:
+        return make_response(jsonify(hive.save(text)),200)
+
+    return make_response(jsonify({"error" : "file not found"}), 404)
+
+@blueprint.route("/hive/format", methods=["POST"])
+def hive_format_endpoint():
+    text = request.args.get("val")
+    schemaId = request.args.get("schema")
+
+    hive = get_hive_file(schemaId)
+    if hive is not None:
+        return make_response(hive.format(text),200)
+
+    return make_response(text, 404)
+
+@blueprint.route("/hive/validate", methods=["GET"])
+def hive_validate_endpoint():
+    text = request.args.get("val")
+    schemaId = request.args.get("schema")
+
+    hive = get_hive_file(schemaId)
+    if hive is not None:
+        return make_response(jsonify(hive.validate(text)),200)
+    return make_response(jsonify([]), 404)
+
+@blueprint.route("/hive/schema", methods=["POST"])
+def hive_schema_endpoint():
+
+    schemaId = request.args.get("schema")
+    exe = request.args.get("val")
+
+    hive = get_hive_file(schemaId)
+    if hive is not None:
+        result = hive.set_schema(exe, reload=True)
+        return make_response(result,200)
+    return make_response("Error: File not found ", 404)
 
 @blueprint.route("/reader/<int:id_>", methods=["GET", "POST"])
 def reader(id_):

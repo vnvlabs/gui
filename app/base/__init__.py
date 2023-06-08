@@ -184,7 +184,8 @@ if FIRST_TIME is None:
 
     #Load the users home registration file. 
     global_reg_file = os.path.expanduser("~/.vnv")
-    with open(global_reg_file,'r') as f:
+    try:
+     with open(global_reg_file,'r') as f:
         reg = json.load(f)
         
         for package,filename in reg["gui"].items():
@@ -192,11 +193,14 @@ if FIRST_TIME is None:
                 with open(filename,'r') as w:
                    updateBranding(json.load(w), os.path.dirname(filename))
             except:
-                print("Failed to load declared config file: ", line )
-    
-    
-    ALL_BLUEPRINTS["notifications"] = blueprints.notifications
-    ALL_BLUEPRINTS["browser"] = blueprints.browser
+                print("Failed to load declared config file: ", filename )
+    except:
+        pass
+
+    from app.base.blueprints import notifications
+    from app.base.blueprints import browser
+    ALL_BLUEPRINTS["notifications"] = notifications
+    ALL_BLUEPRINTS["browser"] = browser
     
     for k, v in ALL_BLUEPRINTS.items():
         blueprint.register_blueprint(v.blueprint)
