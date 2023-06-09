@@ -1054,8 +1054,6 @@ class VnVFile:
         return self.getCommObj().keys()
 
     def get_injection_point(self, id):
-        if (id == 226 ) :
-            print ("GGGGGGGGGGGGGGGGGG")
         a = self.getById(id)
         if a is not None and a.getTypeStr() == "InjectionPoint":
             return a.cast()

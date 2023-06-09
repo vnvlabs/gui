@@ -181,11 +181,12 @@ class VnVInputFile:
             self.value = json.dumps(VnV.getVnVConfigFile_1(), indent=4)
 
         for k, v in VnVInputFile.EXTRA_TABS.items():
-            self.extra[k] = v(self, name, path, defs, plugs)
+            self.extra[k] = v(self, name, path, defs, defs.get("plugs",{}))
 
         if "plugins" in defs and isinstance(defs["plugins"],dict):
             self.plugs = defs["plugins"]
-            self.updateSpec()
+
+        self.updateSpec()
             
 
     def toJson(self):

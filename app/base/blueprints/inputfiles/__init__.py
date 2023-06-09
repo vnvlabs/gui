@@ -264,12 +264,9 @@ def configure(id_):
 
 @blueprint.route('/view/<int:id_>')
 def view(id_):
-    print("GGGGGGGGGGGGGGGGGGGGGGGGGGGGG")
 
     try:
         with VnVInputFile.find(id_) as file:
-            print("GGGGGGGGGGGGGGGGGGGGGGGGGGGGG")
-
             return render_template("inputfiles/view.html", file=file, error=request.args.get("error"))
     except Exception as e:
         import traceback

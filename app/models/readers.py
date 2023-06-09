@@ -185,10 +185,14 @@ class HiveFile():
             with open(os.path.join(self.cwd, f"{self.uuid}.i"),'w') as f:
                 f.write(text)
 
-                a = subprocess.check_output([self.moose_executable, "-i", f"{self.uuid}.i", "--mesh-only"], cwd=self.cwd, timeout=10).decode('ascii')
-            return f"/pv?file={os.path.join(self.cwd, f'{self.uuid}_in.e')}" ,200
+                a = subprocess.run([self.moose_executable, "-i", f"{self.uuid}.i", "--mesh-only"], cwd=self.cwd, timeout=10, capture_output=True)
+                mfile = os.path.join(self.cwd, f'{self.uuid}_in.e')
+                if a.returncode == 0 and os.path.exists(mfile):
+                    return f"/pv?file={os.path.join(self.cwd, f'{self.uuid}_in.e')}" ,200
         except Exception as e:
-            return "mesh generation failed", 201
+            pass
+
+        return "mesh generation failed", 201
     def validate(self, text):
         try:
             with open(os.path.join(self.cwd, f"{self.uuid}.i"), 'w') as f:
@@ -197,19 +201,22 @@ class HiveFile():
                     ["/home/user/software/moose/examples/ex01_inputfile/ex01-opt", "-i", "ex01.i", "--check-input"],
                     capture_output=True)
 
-                a = subprocess.run([self.moose_executable, "-i", f"{self.uuid}.i", "--check-input","--color","off"], cwd=self.cwd, capture_output=True, timeout=10).decode('ascii')
+                a = subprocess.run([self.moose_executable, "-i", f"{self.uuid}.i", "--check-input","--color","off"], cwd=self.cwd, capture_output=True, timeout=10)
+                stdout = a.stdout.decode("ascii")
+                stderr = a.stderr.decode("ascii")
                 if a.returncode == 0:
-                    aa = a.stdout.find("*** WARNING ***")
+                    aa = stdout.find("*** WARNING ***")
                     if aa > 0:
-                        return [{"row": 0, "column": 1, "text": a.stdout[aa:], "type": 'warning',"source": 'vnv'}]
+                        return [{"row": 0, "column": 1, "text": stdout[aa:], "type": 'warning',"source": 'vnv'}]
                     return []
                 else:
-                    start = a.stderr.decode('ascii').find("*** ERROR ***")
-                    end = a.stderr.find("Stack Frames")
-                    if end < 0:
-                        end = len(a.stderr)
 
-                    mess = a.stderr[start:end]
+                    start = stderr.find("*** ERROR ***")
+                    end = stderr.find("Stack Frames")
+                    if end < 0:
+                        end = len(stderr)
+
+                    mess = stderr[start:end]
                     return [{"row": 0, "column": 1, "text": mess, "type": 'error',"source": 'vnv'}]
 
         except Exception as e:
