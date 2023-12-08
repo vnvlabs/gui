@@ -1,7 +1,7 @@
 #!/bin/bash 
 
 # Launch with mapping Theia and Paraview. This is used by the serve app
-
+DIRECT="${1:-/vnvgui/gui}"
 HOST_PORT=5000
 PARAVIEW_PORT=9000
 THEIA_PORT=3000
@@ -24,7 +24,7 @@ cd /vnvgui/paraview
 bin/pvpython -m paraview.apps.visualizer --host ${HOSTNAME} --data /home/user --port ${PARAVIEW_PORT} --timeout 600000 &> /vnvgui/logs/paraview_logs &
 
 #Run the vnv gui
-cd /vnvgui/gui
+cd $DIRECT
 virt/bin/python ./run.py \
                 --host ${HOSTNAME} \
                 --port ${GUI_PORT} ${@:1} &> /vnvgui/logs/gui_logs &
