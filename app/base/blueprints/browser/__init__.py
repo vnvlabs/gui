@@ -24,8 +24,9 @@ blueprint = Blueprint(
 )
 @blueprint.route("")
 def browse_route():
-    return render_template("browser/browse.html", model="inline-")
-
+    filename = request.args.get("filename","")
+    return render_template("browser/browse.html", model="inline-", filename=filename)
+    
 @blueprint.route("/edit/<int:id_>", methods=["GET", "POST"])
 def edit_file(id_):
     filename=request.args.get("filename")

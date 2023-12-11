@@ -17,6 +17,9 @@ function upload_file_b(vnvfileid, filename, type, options) {
 }
 
 function show_file_reader(vnvfileid, filename, reader , type, options) {
+       
+        var pageUrl = '?filename=' + encodeURIComponent(filename);
+        window.history.pushState('', '', pageUrl);
 
        if (type.length == 0 ) {
          $('#file_viewer_modal').modal('show')
@@ -24,7 +27,7 @@ function show_file_reader(vnvfileid, filename, reader , type, options) {
            $('#file_viewer_modal_body').html("<div>Loading...</div>")
          }
          $('#file_view_modal_dialog').css("max-width","90%")
-       } else if (options && !("noload" in options)) {
+       } else if (!options || !("noload" in options)) {
          $('#' + type ).html("<div>Loading...</div>")
        }
 

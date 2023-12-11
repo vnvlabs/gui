@@ -112,13 +112,13 @@ $( document ).ready(function(){
 
     input_editor.session.on('change', function(delta) {
 
-        $.get("/browser/hive/validate?schema={{hive.uuid}}&val=${encodeURIComponent(input_editor.getValue())}", function(data, s, xhr) {
+        $.get(`/browser/hive/validate?schema={{hive.uuid}}&val=${encodeURIComponent(input_editor.getValue())}`, function(data, s, xhr) {
                 input_editor.session.setAnnotations(data)
         });
     });
 
     //validate
-    $.get("/browser/hive/validate?schema={{hive.uuid}}&val=${encodeURIComponent(input_editor.getValue())}", function(data, s, xhr) {
+    $.get(`/browser/hive/validate?schema={{hive.uuid}}&val=${encodeURIComponent(input_editor.getValue())}`, function(data, s, xhr) {
                 input_editor.session.setAnnotations(data)
         });
 
