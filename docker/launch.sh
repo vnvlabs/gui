@@ -44,7 +44,7 @@ echo "Parview PID is $!"
 cd $DIRECT
 virt/bin/python ./run.py \
                 --host ${HOSTNAME} \
-                --port ${GUI_PORT} ${@:1}  &
+                --port ${GUI_PORT} ${@:1} &> /vnvgui/logs/gui_logs &
 echo "GUI PI is $!"
 
 
@@ -56,7 +56,7 @@ virt/bin/python router.py \
 	        --port ${HOST_PORT}\
 	        --vnv ${GUI_PORT}  \
             --theia ${THEIA_PORT} \
-            --paraview ${PARAVIEW_PORT} ${@:1} 
+            --paraview ${PARAVIEW_PORT} ${@:1} &> /vnvgui/logs/router_logs 
 
 
 
