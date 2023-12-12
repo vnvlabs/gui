@@ -262,7 +262,8 @@ def compute_value_completion(param , is_quoted, has_space, syntax, document_text
             ref = param["options"].split(' ')
             for option in ref:
                 item = {
-                    "label": option,
+                    "name": option,
+                    "insertText" : option,
                     "kind": "enumMember"
                 }
                 if ('option_docs' in param and option in param["option_docs"]):
@@ -351,8 +352,9 @@ def paramDefault(param):
 
 
 def compute_completion(document_text, line, character, syntax, parser):
-    
-    document_text_vec = document_text.split()
+    line = int(line)
+    character = int(character)
+    document_text_vec = document_text.split("\n")
     
     completions = []
     
@@ -448,7 +450,7 @@ def compute_completion(document_text, line, character, syntax, parser):
     match = otherParameter.search(text_line)
     if match:
         param_name = match.group(1)
-        is_quoted = match.group(2)[0] == "'"
+        is_quoted = len(match.group(2)) and match.group(2)[0] == "'"
         has_space = bool(match.group(3))
 
         param = valid_params.get(param_name)
@@ -481,8 +483,8 @@ def get_suggestions(document_text, line, character, syntax) :
         parser.parse(document_text)
         if parser.tree:
             return compute_completion(document_text, line, character, Syntax(syntax), parser)
-    except:
-        pass
+    except Exception as e:
+        print(e)
 
     # no completion available
     return []
