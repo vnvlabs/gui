@@ -1,8 +1,8 @@
 import os
 import re
-
-from app.moose import pyhit as py
-
+import subprocess
+import json
+import app.moose.pyhit as pyhit 
 
 def find_moose_executable(loc, **kwargs):
     """
@@ -80,6 +80,8 @@ def find_moose_executable_recursive(loc=os.getcwd(), **kwargs):
             break
     return executable
 
+def load_moose_file(text):
+    return pyhit.load(text)
 
 import re
 
@@ -91,19 +93,19 @@ std_vector_pattern = re.compile(r'^std::([^:]+::)?vector<([a-zA-Z0-9_]+)(,\s?std
 vec_pattern = re.compile(r'^std::vector<([^>]+)>$')
 
 def object_assign(target, *sources):
-    result = target.copy()
     for source in sources:
-        result.update(source)
-    return result
+        target.update(source)
+    return target
 
 
 class Syntax:
     def __init__(self, tree):
         self.tree = tree
 
-    def getSyntaxNode(self, path: Array[str]):
+    def getSyntaxNode(self, path):
         if not len(path):
             return None
+
 
         b = self.tree["blocks"][path[0]]
         if b is None:
@@ -120,7 +122,7 @@ class Syntax:
 
         return b
 
-    def getSubblocks(self, path: Array[str]):
+    def getSubblocks(self, path):
         if not len(path):
             return list(self.tree["blocks"].keys())
 
@@ -137,11 +139,14 @@ class Syntax:
 
         return sorted(ret)
 
+    def path_to_list(self,obj):
+        return [a.name for a  in obj[1:]]
+
     def getParameters(self, path, ptype):
         ret = {}
         object_assign(ret, self.tree["global"]["parameters"])
 
-        b = self.getSyntaxNode(path)
+        b = self.getSyntaxNode(self.path_to_list(path))
         if b is None:
             return ret
 
@@ -203,17 +208,22 @@ class Parser:
     def __init__(self):
         self.tree =None
     
-    def parse(text):
-        self.tree =  py.load(text)        
+    def parse(self, text):
+        self.tree =  pyhit.load(text)        
 
     def get_block_list(self):
-        return self.tree.get_block_list()
+        return self.tree.children()
         
     def get_block_at_position(self, line, character):
-        return self.tree.get_block_at_line(line)
+        main_lines = list(self.tree.descendants)
+        res = main_lines[0]
+        for des in main_lines[1:]:
+            if des.line() > line:
+                return res
+            res = des
         
     def get_block_parameters(self, node):
-        return node.get_parameter()
+        return node.params()
 
 
 def compute_filename_completion(regex, doc_vec, line, character):
@@ -227,7 +237,7 @@ def isVectorOf(yamlType, type):
     return match and (match.group(2) == type)
 
 
-def compute_value_completion(param , is_quoted, has_space, syntax): 
+def compute_value_completion(param , is_quoted, has_space, syntax, document_text_vec, line, character, parser): 
     
     
     single_ok =  not has_space
@@ -263,19 +273,19 @@ def compute_value_completion(param , is_quoted, has_space, syntax):
             return completions
 
     # Perform the match
-    match = pattern.match(param["cpp_type"])
+    match = vec_pattern.match(param["cpp_type"])
     if ((match and not vector_ok) or (not match and  not single_ok)):
         return []
     
 
     basic_type = match[1] if match else param["cpp_type"]
-    if (basic_type === 'FileName') :
+    if (basic_type == 'FileName') :
         return compute_filename_completion(re.compile(".*"), document_text_vec, line, character)
     
-    if (basic_type === 'MeshFileName') :
+    if (basic_type == 'MeshFileName') :
         return compute_filename_completion(re.compile(".*\.(e|exd|dat|gmv|msh|inp|xda|xdr|vtk)$"), document_text_vec, line, character)
     
-    if (basic_type === 'OutputName') :
+    if (basic_type == 'OutputName') :
         
         def f():
             ref1 = ['exodus', 'csv', 'console', 'gmv', 'gnuplot', 'nemesis', 'tecplot', 'vtk', 'xda', 'xdr']
@@ -301,11 +311,11 @@ def compute_value_completion(param , is_quoted, has_space, syntax):
             
             if (match[-2:] == '/*'):
                 key = match[0:-1]
-                for blockp in block_list
+                for blockp in block_list:
 
                     block = blockp["path"].join('/')
 
-                    if (block[0:len(key)] == key) 
+                    if (block[0:len(key)] == key):
                         label = block[len(key):]
                         if (label.find('/') < 0):
                             completions.append({
@@ -336,25 +346,25 @@ def paramDefault(param):
                 return 'true'
             
         
-        return param.default
+        return param["default"]
     return None
 
 
 def compute_completion(document_text, line, character, syntax, parser):
     
-    document_text_vec = document_text.split("/n")
+    document_text_vec = document_text.split()
     
     completions = []
     
     # current line up to the cursor position
-    line = document_text_vec[line][0:character]
+    text_line = document_text_vec[line][0:character]
     
     # get the type pseudo path (for the yaml)
     cp = parser.get_block_at_position(line, character)
     
-    if is_open_bracket_pair(line):
+    if is_open_bracket_pair(text_line):
         # get a partial path
-        line_match = re.match(inside_block_tag, line)
+        line_match = re.match(insideBlockTag, text_line)
         if line_match:
             partial_path = line_match.group(1).replace(r'^\.\//', '').split('/')
             partial_path.pop()
@@ -362,8 +372,8 @@ def compute_completion(document_text, line, character, syntax, parser):
             partial_path = []
 
         # get the postfix (to determine if we need to append a ] or not)
-        post_line = document_text_vec[line][character:character+1]document.get_text(
-      
+        post_line = document_text_vec[line][character:character+1]
+        
         # add block close tag to suggestions
         block_postfix = "" if len(post_line) > 0 and post_line[0] == "]" else "]"
         if cp.path and partial_path:
@@ -391,11 +401,11 @@ def compute_completion(document_text, line, character, syntax, parser):
         return completions
 
     # get parameters we already have and parameters that are valid
-    existing_params = parser.get_block_parameters(cp.node)
-    valid_params = syntax.get_parameters({"path": cp.path, "type": existing_params["type"]})
+    existing_params = { a[0] : a[1] for a  in parser.get_block_parameters(cp) }
+    valid_params = syntax.getParameters(cp.path, existing_params.get("type"))
 
     # suggest parameters
-    if is_parameter_completion(line):
+    if is_parameter_complet(text_line):
         # loop over valid parameters
         for name, param in valid_params.items():
             # skip deprecated params
@@ -406,18 +416,18 @@ def compute_completion(document_text, line, character, syntax, parser):
                 continue
 
             # format the default value
-            default_value = param_default(param) or ""
+            default_value = paramDefault(param) or ""
             if " " in default_value:
                 default_value = f"'{default_value}'"
 
             # set icon and build completion
             icon = (
                 "parameter"
-                if param["name"] == "type"
+                if param.get("name","") == "type"
                 else "constructor"
-                if param["required"]
+                if param.get("required",False)
                 else "variable"
-                if param["default"] is not None
+                if param.get("default") is not None
                 else "field"
             )
             completions.append(
@@ -425,17 +435,17 @@ def compute_completion(document_text, line, character, syntax, parser):
                     "label": param["name"],
                     "insertText": f"{param['name']} = {default_value if default_value else ''}",
                     "insertTextFormat": "snippet" if default_value else None,
-                    "documentation": param["description"],
-                    "detail": f"(required) {param_default(param)}",
+                    "documentation": param.get("description","No description available"),
+                    "required" : param.get("required",False),
                     "kind": icon,
-                    "tags": ["depreciated"] if param["deprecated"] else [],
+                    "tags": ["depreciated"] if param.get("deprecated",False) else [],
                 }
             )
 
         return completions
 
     # value completion
-    match = other_parameter.search(line)
+    match = otherParameter.search(text_line)
     if match:
         param_name = match.group(1)
         is_quoted = match.group(2)[0] == "'"
@@ -456,21 +466,57 @@ def compute_completion(document_text, line, character, syntax, parser):
                 if sub_path.startswith(path):
                     sub_path = sub_path[len(path) + 1:]
                     if "/" not in sub_path:
-                        completions.append({"label": sub_path, "kind": SymbolKind.Array})
+                        completions.append({"label": sub_path, "kind": "Array"})
             return completions
         else:
-            completions = compute_value_completion(param, , is_quoted, has_space, syntax)
+            completions = compute_value_completion(param, is_quoted, has_space, syntax, document_text_vec, line, character, parser)
 
     return completions
 
 
 
 def get_suggestions(document_text, line, character, syntax) :
-          parser = Parser()
-          parser.parse(document_text)
-          if parser.tree:
-                return compute_completion(document_text, line, character, syntax, parser)
-
+    try:
+        parser = Parser()
+        parser.parse(document_text)
+        if parser.tree:
+            return compute_completion(document_text, line, character, Syntax(syntax), parser)
+    except:
+        pass
 
     # no completion available
     return []
+
+    
+
+def extract_moose_schema( filename, **kwargs):
+
+        if filename is None:
+            return {}, "No Schema Provided"
+        
+        elif not os.path.exists(filename):
+            return {}, "Executable does not exist"
+
+        try:
+            args = kwargs.get("args",["--json"])
+            cwd = kwargs.get("cwd", os.path.dirname(filename))
+            a = subprocess.check_output([filename] + args, cwd=cwd, timeout=10).decode('ascii')
+            akey = "**START JSON DATA**"
+            ekey = "**END JSON DATA**"
+            start_pos = a.find(akey) + len(akey)
+            end_pos = a.find(ekey)
+            return json.loads(a[start_pos:end_pos])
+           
+        except Exception as e:
+            print(e)
+            return {}, "Error: " + str(e)
+
+
+
+if __name__ == "__main__":
+    
+    with open("ex01.i",'r') as f:
+        val = f.read()
+        schema = extract_moose_schema("/vnvlabs/applications/moose/examples/ex01_inputfile/ex01-opt")
+        
+        print(get_suggestions(val, 20, 30, schema))

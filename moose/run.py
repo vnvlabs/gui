@@ -91,10 +91,9 @@ std_vector_pattern = re.compile(r'^std::([^:]+::)?vector<([a-zA-Z0-9_]+)(,\s?std
 vec_pattern = re.compile(r'^std::vector<([^>]+)>$')
 
 def object_assign(target, *sources):
-    result = target.copy()
     for source in sources:
-        result.update(source)
-    return result
+        target.update(source)
+    return target
 
 
 class Syntax:
@@ -104,6 +103,7 @@ class Syntax:
     def getSyntaxNode(self, path):
         if not len(path):
             return None
+
 
         b = self.tree["blocks"][path[0]]
         if b is None:
@@ -137,11 +137,14 @@ class Syntax:
 
         return sorted(ret)
 
+    def path_to_list(self,obj):
+        return [a.name for a  in obj[1:]]
+
     def getParameters(self, path, ptype):
         ret = {}
         object_assign(ret, self.tree["global"]["parameters"])
 
-        b = self.getSyntaxNode(path)
+        b = self.getSyntaxNode(self.path_to_list(path))
         if b is None:
             return ret
 
@@ -207,13 +210,18 @@ class Parser:
         self.tree =  pyhit.load(text)        
 
     def get_block_list(self):
-        return self.tree.get_block_list()
+        return self.tree.children()
         
     def get_block_at_position(self, line, character):
-        return self.tree.get_block_at_line(line)
+        main_lines = list(self.tree.descendants)
+        res = main_lines[0]
+        for des in main_lines[1:]:
+            if des.line() > line:
+                return res
+            res = des
         
     def get_block_parameters(self, node):
-        return node.get_parameter()
+        return node.params()
 
 
 def compute_filename_completion(regex, doc_vec, line, character):
@@ -336,7 +344,7 @@ def paramDefault(param):
                 return 'true'
             
         
-        return param.default
+        return param["default"]
     return None
 
 
@@ -347,14 +355,14 @@ def compute_completion(document_text, line, character, syntax, parser):
     completions = []
     
     # current line up to the cursor position
-    line = document_text_vec[line][0:character]
+    text_line = document_text_vec[line][0:character]
     
     # get the type pseudo path (for the yaml)
     cp = parser.get_block_at_position(line, character)
     
-    if is_open_bracket_pair(line):
+    if is_open_bracket_pair(text_line):
         # get a partial path
-        line_match = re.match(insideBlockTag, line)
+        line_match = re.match(insideBlockTag, text_line)
         if line_match:
             partial_path = line_match.group(1).replace(r'^\.\//', '').split('/')
             partial_path.pop()
@@ -391,11 +399,11 @@ def compute_completion(document_text, line, character, syntax, parser):
         return completions
 
     # get parameters we already have and parameters that are valid
-    existing_params = parser.get_block_parameters(cp.node)
-    valid_params = syntax.get_parameters({"path": cp.path, "type": existing_params["type"]})
+    existing_params = { a[0] : a[1] for a  in parser.get_block_parameters(cp) }
+    valid_params = syntax.getParameters(cp.path, existing_params.get("type"))
 
     # suggest parameters
-    if is_parameter_complet(line):
+    if is_parameter_complet(text_line):
         # loop over valid parameters
         for name, param in valid_params.items():
             # skip deprecated params
@@ -413,11 +421,11 @@ def compute_completion(document_text, line, character, syntax, parser):
             # set icon and build completion
             icon = (
                 "parameter"
-                if param["name"] == "type"
+                if param.get("name","") == "type"
                 else "constructor"
-                if param["required"]
+                if param.get("required",False)
                 else "variable"
-                if param["default"] is not None
+                if param.get("default") is not None
                 else "field"
             )
             completions.append(
@@ -425,17 +433,17 @@ def compute_completion(document_text, line, character, syntax, parser):
                     "label": param["name"],
                     "insertText": f"{param['name']} = {default_value if default_value else ''}",
                     "insertTextFormat": "snippet" if default_value else None,
-                    "documentation": param["description"],
+                    "documentation": param.get("description","No description available"),
                     "detail": f"(required) {paramDefault(param)}",
                     "kind": icon,
-                    "tags": ["depreciated"] if param["deprecated"] else [],
+                    "tags": ["depreciated"] if param.get("deprecated",False) else [],
                 }
             )
 
         return completions
 
     # value completion
-    match = otherParameter.search(line)
+    match = otherParameter.search(text_line)
     if match:
         param_name = match.group(1)
         is_quoted = match.group(2)[0] == "'"
@@ -504,4 +512,4 @@ if __name__ == "__main__":
         val = f.read()
         schema = Syntax(extract_moose_schema("/vnvlabs/applications/moose/examples/ex01_inputfile/ex01-opt"))
         
-        get_suggestions(val, 10, 30, schema)
+        print(get_suggestions(val, 5, 2, schema))

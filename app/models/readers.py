@@ -16,7 +16,7 @@ from flask import render_template, make_response, jsonify
 from pygments.lexers import guess_lexer_for_filename
 
 from app import Directory
-from app.moose import py as pyhit, find_moose_executable_recursive, get_suggestions
+from app.moose import load_moose_file, find_moose_executable_recursive, get_suggestions
 
 
 def getPath(filename, exten=None):
@@ -172,7 +172,7 @@ class HiveFile():
             return f.read()
 
     def format(self, text):
-        return pyhit.load(text).format()
+        return load_moose_file(text).format()
     
     
     def save(self, text):
@@ -225,12 +225,16 @@ class HiveFile():
             return [{"row": 0, "column": 1, "text": "Validation Failed:" + str(e), "type": 'warning', "source": 'vnv'}]
 
     def autocomplete(self, text, row, col, prefix):
-        return moose_autocomplete(text,row,col,prefix)
+        moose_suggestions = get_suggestions(text,row,col,self.schema)
+    
+        return [ {
+            "caption" : a.get("name"),
+            "value" : f"{a.get('insertText')} {' # required' if a.get('required',False) else ''}",
+            "desc" : a.get("documentation","No description available"),
+            "meta" : a.get("kind","")
+        } for a in moose_suggestions ]
         
-        return [{"caption": "TODO", "value": "TODO", "meta": "", "desc": "HIVE (moose) Autocomplete is under active development"}]
-
 SAVED_HIVE_FILES = {}
-
 
 def render_hive(filename, **kwargs):
     try:

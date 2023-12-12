@@ -44,7 +44,7 @@ echo "Parview PID is $!"
 cd $DIRECT
 virt/bin/python ./run.py \
                 --host ${HOSTNAME} \
-                --port ${GUI_PORT} ${@:1} &> /vnvgui/logs/gui_logs &
+                --port ${GUI_PORT} ${@:1}  &
 echo "GUI PI is $!"
 
 
