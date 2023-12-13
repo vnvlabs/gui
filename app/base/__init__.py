@@ -192,7 +192,8 @@ if FIRST_TIME is None:
             try:  
                 with open(filename,'r') as w:
                    updateBranding(json.load(w), os.path.dirname(filename))
-            except:
+            except Exception as e:
+                print(e)
                 print("Failed to load declared config file: ", filename )
     except:
         pass
