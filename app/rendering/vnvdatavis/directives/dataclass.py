@@ -1,7 +1,7 @@
 import json
 from flask import render_template
 from sphinx.errors import ExtensionError
-
+import uuid 
 import pygments
 from pygments.lexers.data import JsonLexer
 from pygments.formatters.html import HtmlFormatter
@@ -27,6 +27,7 @@ class DataClass:
         self.id_ = id_
         self.file = file
         self.query_cache = {}
+        self.random = {}
 
     def _compile(self, expr):
         try:
@@ -132,3 +133,10 @@ class DataClass:
 
     def getAAId(self):
         return self.data.getId()
+    
+    
+    def getRandom(self, val):
+        if val not in self.random:
+           self.random[val] = uuid.uuid4().hex
+        return self.random[val]
+        

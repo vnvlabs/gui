@@ -74,7 +74,7 @@ class Dependency:
         if len(self.desc) > 0:
             return self.desc
 
-        if self.type in ["moose", "text"]:
+        if self.type in ["text"]:
             return "A " + self.type + " based input file (" + self.kwargs.get("text")[0:50] + "...)"
         elif self.type == ["upload"]:
             return f" A File uploaded from your local machine (" + self.kwargs.get("original", "None") + ")"
@@ -513,22 +513,9 @@ class VnVInputFile:
     def autocomplete_spec(self, row, col, pre, val):
         return []
 
-    # MOOSE VALIDATION AND AUTOCOMPLETE
-    # TODO Map these to a moose autocomplete and validation function.
-    def autocomplete_moose(self, dep, dump, row, col, pre, val):
-        spec = self.getSpec(dep, dump)
-        # return autocomplete_hive(spec, val, row,col,pre)
-        return [{"caption": "TODO", "value": "TODO", "meta": "",
-                 "desc": "HIVE (moose) Autocomplete is under active development"}]
 
     def getSpec(self, depId, dump):
         return None  # TODO
-
-    def validate_moose(self, depId, dump, newVal):
-        dep = self.deps.get(depId)
-        spec = self.getSpec(depId, dump)
-        # return validate_hive(spec, newVal);
-        return [{"row": 1, "column": 1, "text": "Validation is a work in progress", "type": 'warning', "source": 'vnv'}]
 
     def refresh_job(self, jobId):
         j = self.connection.get_job(jobId)

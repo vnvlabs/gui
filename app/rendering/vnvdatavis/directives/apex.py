@@ -159,6 +159,7 @@ loading = {
 }
 
 class ApexChartDirective(JsonChartDirective):
+    
     script_template = '''
          <div>
            <div id="{uid1}" class='vnv-table'></div>

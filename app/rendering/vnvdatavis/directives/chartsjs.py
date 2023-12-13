@@ -47,31 +47,31 @@ class ChartsJsChartDirective(ApexChartDirective):
 
     script_template = '''
          <div>
-           <div id="{uid1}_container" class='vnv-table'>
-              <canvas id="{uid1}"></canvas>
+           <div id="{{{{data.getRandom('UID')}}}}_container" class='vnv-table'>
+              <canvas id="{{{{data.getRandom('UID')}}}}"></canvas>
            </div>
     
-           <div class="apex-error-main" id="{uid1}_errors" 
+           <div class="apex-error-main" id="{{{{data.getRandom('UID')}}}}_errors" 
                style="color:orangered; font-size:30px; width:40px; height:40px; position:absolute; top:3px; right:3px; cursor:pointer; display:none">
-               <i onclick="$('#{uid1}_error_message').toggle()" class="feather icon-alert-triangle" ></i>
+               <i onclick="$('#{{{{data.getRandom('UID')}}}}_error_message').toggle()" class="feather icon-alert-triangle" ></i>
            </div>
-           <div class="card" id ="{uid1}_error_message" style="display:none; position:absolute; margin:20px; padding=20px; z-index:1000; top:43px; right:43px;"></div>   
+           <div class="card" id ="{{{{data.getRandom('UID')}}}}_error_message" style="display:none; position:absolute; margin:20px; padding=20px; z-index:1000; top:43px; right:43px;"></div>   
          </div> 
          <script>
            $(document).ready(function() {{
-             var ctx = document.getElementById('{uid1}');
+             var ctx = document.getElementById('{{{{data.getRandom('UID')}}}}');
              var myChart = new Chart(ctx, {loading});
 
              url = "/directives/updates/{uid}/{{{{data.getFile()}}}}/{{{{data.getAAId()}}}}{context}"
-             update_now(url, "{uid1}_container", 1000, function(config) {{
+             update_now(url, "{{{{data.getRandom('UID')}}}}_container", 1000, function(config) {{
                  z = JSON.parse(config)
                  myChart.config = z 
                  myChart.update()  
                  if (z["errors"]) {{
-                    $('#{uid1}_errors').show()   
-                    $('#{uid1}_error_message').html(z["errors"])
+                    $('#{{{{data.getRandom('UID')}}}}_errors').show()   
+                    $('#{{{{data.getRandom('UID')}}}}_error_message').html(z["errors"])
                   }} else {{
-                    $('#{uid1}_errors').hide()   
+                    $('#{{{{data.getRandom('UID')}}}}_errors').hide()   
                 }}
              }})
           }})
