@@ -8,7 +8,7 @@
    <div style="    font-size: 14px; margin-top: -13px;margin-left: 1px; margin-bottom: 10px;" >
       <span title="{% if file.connection.connected()%}Connected{%else%}Not Connected{%endif%}" style="color:{% if file.connection.connected()%}green{%else%}red{%endif%};">{{file.connection.describe()}}:/</span><span style="color:{{file.getFileStatus()[0]}};">{{file.filename}}</span> 
    </div>
-   <div id="main_desc">{{file.get_executable_description()|safe}}</div>
+   
 
 </div>
 
@@ -65,31 +65,25 @@ document.getElementById("inputfile_display_name").addEventListener("input", func
 
 function save_the_job(fileId) {
    save_input_object(fileId,"inputfile", "save_input")
-   save_input_object(fileId, "execfile", "save_exec")
 }
 
 function execute_the_job(fileid) {
    save_input_object(fileid,"inputfile", "save_input", function(data,s,xhr) {
 
        if (xhr.status == 200) {
-          save_input_object(fileid,"execfile", "save_exec", function(dd,ss,xx) {
-               if (xx.status == 200) {
-                  $.get(`/inputfiles/execute/${fileid}?val=${encodeURIComponent(ace.edit("execfile").getValue())}`, function(data) {
-                     refresh_jobs_list(fileid)
-                     $('#pills-jobs-tab').click()
-                  });
-               } else {
-                   alert("Something went wrong - Please try again.")
-               }
-          })
-       } else {
-          alert("Something went wrong - Please try again.")
-       }
+         $.get(`/inputfiles/execute/${fileid}?val=${encodeURIComponent(ace.edit("inputfile").getValue())}`, function(data) {
+             refresh_jobs_list(fileid)
+             $('#pills-jobs-tab').click()
+         });
+        } else {
+             alert("Something went wrong - Please try again.")
+        }
+       
    })
 }
 
 function preview_the_job(fileid) {
-   $.get(`/inputfiles/execute/${fileid}?highlight&dryrun=1&val=${encodeURIComponent(ace.edit("execfile").getValue())}`, function(data) {
+   $.get(`/inputfiles/execute/${fileid}?highlight&dryrun=1&val=${encodeURIComponent(ace.edit("inputfile").getValue())}`, function(data) {
            aceView("Executable Script Preview", data,"sh")
    });
 }

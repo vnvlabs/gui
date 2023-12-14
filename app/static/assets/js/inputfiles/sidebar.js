@@ -95,9 +95,6 @@ function save_input_input(fileid) {
 function save_input_spec(fileid) {
   save_input_object(fileid,"specfile", "save_spec")
 }
-function save_input_exec(fileid) {
-  save_input_object(fileid,"execfile", "save_exec")
-}
 
 
 function show_input_modal(fileId, modalId) {
