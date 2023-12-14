@@ -424,11 +424,30 @@ class VnVInputFile:
             "shell": {"type": "string", "enum": ["bash"]},
             "shebang": {"type": "string"},
             "working-directory": {"type": "string"},
-            "load-vnv": {"type": "boolean"},
+            "vnv": {"type": "boolean"},
             "environment": {
                 "type": "object"
             },
-            "input-file-name": {"type": "string"},
+            "mpi" : {
+              "type" : "object",
+              "properties" : {
+                  "on" : { "type" : "boolean", "default" : False },
+                  "processors" : { "type" : "integer" , "default" : 1},
+                  "runner" : {"type" : "string", "default" : "mpirun"},
+                  "extra-args" : {"type" : "string"}
+              }  
+            },
+            "executioner" : {
+                "type" : "object",
+                "properties" : {
+                  "name" : { 
+                      "type" : "string" ,
+                      "enum" : [ "bash" , "slurm" ],
+                      "default" : "bash"
+                  }
+                }  
+            },
+            "vnv-input-file": {"type": "string"},
             "command-line": {"type": "string",
                              "description": "Command to submit with input file called '${inputfilename}'"},
             "input-staging": {
@@ -479,11 +498,12 @@ class VnVInputFile:
 
     def defaultExecution(self):
         return {
+        "vnv": True,
         "shell": "bash",
-        "load-vnv": True,
         "working-directory": "${application_dir}",
         "environment": {},
-        "input-file-name": "./vv-input.json",
+        "mpi" : { "on" : False, "processors" : 1},
+        "vnv-input-file": "GUI",
         "input-staging": [],
         "output-staging": [],
         "command-line": "${application}",
@@ -552,16 +572,7 @@ class VnVInputFile:
 
 
 
-    def write_deps(self, workdir):
-        # This script is called inside the working directory.
-        s = []
 
-        # TODO Verify that "dep.remoteName" is a valid file path relative to the working directory.
-        # These
-        for k, dep in self.deps.items():
-            s.append(textwrap.dedent(VNV_INPUT_FILE_TYPES[dep.type]["command"](dep, workdir=workdir)))
-
-        return "\n".join(s)
 
     def script(self, val, workflowId):
         data = json.loads(val)
@@ -571,10 +582,8 @@ class VnVInputFile:
                 for k, v in over.items():
                     data[k] = v
 
-        # Deps Script is called from inside the working directory.
-        deps = self.write_deps(data.get("working-directory", "${application_dir}"))
-        deps = deps.replace("\r\n", "\n");
-        script = bash_script(self.filename, self.fullInputFile(), data, workflowName=workflowId, deps=deps)
+
+        script = bash_script(self.filename, self.fullInputFile(), data, workflowName=workflowId, deps=self.deps)
         return script, data.get("name")
 
     @staticmethod
@@ -707,27 +716,72 @@ VNV_INPUT_FILE_TYPES = {
 def add_input_file_type(key, value):
     VNV_INPUT_FILE_TYPES[key] = value;
 
+def get_bash_header(application_path, data, workflowName, deps):
+    
+    inputfilename = data.get("vnv-input-file") if data.get("vnv-input-file","GUI") not in ["","GUI"] else ".vnv-input-${VNV_WORKFLOW_ID}"
+    add_inputfile = "" if data.get("vnv-input-file") == None else f"export VNV_INPUT_FILE={inputfilename}"
+    
+    return textwrap.dedent(f"""
+    {data.get("shebang", "#!/usr/bin/bash")}
+    export application={application_path}
+    export application_dir=$(dirname {application_path})
+    export VNV_WORKFLOW_ID={workflowName}
+    {add_inputfile}
+    cd {data.get("working-directory", "${application_dir}")}"""
+    )
+
+def get_bash_environment(data):
+    return njoin(["export " + k + "=" + v for k, v in data.get("environment", {})])
+
+def get_bash_inputstaging(data):
+    return njoin([a["action"] + " " + a["source"] + " " + a["dest"]] for a in data.get("input-staging", {}))
+
+def get_bash_commandline(data):
+    command_line = data.get("command-line", "echo 'No Command line provided'")
+    
+    mpi = data.get("mpi",{})
+    if mpi.get("on",False):     
+        return f"""{mpi.get("runner","mpirun")} -n {mpi.get("processors",1)} {mpi.get("extra-args","")} {command_line}"""
+    
+    return command_line 
+
+def get_bash_outputstaging(data):
+    return njoin([a["action"] + " " + a["source"] + " " + a["dest"]] for a in data.get("output-staging", {}))
+    
+def get_bash_dependencies(data, thedeps):
+        workdir = data.get("working-directory", "${application_dir}")
+        # This script is called inside the working directory.
+        s = []
+
+        # TODO Verify that "dep.remoteName" is a valid file path relative to the working directory.
+        # These
+        for k, dep in thedeps.items():
+            s.append(textwrap.dedent(VNV_INPUT_FILE_TYPES[dep.type]["command"](dep, workdir=workdir)))
+
+        deps = "\n".join(s)
+        deps = deps.replace("\r\n", "\n")
+        return deps
+
+def get_bash_write_inputfile(data, inputfile):
+    if data.get("vnv-input-file","GUI") in ["GUI",""]:
+       return textwrap.dedent(f'''
+        \ncat << EOF > ${{VNV_INPUT_FILE}}
+            {inputfile}
+        \nEOF\n''') 
+    
+    return ""
+
 
 def bash_script(application_path, inputfile, data, workflowName, deps):
+
     script = textwrap.dedent(f"""
 
-{data.get("shebang", "#!/usr/bin/bash")}
-
-export application={application_path}
-export application_dir=$(dirname {application_path})
-export VNV_WORKFLOW_ID={workflowName}
-export VNV_INPUT_FILE=.vnv-input-${{VNV_WORKFLOW_ID}}
-
-cd {data.get("working-directory", "${application_dir}")}
-
-{deps}
-
-cat << EOF > ${{VNV_INPUT_FILE}}
-    {inputfile}
-EOF
-
-{njoin(["export " + k + "=" + v for k, v in data.get("environment", {})])}
-{njoin([a["action"] + " " + a["source"] + " " + a["dest"]] for a in data.get("input-staging", {}))}
-{data.get("command-line", "")} 
-{njoin([a["action"] + " " + a["source"] + " " + a["dest"]] for a in data.get("output-staging", {}))} """)
+    {get_bash_header(application_path, data, workflowName,deps)}
+    {get_bash_dependencies(data,deps)}
+    {get_bash_write_inputfile(data, inputfile)}
+    {get_bash_environment(data)}
+    {get_bash_inputstaging(data)}
+    {get_bash_commandline(data)}
+    {get_bash_outputstaging(data)}""")
+    
     return script
