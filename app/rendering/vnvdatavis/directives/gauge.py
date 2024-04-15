@@ -1,6 +1,6 @@
 
 from .jmes import jmes_jinja_percentage
-from .apex import ApexChartDirective
+from .viz.apex.apex import ApexChartDirective
 
 
 class ApexGaugeDirective(ApexChartDirective):

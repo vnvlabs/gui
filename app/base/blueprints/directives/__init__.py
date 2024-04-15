@@ -13,14 +13,14 @@ from jinja2 import FileSystemLoader
 from app import Directory
 from app.models.VnVFile import VnVFile
 from app.models.VnVInputFile import VnVInputFile
-from app.rendering.vnvdatavis.directives.chartsjs import chartsjs_post_process
+from gui.app.rendering.vnvdatavis.directives.viz.chartsjs.chartsjs import chartsjs_post_process
 from app.rendering.vnvdatavis.directives.dataclass import DataClass
 from app.rendering.vnvdatavis.directives.forr import VnVForDirective
 from app.rendering.vnvdatavis.directives.iff import VnVIfDirective
 from app.rendering.vnvdatavis.directives.include import post_process_include
-from app.rendering.vnvdatavis.directives.plotly import plotly_post_process
-from app.rendering.vnvdatavis.directives.plotly_animation import PlotlyAnimation
-from app.rendering.vnvdatavis.directives.apex import apex_post_process
+from gui.app.rendering.vnvdatavis.directives.viz.plotly.plotly import plotly_post_process
+from gui.app.rendering.vnvdatavis.directives.viz.plotly.plotly_animation import PlotlyAnimation
+from gui.app.rendering.vnvdatavis.directives.viz.apex.apex import apex_post_process
 from ...utils.utils import render_error
 import os
 

@@ -212,36 +212,43 @@ function scroll_to_bottom() {
     a.children[ a.children.length -1 ].scrollIntoView({behavior: "smooth", block: "center", inline: "nearest"})
 }
 
-function update_chart(url, containerId, timeout, chartupdate, response) {
-        x = JSON.parse(response)
-        if (!x.more) {
-          $('#' + containerId ).removeClass("vnv-reloader")
-        }
+const characters ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
+function generateString(length) {
+    let result = ' ';
+    const charactersLength = characters.length;
+    for ( let i = 0; i < length; i++ ) {
+        result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+
+    return result;
+}
+
+function update_chart(url, timeout, chartupdate, response) {
+        x = JSON.parse(response)
+    
         chartupdate(x.config)
 
-        if (x.more && $('#' +containerId).parent(".vnv-reloader").length == 0 ) {
-            update_soon(url,  containerId, timeout,chartupdate)
+        if (x.more ) {
+            update_soon(url,  timeout, chartupdate)
         }
 }
 
-function update_soon(url,  containerId, timeout, chartupdate) {
-    if ($('#' + containerId).length) {
-        setTimeout(function() {
-            $.get(url, function(response) {
-               update_chart(url,containerId,timeout,chartupdate,response)
-            })
-        }, timeout)
-    }
+function update_soon(url,  timeout, chartupdate) {
+    
+    setTimeout(function() {
+        $.get(url, function(response) {
+            update_chart(url,timeout,chartupdate,response)
+        })
+    }, timeout)
+    
 }
 
-function update_now(url,  containerId, timeout, chartupdate) {
-    if ($('#' + containerId).length) {
-        $('#' + containerId).addClass("vnv-reloader")
+function update_now(url, timeout, chartupdate) {
         $.get(url, function(response) {
-            update_chart(url,containerId,timeout,chartupdate,response);
+            update_chart(url, timeout,chartupdate,response);
         })
-    }
+    
 }
 
 

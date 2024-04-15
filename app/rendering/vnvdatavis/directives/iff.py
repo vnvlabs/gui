@@ -21,19 +21,24 @@ class VnVIfNode(docutils.nodes.General, docutils.nodes.Element):
     @staticmethod
     def visit_node(visitor, node):
         visitor.body.append(f'''
-            <div id="{node["uid"]}_start" hidden ></div>
-            <div id="{node["uid"]}_end" hidden ></div>
+           <div>  
+            <div class="node_start" hidden ></div>
+            <div class="node_end" hidden ></div>
             <script>
-                $(document).ready(function(){{
-                    url = "/directives/updates/{node["uid"]}/{{{{data.getFile()}}}}/{{{{data.getAAId()}}}}?context=if"
-                    update_now(url, "{node["uid"]}_start", 1000, function(config) {{
-                        var nodes = $('#{node["uid"]}_start')
-                        var nodee = $('#{node["uid"]}_end')[0]
-                        while (nodes.next()[0] != nodee) {{nodes.next().remove();}}
-                        nodes.after(config)
-                    }})
-                }})
+            
+            var jqobj = $(document.currentScript).parent()
+               
+            url = "/directives/updates/{node["uid"]}/{{{{data.getFile()}}}}/{{{{data.getAAId()}}}}?context=if"
+             
+            update_now(url, 1000, function(config) {{
+                    var nodes = jqobj.find('node_start') 
+                    var nodee = jqobj.find('node_end')[0]
+                    while (nodes.next()[0] != nodee) {{ nodes.next().remove(); }}
+                    nodes.after(config)  
+            }})
+            
             </script>
+          </div>
         ''')
 
     @staticmethod

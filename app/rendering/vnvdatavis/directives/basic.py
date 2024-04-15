@@ -9,7 +9,7 @@ import docutils.nodes
 from sphinx.util import nested_parse_with_titles
 from sphinx.util.docutils import SphinxDirective
 
-from .charts import VnVChartNode
+from .viz.charts import VnVChartNode
 from .dataclass import DataClass
 from .jmes import jmes_jinja_query_str, jmes_jinga_stat,\
     jmes_jinja_codeblock, jmes_jinja_query, get_target_node, jmes_jinja_query_json

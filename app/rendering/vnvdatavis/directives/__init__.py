@@ -1,14 +1,18 @@
 
+
 def setup(sapp):
 
-    from . import basic, line, charts, jmes, dashboard, gauge, table, psip, issues, \
-        plotly, iff, slider, forr, plotly_animation, apex, chartsjs, include, math, code
+    from . import basic, jmes, gauge, table, psip, issues,  iff, slider, forr, include, math, code
+    from .viz.chartsjs import chartsjs
+    from .viz.plotly import plotly, plotly_animation
+    from .viz.apex import apex, line
+    from .viz import charts
+
 
     jmes.setup(sapp)
     charts.setup(sapp)
     basic.setup(sapp)
     line.setup(sapp)
-    dashboard.setup(sapp)
     gauge.setup(sapp)
     table.setup(sapp)
     psip.setup(sapp)

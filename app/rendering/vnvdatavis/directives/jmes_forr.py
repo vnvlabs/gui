@@ -69,6 +69,8 @@ def json_array(str):
         raise ExtensionError()
 
 
+
+
 class VnVForInDirective(VnVForDirective):
     option_spec = {
         "variable": str,
@@ -76,7 +78,7 @@ class VnVForInDirective(VnVForDirective):
     }
 
     def get_range(self):
-        return self.getO("values", [0, 1, 2, 3, 4])
+        return self.options.get("values", [0, 1, 2, 3, 4])
 
 vnv_directives["vnv-for-range"] = VnVForDirective
 vnv_directives["vnv-for-in"] = VnVForInDirective

@@ -2,7 +2,7 @@ import json
 
 from sphinx.util.docutils import SphinxDirective
 
-from .charts import VnVChartNode
+from .viz.charts import VnVChartNode
 from .jmes import get_target_node
 
 
