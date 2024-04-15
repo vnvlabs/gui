@@ -14,7 +14,7 @@ from flask import render_template, redirect, url_for, request
 
 from app.Directory import STATIC_FILES_DIR
 from app.models import VnVFile
-from app.models.VnVInputFile import VnVInputFile, VNV_INPUT_FILE_TYPES
+from app.models.VnVInputFile import VnVInputFile
 from ..files import get_file_from_runinfo
 from ...utils import mongo
 from ...utils.utils import render_error
@@ -88,8 +88,6 @@ def validate_input(comp, id_):
         form = request.get_json()
         if comp == "inputfile":
             r = file.validateInput(form["value"]);
-        elif comp == "execfile":
-            r = file.validateExecution(form["value"])
         else:
             r = []
 
@@ -140,52 +138,6 @@ def load_exec(id_):
         return make_response("File does not exist", 200)
 
 
-@blueprint.route('/dependency/new/<int:fileid_>', methods=["POST"])
-def newdep(fileid_):
-    with VnVInputFile.find(fileid_) as file:
-        deps = file.add_dependency(remoteName="NEW DEP", type="NEW DEP")
-        return render_template("inputfiles/deps.html", deps=deps)
-
-
-@blueprint.route('/dependency/delete/<int:fileid_>/<depId>', methods=["POST"])
-def deletedep(fileid_, depId):
-    with VnVInputFile.find(fileid_) as file:
-        deps = file.delete_dependency(depId)
-        return render_template("inputfiles/deps.html", deps=deps)
-
-        return make_response("FFF", 200)
-
-
-@blueprint.route('/dependency/edit/<int:fileid_>', methods=["POST"])
-def editdep(fileid_):
-    with VnVInputFile.find(fileid_) as file:
-        depId = request.form["depId"]
-        depType = request.form["depType"]
-        rname = request.form["rname"]
-
-        kw = VNV_INPUT_FILE_TYPES[depType]["process"](request.form)
-
-        if depId is None or len(depId) == 0:
-            deps = file.add_dependency(remoteName=rname, type=depType, **kw)
-        else:
-            deps = file.edit_dependency(depId, remoteName=rname, type=depType, **kw)
-
-        return render_template("inputfiles/deps.html", deps=deps)
-
-
-@blueprint.route('/dependency/get/<int:fileid_>', methods=["POST"])
-def getdep(fileid_):
-    with VnVInputFile.find(fileid_) as file:
-        dep = file.deps.get(request.args.get("depId"))
-        if dep is not None:
-            return make_response(jsonify(dep.to_json()), 200)
-    return make_response("Error", 204)
-
-
-@blueprint.route('/dependency/view/<int:fileid_>/<depId>', methods=["POST"])
-def viewdep(fileid_, depId):
-    with VnVInputFile.find(fileid_) as file:
-        return make_response("FFF", 200)
 
 
 @blueprint.route('/connected/<int:id_>', methods=["GET"])
@@ -372,12 +324,7 @@ def list_vnv_executables():
     return [[k, v["description"], v["package"]] for k, v in vnv_executables.items()]
 
 
-def list_input_file_types():
-    return VNV_INPUT_FILE_TYPES
-
-
 def template_globals(globs):
     globs["inputfiles"] = VnVInputFile.FILES
     globs["list_vnv_executables"] = list_vnv_executables
-    globs["input_file_types"] = list_input_file_types
     VnVInputFile.loadAll()

@@ -16,7 +16,6 @@ from flask import render_template, make_response, jsonify
 from pygments.lexers import guess_lexer_for_filename
 
 from app import Directory
-from app.moose import py as pyhit, find_moose_executable_recursive
 
 
 def getPath(filename, exten=None):
@@ -122,124 +121,6 @@ def render_json(filename, **kwargs):
         reader = json.load(f)
         return render_template("browser/json.html", RAWDATA=json.dumps(json_to_jstree_json(reader)))
 
-
-SAVED_SCHEMA = {}
-
-
-class HiveFile():
-
-    def extract_moose_schema(self, filename, **kwargs):
-
-        if filename is None:
-            return {}, "No Schema Provided"
-        elif filename in SAVED_SCHEMA and "reload" not in kwargs:
-            return SAVED_SCHEMA[filename], ""
-
-        elif not os.path.exists(filename):
-            return {}, "Executable does not exist"
-
-        try:
-            args = kwargs.get("args",["--json"])
-            cwd = kwargs.get("cwd", os.path.dirname(filename))
-            a = subprocess.check_output([filename] + args, cwd=cwd, timeout=10).decode('ascii')
-            akey = "**START JSON DATA**"
-            ekey = "**END JSON DATA**"
-            start_pos = a.find(akey) + len(akey)
-            end_pos = a.find(ekey)
-            SAVED_SCHEMA[filename] = json.loads(a[start_pos:end_pos])
-            return SAVED_SCHEMA[filename], "Success"
-
-        except Exception as e:
-            print(e)
-            return {}, "Error: " + str(e)
-
-    def __init__(self, filename, **kwargs):
-        self.uuid = uuid.uuid4().hex
-        self.filename = filename
-        self.moose_executable = kwargs.get("moose-exe", find_moose_executable_recursive(os.path.dirname(filename)))
-        if self.moose_executable is None:
-            self.moose_executable = os.path.join(os.path.dirname(filename),os.path.splitext(os.path.basename(filename))[0] + "-opt")
-        self.schema, self.error = self.extract_moose_schema(self.moose_executable, **kwargs)
-        self.cwd = os.path.dirname(filename)
-
-    def set_schema(self, exe, **kwargs):
-        self.moose_executable = exe
-        self.schema, self.error = self.extract_moose_schema(self.moose_executable, **kwargs)
-        return self.error
-    def read(self):
-        with open(self.filename, 'r') as f:
-            return f.read()
-
-    def format(self, text):
-        return pyhit.load(text).format()
-    def save(self, text):
-        try:
-            with open(self.filename, 'w') as f:
-                f.write(text)
-                return {"success" : "true"}
-        except Exception as e:
-            return {"failure" : str(e)}
-
-    def regenerate_mesh(self, text):
-        try:
-            with open(os.path.join(self.cwd, f"{self.uuid}.i"),'w') as f:
-                f.write(text)
-
-                a = subprocess.run([self.moose_executable, "-i", f"{self.uuid}.i", "--mesh-only"], cwd=self.cwd, timeout=10, capture_output=True)
-                mfile = os.path.join(self.cwd, f'{self.uuid}_in.e')
-                if a.returncode == 0 and os.path.exists(mfile):
-                    return f"/pv?file={os.path.join(self.cwd, f'{self.uuid}_in.e')}" ,200
-        except Exception as e:
-            pass
-
-        return "mesh generation failed", 201
-    def validate(self, text):
-        try:
-            with open(os.path.join(self.cwd, f"{self.uuid}.i"), 'w') as f:
-                f.write(text)
-                subprocess.run(
-                    ["/home/user/software/moose/examples/ex01_inputfile/ex01-opt", "-i", "ex01.i", "--check-input"],
-                    capture_output=True)
-
-                a = subprocess.run([self.moose_executable, "-i", f"{self.uuid}.i", "--check-input","--color","off"], cwd=self.cwd, capture_output=True, timeout=10)
-                stdout = a.stdout.decode("ascii")
-                stderr = a.stderr.decode("ascii")
-                if a.returncode == 0:
-                    aa = stdout.find("*** WARNING ***")
-                    if aa > 0:
-                        return [{"row": 0, "column": 1, "text": stdout[aa:], "type": 'warning',"source": 'vnv'}]
-                    return []
-                else:
-
-                    start = stderr.find("*** ERROR ***")
-                    end = stderr.find("Stack Frames")
-                    if end < 0:
-                        end = len(stderr)
-
-                    mess = stderr[start:end]
-                    return [{"row": 0, "column": 1, "text": mess, "type": 'error',"source": 'vnv'}]
-
-        except Exception as e:
-            return [{"row": 0, "column": 1, "text": "Validation Failed:" + str(e), "type": 'warning', "source": 'vnv'}]
-
-    def autocomplete(self, text, row, col, prefix):
-        return [{"caption": "TODO", "value": "TODO", "meta": "", "desc": "HIVE (moose) Autocomplete is under active development"}]
-
-SAVED_HIVE_FILES = {}
-def render_hive(filename, **kwargs):
-    try:
-        hive = HiveFile(filename,**kwargs)
-        SAVED_HIVE_FILES[hive.uuid] = hive
-        return render_template("browser/hive.html", hive=hive)
-
-    except Exception as e:
-
-        return render_code(filename, **kwargs)
-
-def get_hive_file(uuid):
-    return SAVED_HIVE_FILES.get(uuid)
-
-
 FILE_READERS = {
     "image": render_image,
     "html": render_html,
@@ -248,8 +129,7 @@ FILE_READERS = {
     "code": render_code,
     "markdown": render_markdown,
     "rst": render_rst,
-    "json": render_json,
-    "hive" : render_hive
+    "json": render_json
 }
 
 EXT_MAP = {

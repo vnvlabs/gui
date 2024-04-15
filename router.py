@@ -44,7 +44,7 @@ def set_theia_forwards():
    try:
     app_config = current_app.config
     forwards = []
-    theiaforwards = subprocess.run(["ls", os.path.join(app_config["THEIA_DIR"],"browser-app/lib")], stdout=subprocess.PIPE).stdout.decode(
+    theiaforwards = subprocess.run(["ls", os.path.join(app_config["THEIA_DIR"],"browser-app/lib/frontend")], stdout=subprocess.PIPE).stdout.decode(
         'ascii').split("\n")
     for line in theiaforwards:
         kk = line.replace("\t", " ")

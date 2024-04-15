@@ -74,7 +74,7 @@ class Dependency:
         if len(self.desc) > 0:
             return self.desc
 
-        if self.type in ["moose", "text"]:
+        if self.type in ["text"]:
             return "A " + self.type + " based input file (" + self.kwargs.get("text")[0:50] + "...)"
         elif self.type == ["upload"]:
             return f" A File uploaded from your local machine (" + self.kwargs.get("original", "None") + ")"
@@ -107,9 +107,9 @@ class VnVInputFile:
        try:
 
             a = {
-            "exec": ["Execution Configuration", "inputfiles/execute.html"],
+            #! "exec": ["Execution Configuration", "inputfiles/execute.html"],
+            "description" : ["About", "inputfiles/about.html"],
             "inputfile": ["VnV Input File", "inputfiles/input.html"],
-            "dependencies": ["Dependencies", "inputfiles/dependencies.html"],
             "browse": ["Browse", "files/file_browser.html"],
             }
 
@@ -150,6 +150,7 @@ class VnVInputFile:
         # Update my specification -- based on the input file.
         self.updateSpec()
 
+        #Get the default as defined in the specification which was loaded on the prev line
         defs = self.get_executable_defaluts()
 
         # Set the execution file
@@ -162,24 +163,20 @@ class VnVInputFile:
             for key, value in defs["exec"].items():
                 execObj[key] = value
         
-        self.exec = json.dumps(execObj, indent=4)
+        #self.exec = json.dumps(execObj, indent=4)
 
         self.extra = {}
 
 
-        # Add all the dependencies. If it is an upload depdendency then
-        # we have to special case it.
-        self.deps = {}
-        if "deps" in defs:
-            for k, v in defs["deps"].items():
-                self.add_dependency(**v)
-
         # Set the default Input file values.
         if "input" in defs:
-            self.value = json.dumps(defs["input"], indent=4)
+            jsoninput = defs["input"]
         else:
-            self.value = json.dumps(VnV.getVnVConfigFile_1(), indent=4)
-
+            jsoninput = VnV.getVnVConfigFile_1()
+        
+        jsoninput["execution"] = execObj        
+        self.value = json.dumps(jsoninput, indent=4)
+        
         for k, v in VnVInputFile.EXTRA_TABS.items():
             self.extra[k] = v(self, name, path, defs, defs.get("plugs",{}))
 
@@ -200,9 +197,7 @@ class VnVInputFile:
         a["value"] = self.value
         a["spec"] = self.spec
         a["specDump"] = self.specDump
-        a["deps"] = self.dump_dependencies()
         a["specValid"] = self.specValid
-        a["exec"] = self.exec
         a["execFile"] = self.execFile
         a["plugs"] = self.plugs
         a["rendered"] = self.rendered
@@ -226,14 +221,12 @@ class VnVInputFile:
         r.icon = a["icon"]
         r.displayName = a.get("displayName", r.name)  # backwards compat
         r.connection = connectionFromJson(a["connection"])
-        r.load_dependencies(a.get("deps", "{}"))
         r.loadfile = a["loadfile"]
         r.value = a["value"]
         r.spec = a["spec"]
         r.specDump = a["specDump"]
         r.specValid = a["specValid"]
         r.rendered = a["rendered"]
-        r.exec = a["exec"]
         r.execFile = a["execFile"]
         r.plugs = a["plugs"]
 
@@ -303,34 +296,7 @@ class VnVInputFile:
     def schema(self):
         return self.spec
 
-    def load_dependencies(self, deps):
-        self.deps = {k: Dependency.from_json(v) for k, v in json.loads(deps)}
 
-    def dump_dependencies(self):
-        return json.dumps({k: v.to_json() for k, v in self.deps.items()})
-
-    def dependencies(self):
-        return self.deps
-
-    def add_dependency(self, remoteName, type, **kwargs):
-        newD = Dependency(remoteName=remoteName, type=type, **kwargs)
-        self.deps[newD.id_] = newD
-        return self.deps
-
-    def delete_dependency(self, id_):
-        self.deps.pop(id_)
-        return self.deps
-
-    def edit_dependency(self, id_, remoteName, type, **kwargs):
-        dep = self.deps.get(id_)
-        if dep is not None:
-            dep.remoteName = remoteName
-            dep.type = type
-            dep.kwargs = kwargs
-        return self.deps
-
-    def view_dependency(self, id_):
-        return "Hmmmm"
 
     def updateSpec(self):
         self.specValid = False
@@ -358,8 +324,15 @@ class VnVInputFile:
             b = res.find("===END SCHEMA_DUMP===")
             
             if a > 0 and b > 0 and b > a:
+                #read the spec
                 self.spec = res[a:b]
+                #parse the spec
                 self.specLoad = json.loads(self.spec)
+                #add our execution spec
+                self.specLoad["properties"]["execution"] = VnVInputFile.getExecutionSchema()
+                #dump the spec to get back to string
+                self.spec = json.dumps(self.specLoad, indent=4)
+                #update some other stuff. 
                 self.specValid = True
                 self.rendered = self.get_executable_description()
             else:
@@ -385,7 +358,7 @@ class VnVInputFile:
         
     def get_executable_defaluts(self):
         if self.specLoad is not None:
-            desc = self.specLoad.get("definitions", {}).get("executable", {}).get("default",{})
+            return self.specLoad.get("definitions", {}).get("executable", {}).get("default",{})
         return {}
     
     VNVINPUTFILEDEF = 1022334234443
@@ -399,19 +372,9 @@ class VnVInputFile:
     def getId(self):
         return self.id_
 
-    def validateSpec(self, newVal):
-        try:
-            s = json.loads(newVal)
-            jsonschema.Draft7Validator.check_schema(s)
-            return []
-        except SchemaError as v:
-            r, c = get_row_and_column(v.path, newVal, s)
-            return [{"row": r, "column": c, "text": v.message, "type": 'warning', "source": 'vnv'}]
-        except Exception as e:
-            return [{"row": 1, "column": 1, "text": str(e), "type": 'warning', "source": 'vnv'}]
 
     def describe(self):
-        return f'{self.connection.describe()}://{self.filename}'
+        return f'{self.connection.describe()}:/{self.filename}'
 
     def execTemplate(self):
         return self.exec
@@ -424,11 +387,30 @@ class VnVInputFile:
             "shell": {"type": "string", "enum": ["bash"]},
             "shebang": {"type": "string"},
             "working-directory": {"type": "string"},
-            "load-vnv": {"type": "boolean"},
+            "vnv": {"type": "boolean"},
             "environment": {
                 "type": "object"
             },
-            "input-file-name": {"type": "string"},
+            "mpi" : {
+              "type" : "object",
+              "properties" : {
+                  "on" : { "type" : "boolean", "default" : False },
+                  "processors" : { "type" : "integer" , "default" : 1},
+                  "runner" : {"type" : "string", "default" : "mpirun"},
+                  "extra-args" : {"type" : "string"}
+              }  
+            },
+            "executioner" : {
+                "type" : "object",
+                "properties" : {
+                  "name" : { 
+                      "type" : "string" ,
+                      "enum" : [ "bash" , "slurm" ],
+                      "default" : "bash"
+                  }
+                }  
+            },
+            "vnv-input-file": {"type": "string"},
             "command-line": {"type": "string",
                              "description": "Command to submit with input file called '${inputfilename}'"},
             "input-staging": {
@@ -479,11 +461,12 @@ class VnVInputFile:
 
     def defaultExecution(self):
         return {
+        "vnv": True,
         "shell": "bash",
-        "load-vnv": True,
         "working-directory": "${application_dir}",
         "environment": {},
-        "input-file-name": "./vv-input.json",
+        "mpi" : { "on" : False, "processors" : 1},
+        "vnv-input-file": "GUI",
         "input-staging": [],
         "output-staging": [],
         "command-line": "${application}",
@@ -492,43 +475,11 @@ class VnVInputFile:
         "overrides": {}
     }
 
-    def validateExecution(self, newVal):
-        try:
-            a = json.loads(newVal)
-            print(a)
-            errs = jsonschema.validate(a, schema=VnVInputFile.getExecutionSchema())
-            return []
-        except ValidationError as v:
-            r, c = get_row_and_column(v.path, newVal, a)
-            return [{"row": r, "column": c, "text": v.message, "type": 'warning', "source": 'vnv'}]
-        except Exception as e:
-            return [{"row": 1, "column": 1, "text": str(e), "type": 'warning', "source": 'vnv'}]
-
     def autocomplete_input(self, row, col, pre, val):
         return autocomplete(val, self.specLoad, int(row), int(col), plugins=self.plugs)
 
-    def autocomplete_exec(self, row, col, pre, val, plugins=None):
-        return autocomplete(val, VnVInputFile.getExecutionSchema(), int(row), int(col))
-
     def autocomplete_spec(self, row, col, pre, val):
         return []
-
-    # MOOSE VALIDATION AND AUTOCOMPLETE
-    # TODO Map these to a moose autocomplete and validation function.
-    def autocomplete_moose(self, dep, dump, row, col, pre, val):
-        spec = self.getSpec(dep, dump)
-        # return autocomplete_hive(spec, val, row,col,pre)
-        return [{"caption": "TODO", "value": "TODO", "meta": "",
-                 "desc": "HIVE (moose) Autocomplete is under active development"}]
-
-    def getSpec(self, depId, dump):
-        return None  # TODO
-
-    def validate_moose(self, depId, dump, newVal):
-        dep = self.deps.get(depId)
-        spec = self.getSpec(depId, dump)
-        # return validate_hive(spec, newVal);
-        return [{"row": 1, "column": 1, "text": "Validation is a work in progress", "type": 'warning', "source": 'vnv'}]
 
     def refresh_job(self, jobId):
         j = self.connection.get_job(jobId)
@@ -549,8 +500,12 @@ class VnVInputFile:
 
         return json.dumps(j, indent=4)
 
-    def execute(self, val):
-        inp_dir = json.loads(self.value).get("job", {}).get("dir", "/tmp")
+    
+    def execute(self, val = None):
+        if val is None:
+            val = self.value
+
+        inp_dir = json.loads(val).get("job", {}).get("dir", "/tmp")
 
         workflow_id = uuid.uuid4().hex
         script, name = self.script(val, workflow_id)
@@ -564,30 +519,16 @@ class VnVInputFile:
         return self.connection.execute_script(script, name=name, metadata=meta)
 
 
-
-    def write_deps(self, workdir):
-        # This script is called inside the working directory.
-        s = []
-
-        # TODO Verify that "dep.remoteName" is a valid file path relative to the working directory.
-        # These
-        for k, dep in self.deps.items():
-            s.append(textwrap.dedent(VNV_INPUT_FILE_TYPES[dep.type]["command"](dep, workdir=workdir)))
-
-        return "\n".join(s)
-
     def script(self, val, workflowId):
-        data = json.loads(val)
+        inputfile = json.loads(val)
+        data = inputfile.get("execution",{})
         for i in data.get("active_overrides", []):
             if i in data.get("overrides", {}):
                 over = data["overrides"][i]
                 for k, v in over.items():
                     data[k] = v
 
-        # Deps Script is called from inside the working directory.
-        deps = self.write_deps(data.get("working-directory", "${application_dir}"))
-        deps = deps.replace("\r\n", "\n");
-        script = bash_script(self.filename, self.fullInputFile(), data, workflowName=workflowId, deps=deps)
+        script = bash_script(self.filename, self.fullInputFile(), data, workflowName=workflowId)
         return script, data.get("name")
 
     @staticmethod
@@ -653,94 +594,60 @@ def njoin(array):
     return "\n".join(array)
 
 
-def __desc(count=-1):
-    def f(data):
-        return data.kwargs["text"][0:count]
-
-    return f
 
 
-def __pro(form):
-    return {"text": form["text"]}
+def get_bash_header(application_path, data, workflowName):
+    
+    inputfilename = data.get("vnv-input-file") if data.get("vnv-input-file","GUI") not in ["","GUI"] else ".vnv-input-${VNV_WORKFLOW_ID}"
+    add_inputfile = "" if data.get("vnv-input-file") == None else f"export VNV_INPUT_FILE={inputfilename}"
+    
+    return textwrap.dedent(f"""
+    {data.get("shebang", "#!/usr/bin/bash")}
+    export application={application_path}
+    export application_dir=$(dirname {application_path})
+    export VNV_WORKFLOW_ID={workflowName}
+    {add_inputfile}
+    cd {data.get("working-directory", "${application_dir}")}"""
+    )
+
+def get_bash_environment(data):
+    return njoin(["export " + k + "=" + v for k, v in data.get("environment", {})])
+
+def get_bash_inputstaging(data):
+    return njoin([a["action"] + " " + a["source"] + " " + a["dest"]] for a in data.get("input-staging", {}))
+
+def get_bash_commandline(data):
+    command_line = data.get("command-line", "echo 'No Command line provided'")
+    
+    mpi = data.get("mpi",{})
+    if mpi.get("on",False):     
+        return f"""{mpi.get("runner","mpirun")} -n {mpi.get("processors",1)} {mpi.get("extra-args","")} {command_line}"""
+    
+    return command_line 
+
+def get_bash_outputstaging(data):
+    return njoin([a["action"] + " " + a["source"] + " " + a["dest"]] for a in data.get("output-staging", {}))
+    
+
+def get_bash_write_inputfile(data, inputfile):
+    if data.get("vnv-input-file","GUI") in ["GUI",""]:
+       return textwrap.dedent(f'''
+        \ncat << EOF > ${{VNV_INPUT_FILE}}
+            {inputfile}
+        \nEOF\n''') 
+    
+    return ""
 
 
-def __command(cmd):
-    def __command_(data,workdir):
-        return f"{cmd} {data.kwargs['text']} {data.remoteName}"
+def bash_script(application_path, inputfile, data, workflowName):
 
-    return __command_
-
-
-def __text(data, workdir):
-    return textwrap.dedent(f'''  
-cat << VNVEOF > {data.remoteName}
-{data.kwargs["text"]}
-VNVEOF''')
-
-
-VNV_INPUT_FILE_TYPES = {
-    "text": {
-        "display": "Text",
-        "set": "set_dep_text",
-        "get": "get_dep_text",
-        "template": "ftypes/text.html",
-        "process": __pro,
-        "describe": __desc(10),
-        "command": __text
-    },
-    "copy": {
-        "display": "Copy",
-        "set": "set_dep_copy",
-        "get": "get_dep_copy",
-        "template": "ftypes/copy.html",
-        "process": __pro,
-        "describe": __desc(10),
-        "command": __command("cp")
-    },
-    "hard-link": {
-        "display": "Hard Link",
-        "set": "set_dep_hlink",
-        "get": "get_dep_hlink",
-        "template": "ftypes/hard.html",
-        "process": __pro,
-        "describe": __desc(10),
-        "command": __command("ln")
-    },
-    "soft-link": {
-        "display": "Soft Link",
-        "set": "set_dep_slink",
-        "get": "get_dep_slink",
-        "template": "ftypes/soft.html",
-        "process": __pro,
-        "describe": __desc(10),
-        "command": __command("ln -s")
-    }
-}
-
-def add_input_file_type(key, value):
-    VNV_INPUT_FILE_TYPES[key] = value;
-
-
-def bash_script(application_path, inputfile, data, workflowName, deps):
     script = textwrap.dedent(f"""
 
-{data.get("shebang", "#!/usr/bin/bash")}
-
-export application={application_path}
-export application_dir=$(dirname {application_path})
-export VNV_WORKFLOW_ID={workflowName}
-export VNV_INPUT_FILE=.vnv-input-${{VNV_WORKFLOW_ID}}
-
-cd {data.get("working-directory", "${application_dir}")}
-
-{deps}
-
-cat << EOF > ${{VNV_INPUT_FILE}}
-    {inputfile}
-EOF
-
-{njoin(["export " + k + "=" + v for k, v in data.get("environment", {})])}
-{njoin([a["action"] + " " + a["source"] + " " + a["dest"]] for a in data.get("input-staging", {}))}
-{data.get("command-line", "")} 
-{njoin([a["action"] + " " + a["source"] + " " + a["dest"]] for a in data.get("output-staging", {}))} """)
+    {get_bash_header(application_path, data, workflowName)}
+    {get_bash_write_inputfile(data, inputfile)}
+    {get_bash_environment(data)}
+    {get_bash_inputstaging(data)}
+    {get_bash_commandline(data)}
+    {get_bash_outputstaging(data)}""")
+    
     return script
