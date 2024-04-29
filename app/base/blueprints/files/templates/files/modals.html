@@ -8,9 +8,7 @@
             </div>
 
             <div style="padding:20px;">
-                Enter the required information below to load an existing VnV Report. The information
-                required will change based on the reader you select, so please be sure to select the
-                reader first!
+                Enter the required information below to load an existing VnV Report. 
             </div>
 
             <div class="modal-body">
@@ -19,62 +17,17 @@
                         <label for="name" class="col-form-label">Name</label>
                         <input type="text" class="form-control" name="name" id="name" value="Untitled Report">
                         <small>This name will be used to identify the report in menus and titles.</small>
-
-                    </div>
-
-                    <div class="form-group">
-                        <label for="reader" class="col-form-label">Reader</label>
-                        <select type="text" class="form-control" id="reader" name="reader">
-                            {%for r in list_vnv_readers() %}
-                            <option value="{{r[0]}}" {%if loop.index0 == 0 %} selected {%endif%} data-name="{{r[3]}}" data-message="{{r[1]}}">{{r[0]}}</option>
-                            {%endfor%}
-                        </select>
-                        <small> What reader should be used to read the input file. </small>
-                    </div>
-
-
+                     </div>
 
                     <div class="autocomplete form-group" style="width:100%" >
-                        <label id="reader_label" for="inputfilename" class="col-form-label">{{list_vnv_readers()[0][3]}}</label>
+                        <label id="reader_label" for="inputfilename" class="col-form-label">FileName For The VnV Output File</label>
                         <input id="inputfilename" type="text" class="form-control" name="filename" autocomplete="off" placeholder="" value="">
-                        <small id="reader_message">{{list_vnv_readers()[0][1]}}</small>
-                    </div>
-
-                    <div id="username-group" class="form-group" style="display:none">
-                        <label for="name" class="col-form-label">User Name</label>
-                        <input type="text" class="form-control" id="username" name="username", value="" placeholder="Reader Username (may not be required)">
-                        <small>A username may be required to authenticate with the reader. If one is required it should be in the input file </small>
-                    </div>
-
-                    <div id="password-group" class="form-group" style="display:none">
-                        <label for="name" class="col-form-label">Password</label>
-                        <input type="password" class="form-control" id="password" name="password" placeholder="Reader Password (may not be required)">
-                        <small> A password may be required to authenticate with the reader. If one is required it should be in the input file</small>
                     </div>
 
                     <script>
                         $( document ).ready(function() {
 
-                            $('#reader').on('change', function() {
-                               
-                                $('#reader_message').html($(this).find(":selected").data("message"));
-                                $('#reader_label').html($(this).find(":selected").data("name"));
-
-                                if ($(this).val() === "saved") {
-                                    $('#name-group').hide()
-                                } else {
-                                    $('#name-group').show()
-                                }
-
-                                if ($(this).val() === "json_socket" || $(this).val() === "json_http") {
-                                       $('#username-group').show()
-                                       $('#password-group').show()
-                                } else {
-
-                                       $('#username-group').hide()
-                                       $('#password-group').hide()
-                                }
-                            });
+                
                             autocomplete(document.getElementById('inputfilename'), function() {
                                 return "&context=" + $('#reader').val();
                             })

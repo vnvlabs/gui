@@ -3,7 +3,9 @@
         {%if filelist | length > 0 %}
 
              {%for file in filelist %}
-                <div style="margin:10px;">{%include "files/prov/file.html" %}</div>
+                {%with prefix="", include_header = (loop.index0 == 0 ) %}
+                    <div style="margin:10px;">{%include "files/prov/file.html" %}</div>
+                {%endwith%}
              {%endfor%}
         {% else %}
         <div style="margin:10px;">No files Detected.</div>

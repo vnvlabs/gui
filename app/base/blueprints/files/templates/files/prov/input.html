@@ -1,13 +1,28 @@
 <div class="" style="padding:15px;    border: 1px solid #80808038; ">
     <div class="card-body">
-        {% with file = file.get_prov().get_input() %}
-        {% include 'files/prov/file.html' %}
-        {% endwith %}
-        <div id="input-file-config"></div>
+        <h6>VnV Configuration File</h6>
+        <div style="padding:10px; overflow:auto; display: flex; width:100% ">
+                <div id="data_tree_render" style="width:100%; overflow:auto; margin-right:10px;"></div>
+        </div>
     </div>
 </div>
+
 <script>
-    $.get('/browser/render/{{file.id_}}?modal=input-file-config&reader=json&filename={{file.get_prov().get_input().getName()}}', function(data) {
-        $('#input-file-config').html(data)
-    })
+
+$(document).ready( function () {
+
+$('#data_tree_render').jstree(
+{
+  "core" : {
+    "animation" : 0,
+    "check_callback" : true,
+    "themes" : { "stripes" : true },
+    'data' : {{file.get_prov().get_input().json_text()  | safe }}
+  },
+  "plugins" : [ "wholerow" ]
+});
+
+ $("#data_tree_render").jstree("open_all");
+
+});
 </script>

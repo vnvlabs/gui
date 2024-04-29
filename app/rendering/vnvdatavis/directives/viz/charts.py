@@ -9,9 +9,6 @@ from sphinx.util.docutils import SphinxDirective
 
 from ..jmes import get_target_node, jmes_jinja_query
 
-vnv_directives = {}
-
-
 class VnVChartNode(docutils.nodes.General, docutils.nodes.Element):
 
     @staticmethod
@@ -27,6 +24,11 @@ class VnVChartNode(docutils.nodes.General, docutils.nodes.Element):
 VnVChartNode.NODE_VISITORS = {
     'html': (VnVChartNode.visit_node, VnVChartNode.depart_node)
 }
+
+try:
+    the_app
+except NameError:
+    the_app = None
 
 
 class JsonChartDirective(SphinxDirective):
@@ -87,19 +89,9 @@ class JsonChartDirective(SphinxDirective):
         return self.getContent()
 
 
-try:
-    the_app
-except NameError:
-    the_app = None
 
 
 def setup(sapp):
     global the_app
     the_app = sapp
-
-
-
     sapp.add_node(VnVChartNode, **VnVChartNode.NODE_VISITORS)
-
-    for key, value in vnv_directives.items():
-        sapp.add_directive(key, value)

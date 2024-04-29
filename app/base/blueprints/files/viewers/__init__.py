@@ -7,7 +7,7 @@ from flask import Blueprint, request, render_template, jsonify, make_response, r
 from app.base.utils.utils import render_error
 from app.models import VnVFile
 from app.rendering.vnvdatavis.directives.dataclass import DataClass
-from gui.app.rendering.vnvdatavis.directives.viz.plotly.plotly import plotly_options_list, get_plotly_options_for
+from app.rendering.vnvdatavis.directives.viz.plotly.plotly import plotly_options_list, get_plotly_options_for
 
 blueprint = Blueprint(
     'viewers',

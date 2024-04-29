@@ -9,7 +9,6 @@ from ansi2html import Ansi2HTMLConverter
 from flask import jsonify
 from jsonschema.exceptions import ErrorTree, ValidationError, SchemaError
 
-from app.base.utils import mongo
 from app.models import VnV
 from app.models.VnVConnection import VnVLocalConnection, VnVConnection, connectionFromJson
 from app.models.json_heal import autocomplete
@@ -172,7 +171,14 @@ class VnVInputFile:
         if "input" in defs:
             jsoninput = defs["input"]
         else:
-            jsoninput = VnV.getVnVConfigFile_1()
+            jsoninput = {
+                "outputEngine": {
+                    "file" : {
+                        "filename" : "outputs"
+                    }
+                }
+            }
+
         
         jsoninput["execution"] = execObj        
         self.value = json.dumps(jsoninput, indent=4)
@@ -539,38 +545,25 @@ class VnVInputFile:
     @staticmethod
     def add(name, path=None, defs={}, plugs={}):
 
-        a = mongo.loadInputFile(name)
-        if a is not None:
-            raise Exception("Name is taken")
-        else:
-            f = VnVInputFile(name, path=path)
-
+        f = VnVInputFile(name, path=path)
         VnVInputFile.FILES[f.id_] = f
+
         return f
 
     @staticmethod
     def load(name):
-        a = mongo.loadInputFile(name)
-        if a is not None:
-            f = VnVInputFile.fromJson(a)
-            VnVInputFile.FILES[f.id_] = f
-            return f
+        raise NotImplementedError
 
     @staticmethod
     def loadAll():
-        for a in mongo.list_input_files():
-            f = VnVInputFile.fromJson(a)
-            VnVInputFile.FILES[f.id_] = f
+        raise NotImplementedError
 
     @staticmethod
     def removeById(fileId):
         a = VnVInputFile.FILES.pop(fileId)
-        mongo.deleteInputFile(a.name)
 
     @staticmethod
     def delete_all():
-        for k, v in VnVInputFile.FILES.items():
-            mongo.deleteInputFile(v.name)
         VnVInputFile.FILES.clear()
 
     @staticmethod
@@ -587,7 +580,7 @@ class VnVInputFile:
             return self.file
 
         def __exit__(self, type, value, traceback):
-            mongo.persistInputFile(self.file)
+            pass
 
 
 def njoin(array):

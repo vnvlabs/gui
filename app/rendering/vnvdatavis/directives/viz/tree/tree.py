@@ -20,10 +20,13 @@ except NameError:
 
 class TreeChartDirective(JsonChartDirective):
     script_template = '''
-        <div>
+                        {{% with current_id = data.getRandom() %}}
+                    <div id="{{{{current_id}}}}">  
+
+
         <div id="{id_}" class='vnv_jsonviewer' width="100%" height="100%"></div>
-        <script>
-           const element = $(document.currentScript).parent().find('.vnv_jsonviewer)  
+        <script>           ( () => {{
+           const element = $('#{{{{current_id}}}}').find('.vnv_jsonviewer)  
            var data = JSON.parse(`{config}`);
            var tree = new JSONFormatter(data['data'], true ,data['config']);
            element.appendChild(tree.render());
@@ -35,8 +38,9 @@ class TreeChartDirective(JsonChartDirective):
                 element.clear()
                 element.appendChild(tree.render());
            }});    
-           
-        </script></div> '''
+              }})()
+        </script></div>          {{%endwith%}}
+ '''
 
     def register(self):
         return self.getContent()

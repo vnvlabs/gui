@@ -1,4 +1,4 @@
-{% with loopList = [["inputfiles","Input Files", file.get_prov().has_inputs() ],["outputs","Outputs", file.get_prov().has_outputs() ],["libraries","Libraries", True],["input","VnV Configuration", True]] %}
+{% with loopList = [["input","VnV Configuration", True],["inputfiles","Input Files", file.get_prov().has_inputs() ],["outputs","Outputs", file.get_prov().has_outputs() ],["libraries","Libraries", True]] %}
 {% with active_tab = request.args.get("btab",loopList[3][0]) %}
 <!-- 
   column: "Content in Provenence tab"
@@ -13,19 +13,17 @@
             <!-- 
               text: "Executable path"
              -->
-            {%with prefix="Executable:", file=file.get_prov().get_executable() %}
-            {% include 'files/prov/file.html' %}
-            {% endwith %}
-            <!-- 
-              text: "Command line path"
-             -->
-            <h6 style="margin-bottom:4px">Command Line: {{ file.get_prov().get_command_line() }}</h6>
-            <!-- 
-              text: "Date of compilation"
-             -->
-            <h6 style="margin-bottom:4px">Date: {{ file.get_prov().get_timestamp() }} </h6>
+                 <h6>Executable Path: {{ file.get_prov().get_executable().getName() }} </h6>
+                 <h6>Executable File Size: {{file.get_prov().get_executable().getDisplaySize()}} </h6>
+                 <h6>Executable TimeStamp: {{file.get_prov().get_executable().getDisplayTimeStamp()}} </h6>
+                 <h6>Report Generation Date: {{ file.get_prov().get_timestamp() }} </h6>
+                 <h6>Executable CRC32 Hash at Runtime: {{ file.get_prov().get_executable().getCrc() }} </h6>
+                 <h6>Executable Modified Since Run: {{file.get_prov().get_executable().was_modified()}} </h6>
+                 <h6>Working Directory: {{ file.get_prov().get_working_directory()}}</h6>
+                 <h6>Command Line: {{ file.get_prov().get_command_line() }}</h6>
+                 <h6>Report Directory: {{ file.filename }}</h6>
     </div>
-    
+
     <!-- 
       divider
      -->

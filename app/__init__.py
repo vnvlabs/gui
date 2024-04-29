@@ -15,11 +15,6 @@ global_template_variables = {
 def register_blueprints(apps, config):
 
     import app.base
-    from .base.utils.mongo import Configured
-
-    global_template_variables.update({
-        "mongo_configured": Configured
-    })
 
     base.config(config)
     apps.register_blueprint(base.blueprint)

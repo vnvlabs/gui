@@ -12,11 +12,9 @@
         <!-- if there are "file" objects, then create a "row" under the Libraries for them -->
         {%if filelist | length > 0 %}
              {%for file in filelist %}
-                <!-- 
-                  row: "File"
-                    listed file that looks like a card, or one of possibly many rows in a single column
-                 -->
-                <div class="libfile" modified="{{file.modified()}}" name="{{file.getName()}}" style="margin:10px;">{%include "files/prov/file.html" %}</div>
+                {%with prefix="", include_header = (loop.index0 == 0 )  %}
+                   <div class="libfile"  name="{{file.getName()}}" style="margin:10px;">{%include "files/prov/file.html" %}</div>
+                {%endwith%}
              {%endfor%}
         {% else %}
         <!-- if there are NO "file" objects, then say so -->

@@ -14,7 +14,6 @@ from werkzeug.utils import redirect
 from pygments.lexers import get_lexer_by_name
 
 from . import blueprints
-from .utils.mongo import list_mongo_collections
 
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.Directory import VNV_DIR_PATH
@@ -244,7 +243,7 @@ def paraview_route():
     # This route should get intercepted by the "serve" app, so, when
     # serving, this should never be called. This button is just a placeholder
     # for the serve app -- should really allow the serve app to add buttons.
-    return render_error(200, "Visualzier is not configured", nohome=True)
+    return render_error(200, "ParaviewVisualzier is not configured", nohome=True)
 
 
 @blueprint.route("/ide")
@@ -254,12 +253,11 @@ def ide_route():
 
 @blueprint.route("/viz")
 def viz_route():
-    src_url = current_app.config["PARAVIEW_URL"]
-    return render_template("para.html", src_url=src_url)
+    return render_template("para.html", src_url="/paraview")
 
 @blueprint.route("/viz-file")
 def vis_file():
-    src_url = f'{current_app.config["PARAVIEW_URL"]}?file={request.args.get("file","none")}'  
+    src_url = f'/paraview?file={request.args.get("file","none")}'  
     iframe = f"""<iframe id='paraview' src="{src_url}" style="flex: 1; margin-bottom: 0px; border: none;"></iframe>"""
     return render_template(iframe,200)
 
@@ -310,11 +308,7 @@ def available_ports():
 
 
 context_map = {
-    "json_file": lambda x: glob.glob(x + "*"),
-    "adios_file": lambda x: glob.glob(x + "*"),
-    "json_http": lambda x: [str(a) for a in available_ports()],
-    "json_socket": lambda x: [str(a) for a in available_ports()],
-    "saved": lambda x: list_mongo_collections()
+    "file": lambda x: glob.glob(x + "*"),
 }
 
 
@@ -371,33 +365,23 @@ def template_globals(d):
     def title_name():
         return TITLE_NAME
 
-    def paraview_ready():
-       return True
-
-    def theia_url():
-        return current_app.config["THEIA_URL"]
-
-        
-    def paraview_url():
-        return current_app.config["PARAVIEW_URL"]
+    def paraview_configured(): return current_app.config["PARAVIEW"] > 0 
+    def theia_configured(): return current_app.config["THEIA"] > 0 
+    
 
     d["COPYRIGHT_LINK"] = DelayCopyRightLink()
     d["COPYRIGHT_MESSAGE"] = DelayCopyRightMessage()
     d["ALL_BLUEPRINTS"] = ALL_BLUEPRINTS
-    d["PARAVIEW_READY"] = paraview_ready
     d["logo_large"] = logo_large
     d["logo_small"] = logo_small
     d["logo_icon"] = logo_icon
-    d["theia_url"] = theia_url
     d["home_template"] = home_file
-    d["paraview_url"] = paraview_url
     d["title_name"] = title_name
     d["highlight_code"] = highlight_code
     d["HASVNV"] = blueprints.HAS_VNV
-
-    if blueprints.HAS_VNV:
-        from ..models.VnV import DumpReaders
-        d["list_vnv_readers"] = DumpReaders
+    d["paraview_configured"] = paraview_configured
+    d["theia_configured"] = theia_configured
+    
     
     for kk, vv in ALL_BLUEPRINTS.items():
         if hasattr(vv, "template_globals"):

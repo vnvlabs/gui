@@ -2,6 +2,7 @@ import os
 
 from flask import render_template_string, render_template
 
+from .jmes import register_context
 from .viz.charts import JsonChartDirective
 
 
@@ -30,18 +31,23 @@ class IncludeRSTDirective(JsonChartDirective):
     has_content = False
 
     script_template = '''
-        <div>  
+                        {{% with current_id = data.getRandom() %}}
+                    <div id="{{{{current_id}}}}">  
+
+  
           <div class='main-div vnv-table'>
              Loading...
           </div>
           <script>
-            var jqobj = $(document.currentScript).parent()
+                     ( () => {{
+            var jqobj = $('#{{{{current_id}}}}')
             url = "/directives/updates/{uid}/{{{{data.getFile()}}}}/{{{{data.getAAId()}}}}?context=include"
             update_now(url, 1000, function(config) {{
                 jqobj.find('.main-div').html(config)
-            }})
+            }})   }})()
           </script>
-        </div>
+        </div>          {{%endwith%}}
+
         '''
 
     def getRawContent(self):
@@ -55,3 +61,5 @@ class IncludeRSTDirective(JsonChartDirective):
         '''
 def setup(sapp):
     sapp.add_directive("vnv-include-rst", IncludeRSTDirective)
+
+register_context("include", post_process_include)

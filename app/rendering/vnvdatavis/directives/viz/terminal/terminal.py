@@ -8,16 +8,19 @@ except NameError:
 
 class TerminalDirective(JsonChartDirective):
     script_template = '''
-            <div>
+                   {{% with current_id = data.getRandom() %}}
+                    <div id="{{{{current_id}}}}">  
+
             <div class='card' style="height: 800px; overflow: auto; padding: 15px; background: #3c465b;"></div>
-            <script>
-                 const parent = $(document.currentScript).parent()
+            <script>           ( () => {{
+                 const parent = $('#{{{{current_id}}}}')
                  url = "/directives/updates/{uid}/{{{{data.getFile()}}}}/{{{{data.getAAId()}}}}"
                  update_now(url, 3000, function(config) {{
                       parent.find('.card').html("<pre class='term'>" + config + "</pre>")
                  }});    
-              
-            </script></div> '''
+                 }})()
+            </script></div>          {{%endwith%}}
+ '''
 
     def register(self):
         return self.getContent()

@@ -4,9 +4,6 @@ import os
 import sys
 from app import create_app
 
-import sys
-
-
 class Config:
     DEBUG = True
     LOCAL = False
@@ -16,24 +13,20 @@ class Config:
     port = 5001
     host = "0.0.0.0"
     DEFAULT_DATA_PREFIX = "../build/"
-    THEIA_URL = "/theia"
-    PARAVIEW_URL = "/paraview"
     LOGOUT_COOKIE = "vnvnginxcode"
     INPUTTABS_BROWSER = True
     INPUTTABS_PSIP = True
     INPUTTABS_ISSUES = True
+    PARAVIEW = 1
+    THEIA = 1
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--port", help="port to run on (default 5001)")
 parser.add_argument("--host", help="host to run on (default localhost)")
 parser.add_argument("--logout", help="name of logout cookie")
-parser.add_argument("--theiapath", type=str, help="Theia Path")
 
 args, unknown = parser.parse_known_args()
-
-if args.theiapath:
-    Config.THEIA_URL = args.theiapath
 
 if args.port:
     Config.port = args.port

@@ -1,6 +1,6 @@
 
-from .jmes import jmes_jinja_percentage
-from .viz.apex.apex import ApexChartDirective
+from ...jmes import jmes_jinja_percentage
+from .apex import ApexChartDirective
 
 
 class ApexGaugeDirective(ApexChartDirective):
@@ -9,22 +9,14 @@ class ApexGaugeDirective(ApexChartDirective):
     file_argument_whitespace = True
     has_content = False
     option_spec = {
-        'min': str,
-        'max': str,
-        'curr': str,
+        'value': str,
         'title': str
     }
 
-    def g(self):
-        mi = self.options.get("min", "`0`")
-        cu = self.options.get("curr", "`50`")
-        ma = self.options.get("max", "`100`");
-        return jmes_jinja_percentage(cu,mi,ma)
-
-    def getContent(self):
+    def getRawContent(self):
         return f'''
          {{
-          "series": [{self.g()}],
+          "series": [ {self.options.get("value",53)} ] ,
           "chart": {{
             "type": "radialBar",
             "width" : "100%",

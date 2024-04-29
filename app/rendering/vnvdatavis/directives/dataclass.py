@@ -122,8 +122,7 @@ class DataClass:
     def codeblock(self, text):
         """Return highlighted json html for the resulting jmes query"""
         j = self.query_str(text)
-        return pygments.highlight(
-            j, JsonLexer(), HtmlFormatter(), outfile=None)
+        return pygments.highlight(j, JsonLexer(), HtmlFormatter(), outfile=None)
 
     def rawCodeBlock(self, package, name):
         self.file
@@ -135,7 +134,9 @@ class DataClass:
         return self.data.getId()
     
     
-    def getRandom(self, val):
+    def getRandom(self, val = None):
+        if val is None:
+            return uuid.uuid4().hex
         if val not in self.random:
            self.random[val] = uuid.uuid4().hex
         return self.random[val]

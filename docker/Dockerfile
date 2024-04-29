@@ -13,6 +13,7 @@ ENV NODE_VERSION=18.0.0
 ENV YARN_VERSION=1.22.19
 ENV PARAVIEW_DIR=/vnvgui/paraview 
 ENV PVPYTHON=${PARAVIEW_DIR}/bin/pvpython 
+ENV PATH=/vnvgui/node/bin/:$PATH 
 
 
 RUN apt-get -y update && apt-get -y upgrade && apt-get -y install \
@@ -24,6 +25,8 @@ RUN apt-get -y update && apt-get -y upgrade && apt-get -y install \
     python3-pip \
     gsl-bin \
     libgsl-dev \
+    cmake \ 
+    swig \
     libglapi-mesa pkg-config libsecret-1-dev \
     && pip3 install virtualenv  
 
@@ -54,27 +57,27 @@ RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
 
 #Copy theia config Leave this seperate so we can cache that god awfull thing above. 
 COPY theia /vnvgui/theia
-
-ENV PATH=/vnvgui/node/bin/:$PATH 
-
 RUN cd /vnvgui/theia && yarn --pure-lockfile && cd browser-app && yarn theia download:plugins 
 
+#Install paraview
+COPY ./scripts/download_paraview.sh /vnvgui/paraview/download_paraview.sh
+RUN  cd /vnvgui/paraview && ./download_paraview.sh
+RUN tar -xf /vnvgui/paraview/pv.tar.gz -C /vnvgui/paraview --strip-components=1 && rm /vnvgui/paraview/pv.tar.gz 
 
-#Install the vnv guo
+
+#Install the vnv gui
 COPY ./requirements.txt /vnvgui/gui/requirements.txt
-RUN cd /vnvgui/gui \
-    && virtualenv virt \
-    && virt/bin/pip install -r ./requirements.txt 
+RUN cd /vnvgui/gui && virtualenv virt && virt/bin/pip install -r ./requirements.txt 
 
+COPY ./python_api /vnvgui/gui/python_api
+RUN cd /vnvgui/gui/python_api && mkdir -p build && cd build && rm -rf * && cmake .. && make -j 
 
-#Install Pavaview server (used for visualization) 
-COPY . /vnvgui/gui
-LABEL VNV_GUI_EQUIPT=1
-RUN  mkdir /vnvgui/paraview
-RUN tar -xf /vnvgui/gui/pv.tar.gz -C /vnvgui/paraview --strip-components=1 && rm /vnvgui/gui/pv.tar.gz 
+COPY ./router.py /vnvgui/gui/router.py
+COPY ./run.py /vnvgui/gui/run.py
+COPY ./app /vnvgui/gui/app
+COPY ./launch.sh /vnvgui/gui/launch.sh
 
-RUN cd /vnvgui/gui/app/moose/pyhit/hitsrc && make hit bindings 
-
+EXPOSE 5000
 WORKDIR /vnvgui/gui
-RUN mv docker/*.sh ./ 
 ENTRYPOINT ["./launch.sh"]
+

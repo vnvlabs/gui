@@ -172,14 +172,39 @@ class CustomVnVFunctions(functions.Functions):
             return ss
         return sep.join(obj)
 
+    @functions.signature({"types": ['number']},{"types": ['number']})
+    def _func_add(self, arg1,arg2):
+        return arg1 + arg2
 
-    ### TODO This wont work because we have not defined the (*,+) operator for
-    ### the DataBase class.
-    @functions.signature({"types": []},{"types": []}, {"types": []})
+    @functions.signature({"types": ['number']}, {"types": ['number']})
+    def _func_multiply(self, arg1, arg2):
+        return arg1 * arg2
+
+    @functions.signature({"types": ['number']}, {"types": ['number']})
+    def _func_subtract(self, arg1, arg2):
+        return arg1 - arg2
+
+    @functions.signature({"types": ['number']}, {"types": ['number']})
+    def _func_divide(self, arg1, arg2):
+        return arg1 / arg2
+
+    @functions.signature({"types": ['array-number']}, {"types": ['array-number']})
+    def _func_dot(self, arg1, arg2):
+        s = 0
+        for i in range(0,max(len(arg1),len(arg2))):
+            s += arg1[i]*arg2[i]
+        return s
+
+    @functions.signature({"types": ["array-number"]},{"types": ["array-number"]}, {"types": ["array-number"]})
     def _func_axpy(self, alpha, sep, obj):
         return alpha * sep + obj
 
-
+    #Make this a jmes function
+    @functions.signature({"types": ["array"]},{"types": ["array"]}, {"types": ["string"]},{"types": ["string"]})
+    def _func_l2d(self, a, b , a_key, b_key):
+        return [
+            { a_key : a[i], b_key : b[i] } for i in range(0,min(len(a),len(b)))
+        ]
 
 class VnVExpression:
     def __init__(self, parse):

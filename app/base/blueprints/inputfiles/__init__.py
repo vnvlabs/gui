@@ -16,7 +16,6 @@ from app.Directory import STATIC_FILES_DIR
 from app.models import VnVFile
 from app.models.VnVInputFile import VnVInputFile
 from ..files import get_file_from_runinfo
-from ...utils import mongo
 from ...utils.utils import render_error
 from pygments import highlight
 from pygments.formatters.html import HtmlFormatter
@@ -327,4 +326,3 @@ def list_vnv_executables():
 def template_globals(globs):
     globs["inputfiles"] = VnVInputFile.FILES
     globs["list_vnv_executables"] = list_vnv_executables
-    VnVInputFile.loadAll()

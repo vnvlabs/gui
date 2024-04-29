@@ -11,7 +11,7 @@ from sphinx.directives import optional_int
 from sphinx.util import nested_parse_with_titles
 from sphinx.util.docutils import SphinxDirective
 
-from .jmes import get_target_node, jmes_jinja_query, jmes_jinja_if_query
+from .jmes import get_target_node, jmes_jinja_query, jmes_jinja_if_query, register_context
 
 vnv_directives = {}
 
@@ -21,12 +21,14 @@ class VnVIfNode(docutils.nodes.General, docutils.nodes.Element):
     @staticmethod
     def visit_node(visitor, node):
         visitor.body.append(f'''
-           <div>  
+                    {{% with current_id = data.getRandom() %}}
+                    <div id="{{{{current_id}}}}">  
+
             <div class="node_start" hidden ></div>
             <div class="node_end" hidden ></div>
             <script>
-            
-            var jqobj = $(document.currentScript).parent()
+                       ( () => {{
+            var jqobj = $('#{{{{current_id}}}}')
                
             url = "/directives/updates/{node["uid"]}/{{{{data.getFile()}}}}/{{{{data.getAAId()}}}}?context=if"
              
@@ -36,9 +38,10 @@ class VnVIfNode(docutils.nodes.General, docutils.nodes.Element):
                     while (nodes.next()[0] != nodee) {{ nodes.next().remove(); }}
                     nodes.after(config)  
             }})
-            
+               }})()
             </script>
           </div>
+          {{%endwith%}}
         ''')
 
     @staticmethod
@@ -98,3 +101,5 @@ def setup(sapp):
 
     for key, value in vnv_directives.items():
         sapp.add_directive(key, value)
+
+register_context("if", VnVIfDirective.post_process)

@@ -11,20 +11,30 @@ import jsonschema
 import pygments.formatters.html
 from pygments.lexers import guess_lexer, guess_lexer_for_filename
 
-from app.base.utils import mongo
-from app.base.utils.mongo import validate_name, Configured
 from app.models.VnVConnection import VnVConnection, VnVLocalConnection
-from python_api.VnVReader import node_type_START, node_type_POINT, node_type_DONE, node_type_ITER, node_type_ROOT, \
-    node_type_LOG, \
-    node_type_END, node_type_WAITING
+from python_api.build import VnVReader
 from flask import render_template, make_response, render_template_string
 
 from app.models import VnV
 import app.rendering as r
-from app.models.readers import has_reader, LocalFile
+from app.models.readers import has_reader, LocalFile, json_to_jstree_json
 from app.rendering.vnvdatavis.directives.dataclass import render_vnv_template, DataClass
 
+def sizeof_fmt(num, suffix="B"):
+    for unit in ("", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"):
+        if abs(num) < 1024.0:
+            return f"{num:3.1f}{unit}{suffix}"
+        num /= 1024.0
+    return f"{num:.1f}Yi{suffix}"
 
+def seconds_to_human_readable(seconds_since_epoch):
+    try: # Convert seconds since epoch to datetime object
+        date_time = datetime.utcfromtimestamp(seconds_since_epoch)
+        # Format the datetime object as a human-readable string
+        human_readable_string = date_time.strftime('%Y-%m-%d %H:%M:%S')
+        return human_readable_string
+    except:
+        return f"----"
 class ProvFileWrapper:
 
     def __init__(self, vnvfileid, pfile, description):
@@ -36,7 +46,11 @@ class ProvFileWrapper:
         return self.vnvfileid
 
     def getName(self):
+        if self.copy():
+            #If this file was copied, then it should be relative to the file stub
+            return VnVFile.FILES[self.vnvfileid].filename + self.file.filename
         return self.file.info.name
+    
 
     def getUrl(self):
         return pathname2url(self.getName())
@@ -44,17 +58,26 @@ class ProvFileWrapper:
     def getSize(self):
         return self.file.info.size
 
+    def getDisplaySize(self):
+        return sizeof_fmt(self.getSize())
+
     def getTimeStamp(self):
         return self.file.info.timestamp
 
-    def modified(self):
-        return self.file.modified()
+    def getDisplayTimeStamp(self):
+        return seconds_to_human_readable(self.getTimeStamp())
 
     def reader(self):
         return self.file.reader
 
     def text(self):
         return self.file.text
+
+    def json_text(self):
+        return json.dumps(json_to_jstree_json(json.loads(self.text())))
+
+    def copy(self):
+        return self.file.copy
 
     def package(self):
         return self.file.package
@@ -63,11 +86,25 @@ class ProvFileWrapper:
         return self.file.comm
 
     def readable(self):
-        return has_reader(self.file.reader)
+        return has_reader(self.file.reader, self.getName())
 
     def getDescription(self):
         return self.description
 
+    def getCrc(self):
+        return self.file.crc
+
+    def was_modified(self):
+        
+        if self.file.crc: 
+            crc = self.file.getCurrentCRC32(self.getName())
+            return crc != self.file.crc
+
+        if os.path.exists(self.getName()):
+            ti_m = os.path.getmtime(self.getName())
+            return abs(ti_m - self.getTimeStamp()) > 2
+        
+        return False
 
 class ProvWrapper:
 
@@ -78,8 +115,7 @@ class ProvWrapper:
 
     def getD(self, provfile):
         return render_template(
-            self.templates.get_file_description(
-                provfile.package, provfile.name))
+            self.templates.get_file_description(provfile.package, provfile.name))
 
     def get_executable(self):
         return ProvFileWrapper(self.vnvfileid, self.prov.executable, "")
@@ -90,21 +126,15 @@ class ProvWrapper:
     def get_command_line(self):
         return self.prov.commandLine
 
+    def get_working_directory(self):
+        return self.prov.currentWorkingDirectory
+
     def get_libraries(self):
         a = []
-        m = []
         for i in range(0,self.prov.size(2)):
             b = ProvFileWrapper(self.vnvfileid, self.prov.get(i, 2), "")
-            if not b.getName().startswith("/"):
-                pass
-            elif b.modified():
-                m.append(b)
-            else:
-                a.append(b)
-
-        a.sort(key=lambda x: x.getName())
-        m.sort(key=lambda x: x.getName())
-        return m + a
+            a.append(b)
+        return a
 
     def get_outputs(self):
         r = []
@@ -627,23 +657,6 @@ class VnVFile:
 
     FILES = VnV.FILES
 
-
-    def getReaderConfig(self, username, password):
-        if not Configured():
-            a = {"persist": "memory"}
-        else:
-            a = {
-                "uri": "mongodb://localhost:27017",
-                "db": "vnv",
-                "collection": self.name,
-                "persist": "mongo"
-            }
-        if username is not None and len(username) > 0 and password is not None and len(password) > 0:
-            a["username"] = username
-            a["password"] = password
-
-        return a
-
     def __init__(self, name, filename, reader, template_root, icon="icon-box", _cid=None, reload=False,
                  **kwargs):
 
@@ -656,16 +669,10 @@ class VnVFile:
         self.notifications = []
         self.workflowRender = None
 
-        if not reload:
-            self.dispName = name
-            self.name = validate_name(name)
-            mongo.update_display_name(self.name, self.dispName)
-        else:
-            self.name = name
-            self.dispName = mongo.get_display_name(self.name)
+        self.name = name
+        self.dispName = name
 
-        self.wrapper = VnV.Read(filename, reader, self.getReaderConfig(self.options.get("username"),
-                                                                       self.options.get("password")))
+        self.wrapper = VnV.Read(filename, reader,  {})
 
         self.root = self.wrapper.get()
         self.template_dir = os.path.join(template_root, str(self.id_))
@@ -696,8 +703,6 @@ class VnVFile:
 
     def update_dispName(self, newName):
         self.dispName = newName
-        mongo.update_display_name(self.name, newName)
-
 
     def render_temp_string(self, content):
         if self.setupNow():
@@ -1106,31 +1111,23 @@ class VnVFile:
         self.proc_iter = None
 
     def set_proc_iter(self, proc=0, only=None):
-        self.proc_iter_config = {
-            "id": int(proc),
-            "only": True if only else False,
-            "comm": False}
-        self.proc_iter = self.root.getWalker(
-            "VNV", "proc", json.dumps(
-                self.proc_iter_config))
+        self.proc_iter_config = {"id": int(proc),"only": True if only else False, "comm": False}
+        self.proc_iter = self.root.getWalker(json.dumps(self.proc_iter_config))
         self.currX = -1
         self.currY = -1
         self.parents = []
         return True
 
     def set_comm_iter(self, comm, only=None):
-        self.proc_iter_config = {
-            "id": int(comm),
-            "only": True if only else False,
-            "comm": True}
-        self.proc_iter = self.root.getWalker("VNV", "proc", json.dumps(self.proc_iter_config))
+        self.proc_iter_config = { "id": int(comm), "only": True if only else False, "comm": True}
+        self.proc_iter = self.root.getWalker(json.dumps(self.proc_iter_config))
         self.parents = None
         return True
 
     node_type_map = {
-        node_type_POINT: "point",
-        node_type_START: "start",
-        node_type_END: "end"
+        VnVReader.node_type_POINT: "point",
+        VnVReader.node_type_START: "start",
+        VnVReader.node_type_END: "end"
     }
     INJECTION_INTRO = -100
     INJECTION_CONC = -101
@@ -1160,7 +1157,7 @@ class VnVFile:
             n = self.proc_iter.next()
             if n is not None:
 
-                if n.type == node_type_DONE:
+                if n.type == VnVReader.node_type_DONE:
                     res.append({
 
                         "id": VnVFile.INJECTION_INTRO,
@@ -1171,10 +1168,10 @@ class VnVFile:
                     })
                     break
 
-                elif n.type == node_type_WAITING:
+                elif n.type == VnVReader.node_type_WAITING:
                     break
 
-                elif n.type in [node_type_POINT, node_type_END, node_type_START]:
+                elif n.type in [VnVReader.node_type_POINT, VnVReader.node_type_END,VnVReader.node_type_START]:
                     ip = self.get_injection_point(n.item.getId())
                     if ip is not None:
                       res.append({
@@ -1218,15 +1215,11 @@ class VnVFile:
     @staticmethod
     def removeById(fileId, refresh):
         p = VnVFile.FILES.pop(fileId)
-        mongo.removeFile(p.name)
         if refresh:
             VnVFile.FILES[p.id_] = p.clone()
 
     @staticmethod
     def delete_all():
-
-        for k, v in VnVFile.FILES.items():
-            mongo.removeFile(v.name)
         VnVFile.FILES.clear()
 
     class FileLockWrapper:

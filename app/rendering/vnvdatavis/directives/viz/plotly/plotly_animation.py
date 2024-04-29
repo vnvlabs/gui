@@ -11,7 +11,7 @@ from ..charts import JsonChartDirective, VnVChartNode
 from collections.abc import MutableMapping
 
 from ...forr import VnVForDirective
-from ...jmes import get_target_node, jmes_jinja_query
+from ...jmes import get_target_node, jmes_jinja_query, register_context
 from .plotly import PlotlyDirec, PlotlyOptionsDict, plotly_post_process, \
     plotly_post_process_raw
 
@@ -101,12 +101,15 @@ class PlotlyAnimation(PlotlyDirec):
     external = ["width", "height", "defaultTrace", "start", "end", "step", "values", "prefix", "labels"]
 
     script_template = '''
-                     <div>
+                                   {{% with current_id = data.getRandom() %}}
+                    <div id="{{{{current_id}}}}">  
+
+
                      <div class="mainDiv" style="width:100%; height:100%; min-height:500px"></div>
                      
                      <script>
-                       
-                       const parent = $(document.currentScript).parent()
+                                  ( () => {{
+                       const parent = $('#{{{{current_id}}}}')
                        
                        
                        url = "/directives/updates/{uid}/{{{{data.getFile()}}}}/{{{{data.getAAId()}}}}?context=animation"
@@ -120,9 +123,10 @@ class PlotlyAnimation(PlotlyDirec):
                          var xx = JSON.parse(config)
                          Plotly.react(parent.find("mainDiv")[0],xx); 
                        }})
-                     }})
+                     }})   }})()
                      </script>
-                     </div>
+                     </div>          {{%endwith%}}
+
                      '''
 
     @staticmethod
@@ -211,3 +215,5 @@ class PlotlyAnimation(PlotlyDirec):
 def setup(sapp):
     sapp.add_node(VnVAnimatedNode, **VnVAnimatedNode.NODE_VISITORS)
     sapp.add_directive("vnv-animation", PlotlyAnimation)
+
+register_context("animation", PlotlyAnimation.post_process)

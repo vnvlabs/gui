@@ -7,23 +7,18 @@ import json
 import os
 
 import jinja2
-from flask import Blueprint, render_template, make_response, request, jsonify, render_template_string
+from flask import Blueprint, render_template, make_response, request, jsonify, render_template_string, current_app
 from jinja2 import FileSystemLoader
 
 from app import Directory
 from app.models.VnVFile import VnVFile
 from app.models.VnVInputFile import VnVInputFile
-from gui.app.rendering.vnvdatavis.directives.viz.chartsjs.chartsjs import chartsjs_post_process
+from app.rendering.vnvdatavis import directives
+from app.rendering.vnvdatavis.directives.jmes import context_map
 from app.rendering.vnvdatavis.directives.dataclass import DataClass
-from app.rendering.vnvdatavis.directives.forr import VnVForDirective
-from app.rendering.vnvdatavis.directives.iff import VnVIfDirective
-from app.rendering.vnvdatavis.directives.include import post_process_include
-from gui.app.rendering.vnvdatavis.directives.viz.plotly.plotly import plotly_post_process
-from gui.app.rendering.vnvdatavis.directives.viz.plotly.plotly_animation import PlotlyAnimation
-from gui.app.rendering.vnvdatavis.directives.viz.apex.apex import apex_post_process
 from ...utils.utils import render_error
 import os
-
+from app.rendering.vnvdatavis.directives import get_context_map
 blueprint = Blueprint(
     'directives',
     __name__,
@@ -31,16 +26,7 @@ blueprint = Blueprint(
     url_prefix="/directives"
 )
 
-
-context_map = {
-    "plotly" : plotly_post_process,
-    "for" : VnVForDirective.post_process,
-    "if" : VnVIfDirective.post_process,
-    "animation" : PlotlyAnimation.post_process,
-    "apex": apex_post_process,
-    "jscharts" : chartsjs_post_process,
-    "include" : post_process_include,
-}
+context_map = get_context_map()
 
 @blueprint.route('/updates/<updateId>/<int:fileid>/<int:dataid>', methods=["GET"])
 def chartupdates(updateId, fileid, dataid):

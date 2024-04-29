@@ -3,36 +3,31 @@
     displays file "row" when under the Libraries tab of the report's Provenance tab
     lists path to Executable, whether it's up-to-date, and other info
  -->
+{% if include_header %}
+<div style="display: flex; align-items:center; justify-content:center;">
 
-<div style="display: flex; align-items:center;">
-    <!-- display Executable prefix, it's path, and its size -->
-    <h6 style="flex:1;"> {{prefix}} {{ file.getName() }} ({{file.getSize()}} Bytes)</h6>
-    <!-- 
-      pill: "Modified"
-        visible if file modified since Executable ran
-        hover over it to see the title
-    -->
-    {% if file.modified() %}
-    <div class="badge badge-warning" title="The file has been modified since this report was created">Modified</div>
-    <!-- 
-      pill: "Up to date"
-        visible if file NOT modified since Executable ran
-        hover over it to see the title
-    -->
-    {% else %}
-    <div class="badge badge-success" title="The file has not been changed since the report was created">Up to date</div>
-    {% endif %}
-    <!-- 
-      button: "View"
-        click this to view source file
-        visible if file is readable
-     -->
-    {%if file.readable() %}
-    <div href="#!" onclick='show_file_reader({{file.getVnVFileId()}},"{{file.getUrl()}}","{{file.reader()}}","")' class="badge badge-info" style="margin-left:10px" ;>View</div>
-    {% endif %}
-
+    <h6 style="flex:1">Path </h6>
+    <h6 style="width:150px; text-align:center; ">File Size</h6>
+    <h6 style="width:200px; text-align:right;">Last Modified</h6>
+    <h6 href="#!" style="width:100px; text-align:center;">View</h6>
 
 </div>
-<div>
+{% endif %}
+
+<div style="display: flex; align-items:center; justify-content:center;{% if file.was_modified()%}color:red;{%endif%}" {% if file.was_modified()%}title="Modified Since Last Executed"{%endif%}>
+    <h6 style="flex:1"> {{prefix}} {{ file.getName() }} </h6>
+    <h6 style="width:150px; text-align:center; ">{{file.getDisplaySize()}} </h6>
+    <h6 style="width:200px; text-align:right;">{{file.getDisplayTimeStamp()}} </h6>
+    {%if file.readable() %}
+    <div href="#!" onclick='show_file_reader({{file.getVnVFileId()}},"{{file.getUrl()}}","{{file.reader()}}","")'
+         style="cursor:pointer; width:100px; display:flex; align-items:center; justify-content:center;">
+        <i style="color:black" class="feather icon-file-text"></i>
+    </div>
+    {% else %}
+    <div href="#!" title="File Viewer UnAvailable" style="width:100px; display:flex; align-items:center; justify-content:center;">--</div>
+    {% endif %}
+
+</div>
+<div style="margin-top:10px;">
     {{ file.getDescription() | safe }}
 </div>

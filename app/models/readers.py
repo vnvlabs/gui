@@ -52,8 +52,9 @@ def render_pdf(filename, **kwargs):
 
 
 def render_paraview(filename, **kwargs):
-    return f"<iframe class='card' src='/pv?file={filename}' style='width: 100%;height:80vh;'>"
-
+    if current_app.config["PARAVIEW"] > 0:
+        return f"<iframe class='card' src='/pv?file={filename}' style='width: 100%;height:80vh;'>"
+    return f"<div> Paraview Is Not Configured. Reconfigure with paraview to open {filename}."
 
 def render_vti(filename, **kwargs):
     path = urllib.request.pathname2url(f"/temp/files/{getUID(filename)}")
@@ -61,7 +62,7 @@ def render_vti(filename, **kwargs):
 
 
 def render_rst(filename, **kwargs):
-    with open(filename, 'r') as f:
+    with open(filename, 'r', encoding="utf-8-sig") as f:
         d = f.read()
     p, u = getPath(filename, exten="html")
 
@@ -72,17 +73,17 @@ def render_rst(filename, **kwargs):
 
 
 def render_markdown(filename, **kwargs):
-    with open(filename, 'r') as f:
+    with open(filename, 'r',encoding="utf-8-sig") as f:
         return f"<div>{markdown.markdown(f.read())}</div>"
 
 
 def render_code(filename, **kwargs):
-    with open(filename, 'r') as f:
+    with open(filename, 'r', encoding="utf-8-sig") as f:
         return render_template("browser/ace.html", TEXT=f.read(), filename=filename)
 
 
 def render_csv(filename, **kwargs):
-    with open(filename, 'r') as f:
+    with open(filename, 'r',encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
         return render_template("csv/template.html", RAWDATA=json.dumps([r for r in reader]))
 
@@ -117,9 +118,16 @@ def json_to_jstree_json(j):
 
 
 def render_json(filename, **kwargs):
-    with open(filename, 'r') as f:
+    with open(filename, 'r',encoding="utf-8-sig") as f:
         reader = json.load(f)
         return render_template("browser/json.html", RAWDATA=json.dumps(json_to_jstree_json(reader)))
+
+def auto_reader(filename, **kwargs):
+    ext = os.path.splitext(filename)
+    if ext[1] in EXT_MAP and EXT_MAP[ext[1]] in FILE_READERS:
+        return FILE_READERS[EXT_MAP[ext[1]]](filename,**kwargs)
+    return FILE_READERS["code"](filename, **kwargs)
+
 
 FILE_READERS = {
     "image": render_image,
@@ -129,7 +137,8 @@ FILE_READERS = {
     "code": render_code,
     "markdown": render_markdown,
     "rst": render_rst,
-    "json": render_json
+    "json": render_json,
+    "auto" : auto_reader
 }
 
 EXT_MAP = {
@@ -158,7 +167,7 @@ def get_reader(reader, ext):
     return "code"
 
 
-def has_reader(reader):
+def has_reader(reader, filename):
     return reader in FILE_READERS
 
 
@@ -248,7 +257,11 @@ class LocalFile:
         try:
             return self.render_reader()
         except Exception as e:
-            return f"<div>{str(e)}</div>"
+            try:
+                self.reader = "code"
+                return self.render_reader()
+            except:
+                return f"<div>{str(e)}</div>"
 
     def icon(self):
         return "folder" if self.is_dir() else "file"

@@ -1,12 +1,13 @@
+from . import basic, jmes, psip, issues, iff, slider, forr, include, math, code
+from .viz.chartsjs import chartsjs
+from .viz.plotly import plotly, plotly_animation
+from .viz.apex import apex, line, gauge
+from .viz import charts
+from .viz.tabulator import table
+from .viz.terminal import terminal
 
 
 def setup(sapp):
-
-    from . import basic, jmes, gauge, table, psip, issues,  iff, slider, forr, include, math, code
-    from .viz.chartsjs import chartsjs
-    from .viz.plotly import plotly, plotly_animation
-    from .viz.apex import apex, line
-    from .viz import charts
 
 
     jmes.setup(sapp)
@@ -27,3 +28,7 @@ def setup(sapp):
     include.setup(sapp)
     math.setup(sapp)
     code.setup(sapp)
+    terminal.setup(sapp)
+
+def get_context_map():
+    return jmes.context_map

@@ -13,6 +13,7 @@ import numpy as np
 import json
 
 from ...fakejmes import jmespath_autocomplete
+from ...jmes import register_context
 
 
 def gen_comp(cap, val, type, desc):
@@ -265,11 +266,15 @@ def plotly_data_array(**kwargs):
     return func
 
 
-def plotly_convert(keys, value, trace, data):
+def plotly_convert(keys, value, trace, data, all_traces):
     rendered = render_template_string(value, data=data)
 
     if trace == "layout":
-        s = plotly_schema["layout"]["layoutAttributes"]
+        s = {}
+        s.update(plotly_schema["layout"]["layoutAttributes"])
+        for key,value in all_traces.items():
+            s.update(plotly_schema["traces"].get(value,{}).get("layoutAttributes",{}))
+
     elif trace == "config":
         s = plotly_schema["config"]
     else:
@@ -278,6 +283,7 @@ def plotly_convert(keys, value, trace, data):
     for i in keys:
         if i[0:5] in ["xaxis", "yaxis"]:
             s = s[i[0:5]]
+
         else:
             s = s[i]
 
@@ -329,7 +335,7 @@ def plotly_post_process_raw(text, data, file, ext):
             for c in a[0:-1]:
                 dc = dc.setdefault(c, {})
             try:
-                dc[a[-1]] = plotly_convert(a[1:], v, traces[a[0]], data)
+                dc[a[-1]] = plotly_convert(a[1:], v, traces[a[0]], data, traces)
             except Exception as e:
                 errors[k] = {"value": v, "error": str(e)}
 
@@ -388,20 +394,26 @@ class PlotlyOptionsDict(MutableMapping):
 
 class PlotlyChartDirective(JsonChartDirective):
     script_template = '''
-          <div>
-            <div class="{id_}" style="width:100%; height:100%;"></div>
-            <script>
-              const parent = $(document.currentScript).parent()
-              const obj = {config}
-              Plotly.newPlot(parent.find('.{id_}')[0],obj['data'],obj['layout']);
-              url = "/directives/updates/{uid}/{{{{data.getFile()}}}}/{{{{data.getAAId()}}}}"
-              update_now(url,  1000, function(config) {{
-                var xx = JSON.parse(config)
-                Plotly.update(parent.find'.{id_}')[0],xx['data'],xx['layout']);
-              }})
-
-            </script>
+            {{% with current_id = data.getRandom() %}}
+            
+            <div id="{{{{current_id}}}}">  
+                <div class="{id_}" style="width:100%; height:100%;"></div>
+                <script>
+                    ( () => {{
+                        const parent = $('#{{{{current_id}}}}')
+                        const obj = {config}
+                        Plotly.newPlot(parent.find('.{id_}')[0],obj['data'],obj['layout']);
+                        
+                        var url = "/directives/updates/{uid}/{{{{data.getFile()}}}}/{{{{data.getAAId()}}}}"
+                        update_now(url,  1000, function(config) {{
+                            var xx = JSON.parse(config)
+                            Plotly.update(parent.find('.{id_}')[0],xx['data'],xx['layout']);
+                        }})
+                    }})()
+                </script>
            </div>
+           {{%endwith%}}
+
             '''
 
 
@@ -418,46 +430,49 @@ class PlotlyDirec(PlotlyChartDirective):
     ## We tag all the ids with the dataId because we only really generate the html once per test. So, if
     ## you have a test multiple times, we need to have the dataId different so they dont interfere.
     script_template = '''
-                 <div>
+                                {{% with current_id = data.getRandom() %}}
+                    <div id="{{{{current_id}}}}">  
+
+
                  <div class="MainDiv" style="width:100%; height:100%; min-height:450px"></div>
                  <script>
-                 
-                   const parent = $(document.currentScript).parent()
-
-                   url = "/directives/updates/{uid}/{{{{data.getFile()}}}}/{{{{data.getAAId()}}}}?context=plotly"
-                   var load = [88,12]
+                   ( () => {{
+                       const parent = $('#{{{{current_id}}}}')
+                       url = "/directives/updates/{uid}/{{{{data.getFile()}}}}/{{{{data.getAAId()}}}}?context=plotly"
+                       var load = [88,12]
                    
-                   Plotly.newPlot(parent.find(".MainDiv")[0],[
-                       {{values: load, 
-                         text:'Loading', 
-                         textposition:'inside', 
-                         hole: 0.5, 
-                         labels: ['Loaded','Remaining'],
-                         type: 'pie'}}
-                      ],
-                      {{showlegend:false,
-                        annotations: [
-                           {{ 
-                              font: {{ size: 20 }},
-                              showarrow: false,
-                              text: `${{load[0]}}%`,
-                              x: 0.5,
-                              y: 0.5
-                           }}
-                        ] 
-                       }},
-                       {{ }}
-                   );
-                   
-                   update_now(url, 1000, function(config) {{
-                     var xx = JSON.parse(config)
-                     Plotly.react(parent.find('.MainDiv')[0],xx);     
-                     Plotly.relayout(parent.find('.MainDiv')[0],{{}});                
-                   }})
-                   
-                 }})
+                       Plotly.newPlot(parent.find(".MainDiv")[0],[
+                           {{values: load, 
+                             text:'Loading', 
+                             textposition:'inside', 
+                             hole: 0.5, 
+                             labels: ['Loaded','Remaining'],
+                             type: 'pie'}}
+                          ],
+                          {{showlegend:false,
+                            annotations: [
+                               {{ 
+                                  font: {{ size: 20 }},
+                                  showarrow: false,
+                                  text: `${{load[0]}}%`,
+                                  x: 0.5,
+                                  y: 0.5
+                               }}
+                            ] 
+                           }},
+                           {{ }}
+                       );
+                       
+                       update_now(url, 1000, function(config) {{
+                         var xx = JSON.parse(config)
+                         Plotly.react(parent.find('.MainDiv')[0],xx);     
+                         Plotly.relayout(parent.find('.MainDiv')[0],{{}});                
+                       }})
+                       
+                 }})()
                  </script>
-                 </div>
+                 </div>          {{%endwith%}}
+
                  '''
 
     def register(self):
@@ -472,16 +487,4 @@ def setup(sapp):
     sapp.add_directive("vnv-plotly-raw", PlotlyChartDirective)
     sapp.add_directive("vnv-plotly", PlotlyDirec)
 
-
-'''
-
-.. vnv-plotly::
-   :trace.x: ......
-   :trace.y: .....
-   
-   {
-        "xd" : [ a for a in range(0,1000) ],
-        "yd" : [ sin(a) for a  in range(0,1000) ]
-   }
-
-'''
+register_context("plotly", plotly_post_process)

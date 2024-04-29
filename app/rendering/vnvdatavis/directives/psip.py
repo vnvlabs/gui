@@ -8,7 +8,6 @@ from .jmes import get_target_node
 
 class PSIPDirective(SphinxDirective):
 
-    PSIP_SCHEMA_URI="http://localhost:5000/static/assets/psip/schema.json"
     required_arguments = 1
     optional_arguments = 0
     file_argument_whitespace = True

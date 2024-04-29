@@ -9,7 +9,9 @@ from sphinx.errors import ExtensionError
 # Fake jmes
 from . import fakejmes as jmespath
 
-
+context_map = {}
+def register_context(context, func):
+    context_map[context] = func
 
 def get_target_node(directive):
     serial_no = directive.env.new_serialno("ccb")

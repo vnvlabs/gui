@@ -1,7 +1,7 @@
 import json
 
 from ..apex.apex import apex_post_process, ApexChartDirective, ApexOptionsDict
-
+from ...jmes import register_context
 
 
 def chartsjs_post_process(text, data, file):
@@ -25,14 +25,16 @@ loading = {
 }
 
 script_template = '''
-      <div> 
+                      {{% with current_id = data.getRandom() %}}
+                    <div id="{{{{current_id}}}}">  
+
        <div class="main-div" width="100%" height="100%">
           <canvas class='canvas-div'></canvas>
        </div>
-       <script>
+       <script>           ( () => {{
          const obj = JSON.parse(`{config}`)
          
-         const parent = $(document.currentScript).parent()
+         const parent = $('#{{{{current_id}}}}')
          
          var ctx = parent.find('.canvas-div')[0] 
          
@@ -43,15 +45,18 @@ script_template = '''
             myChart.config = JSON.parse(config)
             myChart.update()  
          }})
-       }})
+       }})   }})()
        </script>
-       </div>
+       </div>          {{%endwith%}}
+
        '''
 
 class ChartsJsChartDirective(ApexChartDirective):
 
     script_template = '''
-         <div>
+         {{% with current_id = data.getRandom() %}}
+                    <div id="{{{{current_id}}}}">  
+
          <div>
            <div class='vnv-table'>
               <canvas class="canvas-div"></canvas>
@@ -64,26 +69,31 @@ class ChartsJsChartDirective(ApexChartDirective):
            <div class="card main-error-message" style="display:none; position:absolute; margin:20px; padding=20px; z-index:1000; top:43px; right:43px;"></div>   
          </div> 
          <script>
-             const parent = $(document.currentScript).parent()
+        
+           ( () => {{
+                 const parent = $('#{{{{current_id}}}}')
+                 
+                 var ctx = parent.find(".canvas-div")[0];
+                 var myChart = new Chart(ctx, {loading});
+    
+                 url = "/directives/updates/{uid}/{{{{data.getFile()}}}}/{{{{data.getAAId()}}}}{context}"
+                 update_now(url, 1000, function(config) {{
+                     z = JSON.parse(config)
+                     myChart.config = z 
+                     myChart.update()  
+                     if (z["errors"]) {{
+                        parent.find('.main-errors').show()   
+                        parent.find('.main-error-message').html(z["errors"])
+                      }} else {{
+                        parent.find('.main-errors').hide()   
+                    }}
+                 }})
+                 
+             }})()
              
-             var ctx = parent.find(".canvas-div")[0];
-             var myChart = new Chart(ctx, {loading});
-
-             url = "/directives/updates/{uid}/{{{{data.getFile()}}}}/{{{{data.getAAId()}}}}{context}"
-             update_now(url, 1000, function(config) {{
-                 z = JSON.parse(config)
-                 myChart.config = z 
-                 myChart.update()  
-                 if (z["errors"]) {{
-                    parent.find('.main-errors').show()   
-                    parent.find('.main-error-message').html(z["errors"])
-                  }} else {{
-                    parent.find(".main-errors').hide()   
-                }}
-             }})
-          }})
           </script>
           </div>
+          {{%endwith%}}
         '''
 
     def getContext(self):
@@ -118,3 +128,4 @@ def setup(sapp):
     sapp.add_directive("vnv-charts-js", ChartsJsDirec)
     sapp.add_directive("vnv-chart", ChartsJsChartDirective)
 
+register_context("jscharts", chartsjs_post_process)

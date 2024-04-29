@@ -9,6 +9,9 @@ from sphinx.errors import ExtensionError
 from ..charts import JsonChartDirective
 from collections.abc import MutableMapping
 
+from ...jmes import register_context
+
+
 def dict_pop(d):
 
     if isinstance(d,dict):
@@ -43,73 +46,17 @@ def apex_post_process(text, data, file, schema = apex_schema):
     # Extract all the trace definitions -- trace.x = scatter trace.y = line
     # Turn it into an object
     rdata = {}
-    options = json.loads(text)
-
-    class DictOrOpt:
-        def __init__(self,parent, key):
-            self.parent = parent
-            self.key = key
-
-    apex_opts = {}
-    for k, v in options.items():
-        value = json.loads(render_template_string(v,data=data,file=file))
-        a = k.split('.')
-        last = apex_opts
-        lastParent = None
-        lastKey = None
-        for i in a:
-
-            if isinstance(last,dict):
-               if i not in last:
-                   last[i] = DictOrOpt(last, i)
-
-               lastParent = last
-               lastKey = i
-               last = last[i]
-
-            elif isinstance(last,list) and i.isnumeric():
-
-               ind = int(i)
-               while len(last) <= ind:
-                   last.append(DictOrOpt(last, len(last)))
-
-               lastParent = last
-               lastKey = ind
-               last = last[ind]
-            elif isinstance(last,list):
-                raise ExtensionError("Non numeric tag passed to array.")
-            elif isinstance(last,DictOrOpt):
-
-                if i.isnumeric():
-                    ind = int(i)
-                    a = []
-                    while len(a) <= ind:
-                        a.append(DictOrOpt(a, len(a)))
-
-                    last.parent[last.key] = a
-
-                    lastParent = a
-                    lastKey = ind
-                    last = a[ind]
-                else:
-                    a = {}
-                    a[i] = DictOrOpt(a,i)
-                    last.parent[last.key] = a
-
-                    lastParent = a
-                    lastKey = i
-                    last = a[i]
-            else:
-                raise ExtensionError("What")
-
-        lastParent[lastKey] = value
+    try:
+        options = json.loads(render_template_string(text,data=data,file=file))
+    except Exception as e:
+        return {"errors" : str(e) }
     if schema:
         try:
-            jsonschema.validate(apex_opts,schema)
+            jsonschema.validate(options,schema)
         except Exception as e:
-            apex_opts["errors"] = str(e)
+            return {"errors" :  str(e) }
 
-    return json.dumps(apex_opts)
+    return options
 
   except Exception as e:
       print(e)
@@ -160,42 +107,42 @@ loading = {
 
 class ApexChartDirective(JsonChartDirective):
     script_template = '''
-         <div>
-           
-           <div class='main-div vnv-table'></div>
-          
-           <div class="apex-error-main errors-div" style="color:orangered; font-size:30px; width:40px; height:40px; position:absolute; top:3px; right:3px; cursor:pointer; display:none">
-              <i onclick="$(this).parent().parent().find('.error-message-div').toggle()" class="feather icon-alert-triangle" ></i>
-           </div>
-           
-           <div class="card error-message-div" style="display:none; position:absolute; margin:20px; padding=20px; z-index:1000; top:43px; right:43px;">
-           </div>   
-         
-         
-            <script>
-                $(document).ready(function() {{
+                   {{% with current_id = data.getRandom() %}}
+                    <div id="{{{{current_id}}}}">  
+
+    
+               
+               <div class='main-div vnv-table'></div> 
+               <div class="card error-message-div" style="border:1px solid red; display:none; margin:20px; padding=20px; z-index:1000; "></div>   
+             
+             
+                <script>
+                               ( () => {{
+                    const parent = $('#{{{{current_id}}}}')
+                    var chart = new ApexCharts(parent.find('.main-div')[0], {loading});
+                    chart.render();
+                    
+                    url = "/directives/updates/{uid}/{{{{data.getFile()}}}}/{{{{data.getAAId()}}}}{context}"
+                    update_now(url, 1000, function(config) {{
+                        
+                        if (config["errors"]) {{
+                            parent.find('.errors-div').show()   
+                            parent.find('.error-message-div').html(config["errors"])
+                            parent.find('.error-message-div').show()
+                            parent.find('.main-div').hide()
+                        
+                        }} else {{
+                            parent.find('.main-div').show()
+                            parent.find('.errors-div').hide()   
+                            chart.updateOptions(config) 
+                        }}
+                    }})
+                    
+                   }})()
+                </script>
                 
-                
-                const parent = $(document.currentScript).parent() 
-                var chart = new ApexCharts(parent.find('.main-div')[0]), {loading});
-                chart.render();
-                
-                url = "/directives/updates/{uid}/{{{{data.getFile()}}}}/{{{{data.getAAId()}}}}{context}"
-                update_now(url, 1000, function(config) {{
-                    z = JSON.parse(config)
-                    chart.updateOptions(z) 
-                    if (z["errors"]) {{
-                        parent.find('.errors-div').show()   
-                        parent.find('.error-message-div').html(z["errors"])
-                    }} else {{
-                        parent.find('.errors-div').hide()   
-                    }}
-                }})
-                
-                }})
-            </script>
-            
-          </div> 
+          </div>           {{%endwith%}}
+
         '''
 
     def getContext(self):
@@ -236,3 +183,5 @@ class ApexDirec(ApexChartDirective):
 def setup(sapp):
     sapp.add_directive("vnv-apex", ApexDirec)
     sapp.add_directive("vnv-apex-raw", ApexChartDirective)
+
+register_context("apex", apex_post_process)
