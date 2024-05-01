@@ -56,13 +56,6 @@ def delete(id_):
     return "success", 200
 
 
-@blueprint.route('/disconnect/<int:id_>', methods=["POST"])
-def disconnect(id_):
-    with VnVInputFile.find(id_) as file:
-        file.connection.disconnect();
-        return render_template("inputfiles/connection_content.html", file=file)
-
-
 @blueprint.route('/save_input/<int:id_>', methods=["POST"])
 def save_input_file(id_):
     with VnVInputFile.find(id_) as file:
@@ -326,3 +319,5 @@ def list_vnv_executables():
 def template_globals(globs):
     globs["inputfiles"] = VnVInputFile.FILES
     globs["list_vnv_executables"] = list_vnv_executables
+
+VnVInputFile.add("Demo", "/home/ben/source/vnvlabs.com/vnvlabs/applications/simple/build/cpp/injectionPoint",)

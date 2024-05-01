@@ -1,5 +1,5 @@
 {% with loopList = [["input","VnV Configuration", True],["inputfiles","Input Files", file.get_prov().has_inputs() ],["outputs","Outputs", file.get_prov().has_outputs() ],["libraries","Libraries", True]] %}
-{% with active_tab = request.args.get("btab",loopList[3][0]) %}
+{% with active_tab = request.args.get("btab",loopList[0][0]) %}
 <!-- 
   column: "Content in Provenence tab"
  -->

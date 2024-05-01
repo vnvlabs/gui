@@ -53,49 +53,7 @@
         </small>
     </div>
 
-    <div id="connection_information">
 
-        <!-- 
-          check box: "Files are accessible from the web server"
-            yes/no response
-         -->
-        <div class="form-group form-check">
-            <input name="local" type="checkbox" class="form-check-input" id="clh" {%if
-                   connection.local()
-                   %}checked {%endif%}>
-            <label class="form-check-label" for="clh">Files are accessible from the web
-                server.</label>
-        </div>
-        <div id="remote_conn_info" style="{%if connection.local()%} display:none; {%endif%}">
-            <div class="form-group">
-                <label for="cun">Username</label>
-                <input name="username" type="text"
-                       class="form-control"
-                       id="cun" placeholder="Enter Username"
-                       value="{{connection.username()}}">
-            </div>
-            <div class="form-group">
-                <label for="cd">Domain</label>
-                <input name="domain" type="text"
-                       class="form-control"
-                       id="cd" placeholder="Enter Domain name"
-                       value="{{connection.domain()}}">
-            </div>
-            <div class="form-group">
-                <label for="cp">Port</label>
-                <input name="port" type="number" min="0"
-                       class="form-control" id="cp" placeholder="Enter SSH Port Number"
-                       value="{{connection.port()}}">
-            </div>
-
-            <div class="form-group">
-                <label for="cpa">Password</label>
-                <input name="password" type="password"
-                       class="form-control"
-                       id="cpa" placeholder="Enter your password" value="">
-            </div>
-        </div>
-    </div>
 
      <div class="form-group">
          <button type="submit" class="btn btn-primary" style="width:100%">Save</button>

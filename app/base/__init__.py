@@ -368,6 +368,7 @@ def template_globals(d):
     def paraview_configured(): return current_app.config["PARAVIEW"] > 0 
     def theia_configured(): return current_app.config["THEIA"] > 0 
     
+    def get_uuid(): return uuid.uuid4().hex
 
     d["COPYRIGHT_LINK"] = DelayCopyRightLink()
     d["COPYRIGHT_MESSAGE"] = DelayCopyRightMessage()
@@ -381,7 +382,7 @@ def template_globals(d):
     d["HASVNV"] = blueprints.HAS_VNV
     d["paraview_configured"] = paraview_configured
     d["theia_configured"] = theia_configured
-    
+    d["getUUID"] = get_uuid
     
     for kk, vv in ALL_BLUEPRINTS.items():
         if hasattr(vv, "template_globals"):

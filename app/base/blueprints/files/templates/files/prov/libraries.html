@@ -11,8 +11,11 @@
         </div>
         <!-- if there are "file" objects, then create a "row" under the Libraries for them -->
         {%if filelist | length > 0 %}
-             {%for file in filelist %}
-                {%with prefix="", include_header = (loop.index0 == 0 )  %}
+            {%with prefix="", include_header = True  %}
+            <div style="margin:10px;">{%include "files/prov/file.html" %}</div>
+            {% endwith%}
+            {%for file in filelist %}
+                {%with prefix="", include_header = False %}
                    <div class="libfile"  name="{{file.getName()}}" style="margin:10px;">{%include "files/prov/file.html" %}</div>
                 {%endwith%}
              {%endfor%}

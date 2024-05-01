@@ -1,1 +1,8 @@
-<div id="main_desc">{{file.get_executable_description()|safe}}</div>
+<h5>Executable Path: {{ file.get_executable_path() }} </h5>
+<h5>Executable File Size: {{file.get_executable_size()}} </h5>
+<h5>Executable TimeStamp: {{file.get_executable_timestamp()}} </h5>
+<h5>Description Extracted from the Application:</h5>
+
+<div id="main_desc" class="card" style="padding:15px">
+    {{file.get_executable_description()|safe}}
+</div>

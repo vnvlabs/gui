@@ -1,10 +1,12 @@
 <div class="" >
     <div class="card-body">
         {%if filelist | length > 0 %}
-
+            {%with prefix="", include_header = True, minimize=True %}
+            <div style="margin:10px; padding:15px;" class="card">{%include "files/prov/file.html" %}</div>
+            {%endwith%}
              {%for file in filelist %}
-                {%with prefix="", include_header = (loop.index0 == 0 ) %}
-                    <div style="margin:10px;">{%include "files/prov/file.html" %}</div>
+                {%with prefix="", include_header = False, minimize=True %}
+                    <div style="margin:10px; padding:15px;" class="card">{%include "files/prov/file.html" %}</div>
                 {%endwith%}
              {%endfor%}
         {% else %}

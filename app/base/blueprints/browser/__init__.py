@@ -30,7 +30,7 @@ def browse_route():
 @blueprint.route("/edit/<int:id_>", methods=["GET", "POST"])
 def edit_file(id_):
     filename=request.args.get("filename")
-
+    connection = None
     if id_ == 1000 or not HAS_VNV:
         connection = MAIN_CONNECTION()
 
@@ -99,14 +99,6 @@ def reader(id_):
 
         render_args = {a[7:]: request.args[a] for a in request.args if a.startswith("render_")}
 
-        if reader == "connection":
-            return render_template("browser/connection.html", vnvfileid=id_, modal=modal, filename=filename,
-                                   connection=connection)
-
-        if not connection.connected():
-            return render_template("browser/connection.html", vnvfileid=id_, modal=modal, filename=filename,
-                                   connection=connection, reason="disconnected")
-
         if reader == "upload":
             return render_template("browser/upload.html", vnvfileid=id_, filename=filename, reason="", modal=modal,
                                    connection=connection)
@@ -122,14 +114,11 @@ def reader(id_):
         if len(filename) == 0:
             filename = connection.home()
 
-        if not connection.exists(filename):
-            return render_template("browser/connection.html", vnvfileid=id_, modal=modal, filename=filename,
-                                   connection=connection, reason="does not exist")
-
         try:
 
-            file = LocalFile(filename, id_, connection, reader=reader, **render_args)
-            return render_template("browser/browser.html", file=file, modal=modal)
+            if connection.exists(filename):
+                file = LocalFile(filename, id_, connection, reader=reader, **render_args)
+                return render_template("browser/browser.html", file=file, modal=modal)
 
         except Exception as e:
             return render_template("browser/browser.html",

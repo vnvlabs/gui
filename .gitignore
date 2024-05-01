@@ -4,4 +4,5 @@ virt/
 app/temp
 .idea
 *.tar.gz
+build/
 app/moose/pyhit/hitsrc/hit

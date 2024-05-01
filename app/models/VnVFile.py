@@ -21,11 +21,11 @@ from app.models.readers import has_reader, LocalFile, json_to_jstree_json
 from app.rendering.vnvdatavis.directives.dataclass import render_vnv_template, DataClass
 
 def sizeof_fmt(num, suffix="B"):
-    for unit in ("", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"):
+    for unit in ("", "K", "M", "G", "T", "P", "E", "Z"):
         if abs(num) < 1024.0:
             return f"{num:3.1f}{unit}{suffix}"
         num /= 1024.0
-    return f"{num:.1f}Yi{suffix}"
+    return f"{num:.1f}Y{suffix}"
 
 def seconds_to_human_readable(seconds_since_epoch):
     try: # Convert seconds since epoch to datetime object
@@ -132,9 +132,11 @@ class ProvWrapper:
     def get_libraries(self):
         a = []
         for i in range(0,self.prov.size(2)):
-            b = ProvFileWrapper(self.vnvfileid, self.prov.get(i, 2), "")
-            a.append(b)
-        return a
+            p = self.prov.get(i,2)
+            if "linux-vdso" not in p.filename:
+                b = ProvFileWrapper(self.vnvfileid, p, "")
+                a.append(b)
+        return sorted(a, key=lambda x: x.getName())
 
     def get_outputs(self):
         r = []
@@ -745,30 +747,11 @@ class VnVFile:
     def getDataRoot(self):
         return self.getDataChildren("#")
 
-    def getDataChildren1(self, nodeId):
-        if nodeId == "#":
-            return {
-            "text" : self.filename,
-            "icon" : "feather icon-folder",
-            "li_attr" : {
-                    "fileId": self.id_,
-                    "nodeId": self.root.getId()
-            },
-            "children" : True
-        }
-
-        node = self.getById(int(nodeId)).cast()
-        return [
-
-        ]
-
     def getDataChildren(self, nodeId):
         if nodeId == "#":
             return [
-                f"Filename: {self.filename}",
-                f"Reader: {self.reader}",
                 {
-                    "icon" : "feather icon-folder",
+                    "icon" : "feather icon-home",
                     "text": self.root.getName(),
                     "li_attr": {
                         "fileId": self.id_,

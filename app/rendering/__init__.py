@@ -265,7 +265,7 @@ def build(src_dir, templates, id_):
 
                 with open(os.path.join(src_dir, fnames[-1]), 'w') as w:
                     if len(point["docs"]) == 0 or len(point["docs"]["template"]) == 0 :
-                        w.write(f"\n\n<No information available>\n\n")
+                        w.write(f"")
                     else:
                         w.write(f"\n{textwrap.dedent(point['docs']['template'])}\n\n")
 
@@ -293,7 +293,7 @@ def build(src_dir, templates, id_):
                         fnames.append(f"UnitTest_Test_{name_package[0]}_{name_package[1]}_{test}.rst")
                         with open(os.path.join(src_dir, fnames[-1]), 'w') as w:
                             if len(tests[test]) == 0:
-                                w.write(f"\n\n<No information available>\n\n")
+                                w.write(f"\n\n\n\n")
                             else:
                                 w.write(f"\n{textwrap.dedent(tests[test])}\n\n")
 
@@ -303,7 +303,7 @@ def build(src_dir, templates, id_):
                         fnames.append(f"JobCreator_Job_{name_package[0]}_{name_package[1]}_{test}.rst")
                         with open(os.path.join(src_dir, fnames[-1]), 'w') as w:
                             if len(tests[test]) == 0:
-                                w.write(f"\n\n<No information available>\n\n")
+                                w.write(f"\n\n\n\n")
                             else:
                                 w.write(f"\n{textwrap.dedent(tests[test]['template'])}\n\n")
 

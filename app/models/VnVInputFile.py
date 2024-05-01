@@ -371,13 +371,20 @@ class VnVInputFile:
 
     def get_executable_description(self):
         if self.rendered is None:
-            self.rendered = flask.render_template_string(render_rst_to_string(self.get_executable_description_()),
-                                                         file=self, data=DataClass(self, self.id_, 1022334234443))
-        return self.rendered
+            self.rendered = flask.render_template_string(render_rst_to_string(self.get_executable_description_()), file=self, data=DataClass(self, self.id_, 1022334234443))
+        return self.rendered if len(self.rendered) else "No Description Provided"
 
     def getId(self):
         return self.id_
 
+    def get_executable_timestamp(self):
+        return self.connection.get_timestamp(self.filename)
+
+    def get_executable_size(self):
+        return self.connection.get_filesize(self.filename)
+
+    def get_executable_path(self):
+        return self.filename
 
     def describe(self):
         return f'{self.connection.describe()}:/{self.filename}'
@@ -496,6 +503,18 @@ class VnVInputFile:
     def get_jobs(self):
         return [a for a in self.connection.get_jobs()]
 
+    def vnvInputFile(self):
+        j = json.loads(self.value)
+        if "actions" not in j:
+            j["actions"] = {}
+
+        for k,v in self.extra.items():
+            v.fullInputFile(j)
+
+        j.pop("execution",{})
+        return json.dumps(j, indent=4)
+
+
     def fullInputFile(self):
         j = json.loads(self.value)
         if "actions" not in j:
@@ -505,6 +524,7 @@ class VnVInputFile:
             v.fullInputFile(j)
 
         return json.dumps(j, indent=4)
+
 
     
     def execute(self, val = None):
@@ -534,7 +554,7 @@ class VnVInputFile:
                 for k, v in over.items():
                     data[k] = v
 
-        script = bash_script(self.filename, self.fullInputFile(), data, workflowName=workflowId)
+        script = bash_script(self.filename, self.vnvInputFile(), data, workflowName=workflowId)
         return script, data.get("name")
 
     @staticmethod

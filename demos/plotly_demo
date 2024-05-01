@@ -1,0 +1,130 @@
+
+
+
+The overall time was :vnv:`TotalTime[0]` :vnv:`units[0]`
+
+.. vnv-plotly::
+    :trace.a: histogram
+    :a.y: [1,3,1,3,6]
+
+
+.. vnv-plotly::
+    :trace.a: box
+    :trace.b: box
+    :a.x: [1,2,3,4,5]
+    :b.x: [2,3,4,5,6]
+
+.. vnv-plotly::
+    :trace.a: scatter
+    :a.x: [1,2,3]
+    :a.y: [2,3,5]
+    :a.error_y.type: data
+    :a.error_y.array: [1,2,3]
+    :a.error_y.visible: true
+
+.. vnv-plotly::
+   :trace.a: bar
+   :trace.b: bar
+   :a.x: ["A","B","C"]
+   :a.y: [10,6,10]
+   :b.x: ["A","B","C"]
+   :b.y: [11,6,11]
+   :layout.barmode: stack
+
+
+.. vnv-plotly::
+   :trace.a: scatter
+   :trace.b: scatter
+   :a.x: [1,2,3,4]
+   :a.y: [10,15,13,17]
+   :b.x: [2,3,4,5]
+   :b.y: [11,12,13,14]
+   :b.mode: markers
+   :b.name: Important
+   :b.text: ["A","B","C","D"]
+   :b.marker.size: 12
+   :layout.title.text: Simple Scatter Plot
+   :layout.xaxis.title.text: X Axis Label
+   :layout.yaxis.title.text: Y Axis Label
+
+
+
+.. vnv-plotly::
+   :trace.a: scatter
+   :trace.b: scatter
+   :a.x: [1,2,3,4]
+   :a.y: [10,15,13,17]
+   :b.x: [2,3,4,5]
+   :b.y: [11,12,13,14]
+   :b.mode: markers+text
+   :b.name: Important
+   :b.text: ["A","B","C","D"]
+   :b.marker.size: [10,20,30,40]
+   :b.textposition: bottom center
+   :b.marker.color: [1,2,3,4]
+   :layout.title.text: Data Labels On Plot
+
+
+.. vnv-plotly::
+    :trace.sol: contour
+    :sol.z: [[1,2,3],[1,2,3],[1,2,3]]
+    :layout.title.text: Basic contour plot
+
+.. vnv-plotly::
+    :trace.sol: pie
+    :sol.values: [4,5,6]
+    :sol.labels: ["A","B","C"]
+    :layout.title.text: Basic Pie Chart
+
+
+
+Sample Executable
+=================
+
+This executable is designed to show a number of different injection points.
+The first stage is to initialize the library. The text that appears in the
+comment above the initialize call represents the introduction in the final
+report.
+
+.. vnv-apex-raw::
+
+
+    {
+        "series":[
+            {
+                "name":"Desktops",
+                "data":[10,41,35,51,49,62,69,91,148]
+            }
+        ],
+        "chart":{
+            "height":350,
+            "type":"line",
+            "zoom":{
+                "enabled":false
+            }
+        },
+        "dataLabels":{
+            "enabled":false
+        },
+        "stroke":{
+            "curve":"straight"
+        },"title":{
+            "text":"Product Trends by Month",
+            "align":"left"
+        },"grid":{
+            "row":{
+                "colors":["#f3f3f3","transparent"],
+                "opacity":0.5
+            }
+        },
+        "xaxis":{
+                "categories":["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep"]
+        }
+    }
+
+
+.. vnv-gauge::
+   :min: 10
+   :max: 40
+   :curr: 20
+

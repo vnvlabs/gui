@@ -432,6 +432,16 @@ class VnVLocalConnection:
         ext = "directory" if os.path.exists(abspath) and Path(abspath).is_dir() else os.path.splitext(abspath)[1]
         return abspath, dir, name, ext, size, lastMod, lastModStr
 
+    def get_filesize(self,path ):
+        abspath = os.path.abspath(path)
+        if os.path.exists(abspath):
+            return os.lstat(abspath).st_size if len(abspath) else 0
+        return 0
+    def get_timestamp(self,path):
+        abspath = os.path.abspath(path)
+        lastMod = os.lstat(abspath).st_mtime if len(abspath) else 0
+        return (datetime.fromtimestamp(lastMod).strftime('%Y-%m-%d %H:%M:%S')) if len(abspath) else ""
+
     def write(self, txt, path):
         if path is None:
             path = self.execute("mktemp").rstrip().lstrip()

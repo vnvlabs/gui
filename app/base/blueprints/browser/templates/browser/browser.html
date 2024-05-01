@@ -21,17 +21,11 @@
          <li class="breadcrumb-item"><span style="cursor:pointer" onclick="show_file_reader({{i.getVnVFileId()}},'{{i.url()}}','{{i.reader}}','{{modal}}')">{{i.name}}</span></li>
     {% endfor %}
 </ul>
-
+    {% if theia_configured() %}
      <button class="btn btn-primary" title="edit file" style="margin-right:10px;" onclick='show_file_editor({{file.getVnVFileId()}},"{{file.url()}}")'>
       Edit
     </button>
-    <!-- 
-      button: "Configure"
-        configures connection by displaying input text fields for Username, Domain, and Port
-     -->
-    <button class="btn btn-primary" title="connection info" style="margin-right:10px;" onclick='show_file_reader({{file.getVnVFileId()}},"{{file.url()}}","connection","{{modal}}")'>
-      Configure
-    </button>
+    {% endif %}
 
     <!-- 
       button: "Upload"
