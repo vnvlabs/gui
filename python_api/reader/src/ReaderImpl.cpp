@@ -893,6 +893,19 @@ namespace {
 
         virtual std::map<long, std::list<IDN>>& getNodes() override { return nodes; }
 
+
+        virtual std::string getInjectionPointJson(){
+            json j = json::object;
+            j["type"] = "root";
+
+            for (auto & ind : nodes) {
+              long index = ind.first;
+              for (auto & idn : index.second) {
+                 
+              }
+            }
+        }
+
         void addIDN(long id, long streamId, node_type type, long index, std::string stage) override {
           std::cout << "ADDING " << id << " with stream Id  " << streamId << std::endl;
           auto it = nodes.find(index);
@@ -1077,137 +1090,12 @@ namespace {
 
 }
 
-class Iter {
-      protected:
-        std::shared_ptr<const ICommMap> commMap;
-        std::map<long, std::list<IDN>>& nodes;
-        std::map<long, std::list<IDN>>::iterator niter;
-
-        virtual bool parentContainsChild(long parent, long child) { return commMap->commContainsComm(parent, child); }
-
-        virtual bool commContainsProc(long comm, long proc) { return commMap->commContainsProcessor(comm, proc); }
-
-      public:
-        Iter(std::shared_ptr<const ICommMap> comm, std::map<long, std::list<IDN>>& n) : commMap(comm), nodes(n) {
-          niter = nodes.begin();
-        }
-    };
-
-  class ProcIter : public Iter {
-  protected:
-    long searchProc;
-    bool started = false;
-
-    // Include any comms that contain this processor.
-    virtual bool procContainedIn(long streamId) { return commContainsProc(streamId, searchProc); }
-
-  public:
-    ProcIter(std::shared_ptr<const ICommMap> comm, long proc, std::map<long, std::list<IDN>>& n)
-        : Iter(comm, n), searchProc(proc){};
-
-    virtual bool next(IDN& res) {
-      auto s = niter;  // set s to be the element after the last time we found one.
-      if (started) {
-        s++;
-      }
-      while (s != nodes.end()) {
-        for (auto& it : s->second) {
-          std::cout << it.id << " SDFSDF " << it.streamId << " SEARCH " << searchProc << " esdf " << procContainedIn(it.streamId) << std::endl;;
-          if (procContainedIn(it.streamId)) {
-            res.id = it.id;
-            res.streamId = it.streamId;
-            res.type = it.type;
-            niter = s;  // We found one, so niter should start here next time
-            started = true;
-            return true;
-          }
-        }
-        ++s;
-      }
-      return false;  // We didnt find one this time....
-    }
-  };
-
-  class CommIter : public ProcIter {
-  protected:
-    // Include any comms that contain me in entirty
-    virtual bool procContainedIn(long streamId) override { return parentContainsChild(streamId, searchProc); }
-
-  public:
-    CommIter(std::shared_ptr<const ICommMap> comm, long commId, std::map<long, std::list<IDN>>& n)
-        : ProcIter(comm, commId, n) {}
-  };
-
-  class OnlyCommIter : public ProcIter {
-  protected:
-    // Include any comms that contain me in entirty
-    virtual bool procContainedIn(long streamId) override { return streamId == searchProc; }
-
-  public:
-    OnlyCommIter(std::shared_ptr<const ICommMap> comm, long commId, std::map<long, std::list<IDN>>& n)
-        : ProcIter(comm, commId, n) {}
-  };
-
-  class OnlyProcIter : public ProcIter {
-  protected:
-    // Include any comms that contain me in entirty
-    virtual bool procContainedIn(long streamId) override { return commMap->commIsSelf(streamId, searchProc); }
-
-  public:
-    OnlyProcIter(std::shared_ptr<const ICommMap> comm, long commId, std::map<long, std::list<IDN>>& n)
-        : ProcIter(comm, commId, n) {}
-  };
-
-  class RootNodeProcWalk : public IWalker {
-    
-    IRootNode* rootNode;
-    std::shared_ptr<ProcIter> procIter;
-    IDN curr;
-
-  public:
-  
-    virtual bool _next(VnV::Nodes::WalkerNode& node) override {
-      if (procIter->next(curr)) {
-        node.item = rootNode->findById(curr.id);
-        node.type = curr.type;
-        node.edges.clear();
-        return true;
-      }
-      return false;
-    }
-
-    RootNodeProcWalk(IRootNode* root, long processor, bool only, bool comm) : IWalker(root) {
-      rootNode = root;
-      
-      
-      
-      
-      if (!comm) {
-        if (only) {
-          procIter = std::make_shared<OnlyProcIter>(root->getCommInfoNode()->getCommMap(), processor, root->getNodes());
-        } else {
-          procIter = std::make_shared<ProcIter>(root->getCommInfoNode()->getCommMap(), processor, root->getNodes());
-        }
-      } else {
-        if (only) {
-          procIter = std::make_shared<OnlyCommIter>(root->getCommInfoNode()->getCommMap(), processor, root->getNodes());
-        } else {
-          procIter = std::make_shared<CommIter>(root->getCommInfoNode()->getCommMap(), processor, root->getNodes());
-        }
-      }
-    }
-};
-
   
 
 std::shared_ptr<VnV::Nodes::IRootNode> VnV::Nodes::getEngineReader(std::string filename, bool async, bool lock) {
   auto stream = std::make_shared<MultiFileStreamIterator>(filename);
   auto pv = lock ? std::make_shared<InMemoryParserVisitor<json>>() : std::make_shared<NoLockInMemoryParserVisitor<json>>();
   return InMemoryRootNodeWithThread<MultiFileStreamIterator, json>::parse(async, stream, pv);
-}
-
-std::shared_ptr<IWalker> VnV::Nodes::getProcWalker(IRootNode* rootnode,long processor, bool only, bool comm) {
-  return std::make_shared<RootNodeProcWalk>(rootnode,processor,only,comm);
 }
 
 

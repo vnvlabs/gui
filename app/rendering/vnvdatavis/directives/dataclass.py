@@ -83,7 +83,6 @@ class DataClass:
         else:
             return []
 
-        return json.dumps(ret)
 
     def query_json(self, text):
         """Return the jmes query as a string"""

@@ -31,8 +31,6 @@ namespace VnV
   namespace Nodes
   {
 
-    class IWalker;
-
     enum class node_type
     {
       ROOT,
@@ -1113,27 +1111,6 @@ namespace VnV
       std::string code(std::string package, std::string name) const { return getter("CodeBlocks", package + ":" + name); }
     };
 
-    class WalkerNode
-    {
-    public:
-      std::shared_ptr<Nodes::DataBase> item;
-      Nodes::node_type type;
-      std::set<long> edges;
-    };
-
-    class WalkerWrapper
-    {
-      std::shared_ptr<IWalker> ptr;
-      std::shared_ptr<WalkerNode> node;
-      IRootNode *_rootNode;
-
-      IRootNode *rootNode() { return _rootNode; }
-
-    public:
-      WalkerWrapper(std::shared_ptr<IWalker> walker, IRootNode *root);
-      std::shared_ptr<WalkerNode> next();
-    };
-
     class IRootNode : public DataBase
     {
       std::weak_ptr<IRootNode> rootNode_;
@@ -1309,24 +1286,52 @@ namespace VnV
 
       virtual void kill() {};
 
+      
+    std::string getTree(long processor) {
+      
+      auto nodes = getNodes();
+      auto commMap = getCommInfoNode()->getCommMap();
+      
+      json root = json::object();
+      root["id"] = -1;
+      root["children"] = json::array();
+      
+      auto ptr = "/children"_json_ptr;
+      
+      for (auto &ind : nodes) {
+        auto index = ind.first; 
+        for (auto &idn : ind.second) {
+            if (commMap->commContainsProcessor(idn.streamId, processor)) {
+               
+               if (it.type == node_type::END) {
+                  ptr.pop_back(); // pop the children element
+                  ptr.pop_back(); // pop the list element
+               } else if (it.type == node_type::START) {
+                  
+                  //Add the element
+                  json newpoint = json::object();
+                  newpoint["id"] = it.id;
+                  newpoint["children"] = json::array();
+                  root.at(ptr).push_back(newpoint);
+                  
+                  //Append to the stack
+                  ptr.push_back(std::to_string(root.at(ptr).size()));
+                  ptr.push_back("children");                  
+               } else {
+                throw "Unsupported node type in IDN list";
+               }
+          }
+        }
+      }
+      return root.dump();
+
+    }
+
+
+
       virtual ~IRootNode();
     };
 
-    class IWalker
-    {
-      Nodes::IRootNode *rootNode;
-
-      virtual bool _next(Nodes::WalkerNode &item) = 0;
-
-    public:
-      IWalker(Nodes::IRootNode *root) : rootNode(root) {}
-
-      virtual bool next(Nodes::WalkerNode &item) { return _next(item); }
-
-      virtual ~IWalker();
-    };
-
-    std::shared_ptr<IWalker> getProcWalker(IRootNode *rootnode, long processor, bool only, bool comm);
     std::shared_ptr<Nodes::IRootNode> getEngineReader(std::string filename, bool async, bool lock);
 
   } // namespace Nodes

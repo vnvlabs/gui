@@ -13,6 +13,8 @@ import socket
 from app import Directory
 from . import viewers
 from app.models.VnVFile import VnVFile
+from ...utils import mongo
+from ...utils.mongo import collection_exists
 from ...utils.utils import render_error
 
 blueprint = Blueprint(
@@ -86,23 +88,34 @@ def new():
                 return redirect(url_for("base.files.view", id_=file.id_))
 
         # No jobname so we should load a new file.
+        reader = request.form["reader"]
         fname = request.form["filename"]
 
-        reader = "file"
-        if reader == "file":
+        # Just add some checks in here to make sure its a directory at least. These should
+        # really happen in the reader itself (and they probably do) but there are some wierd
+        # tecnicalities -- For instance, the directory should contain a .fs file, but it might
+        # not have been calculated yet.
+        if reader == "json_file" or reader == "adios_file":
             if not os.path.exists(fname):
                 return render_error(501, "Error Loading File - Path does not exist")
             elif not os.path.isdir(fname):
                 return render_error(501, "Error Loading File - Path is not a directory")
 
-        file = VnVFile.add(
+        if reader == "saved":
+            file = VnVFile.add(
+                fname,
+                fname,
+                "mongo",
+                get_file_template_root(), reload=True)
+        else:
+            file = VnVFile.add(
                 request.form["name"],
                 fname,
                 reader,
                 get_file_template_root(),
                 username=request.form.get("username"),
                 password=request.form.get("password")
-        )
+            )
 
         return redirect(url_for("base.files.view", id_=file.id_))
     except Exception as e:
@@ -127,11 +140,10 @@ def get_file_from_runinfo(runinfo):
     f = VnVFile.findByJobName(runinfo["name"])
     if f is not None:
         return f
-
     engineInfo = runinfo["engine"]
     # if the engine name matches and the read er matches then its prob that one.
     for k, v in VnVFile.FILES.items():
-        if v.filename == engineInfo["filename"]:
+        if v.filename == engineInfo["filename"] and v.reader == engineInfo["reader"]:
             return v
 
     # make a new one.
@@ -225,8 +237,7 @@ def view(id_):
     try:
         with VnVFile.find(id_) as file:
             if "full" in request.args:
-                return render_template("files/tab-view-content.html", file=file,
-                                       count=int(request.args.get("count", "0")))
+                return render_template("files/tab-view-content.html", file=file, count=int(request.args.get("count", "0")))
             return render_template("files/tab-view.html", file=file)
     except Exception as e:
         print(e)
@@ -266,11 +277,8 @@ def load_defaults(CONFIG, exclude):
 
 
 def faker(PREFIX="../build"):
-    VnVFile.add("Euler", "/home/ben/source/vv/vv-neams/build/examples/cpp/outputs/euler/out", "file",  get_file_template_root(), {})
-    VnVFile.add("Heat", "/home/ben/source/vv/applications/heat/build/outputs/out", "file", get_file_template_root(), {})
+    VnVFile.add("Euler", "/home/ben/source/vv/vv-neams/build/examples/cpp/outputs/euler/out", "json_file",  get_file_template_root(), {})
+    VnVFile.add("Heat", "/home/ben/source/vv/applications/heat/build/outputs/out", "json_file", get_file_template_root(), {})
 
     return
 
-
-VnVFile.add("Demo", "/home/ben/injectionPoint/out", "file",
-            get_file_template_root(), {})

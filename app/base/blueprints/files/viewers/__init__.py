@@ -474,16 +474,16 @@ def query():
     except Exception as e:
         return make_response(jsonify("error"), 200)
 
-
-@blueprint.route("next")
-def next():
-    id_ = request.args.get("id_", type=int)
-    count = request.args.get("count", 100, type=int)
+@blueprint.route("tree")
+def get_tree():
+    
     try:
+        id_ = request.args.get("id_", type=int)
+        proc = request.args.get("processor", default=0, type=int)
         with VnVFile.VnVFile.find(id_) as file:
-            data = file.proc_iter_next(count)
-            endtime = file.root.getEndTime()
-            return jsonify({"data": data, "endtime": endtime}), 200
+            tree, done= file.get_tree_for_processor(proc)
+            return jsonify({"data" : tree, "done" : done}), 200
+
     except BaseException as e:
         print(e)
         return render_error(501, "Error Loading File")
