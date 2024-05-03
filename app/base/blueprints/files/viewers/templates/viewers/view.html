@@ -1,41 +1,73 @@
-{% with view = request.args.get("viewer","processor") %}
+{% with processor = request.args.get("processor",0) %}
 
 <div class="" style="position:absolute; top:10px; z-index:1000; right:10px; display:flex; flex-direction:row; ">
-    <div class="btn-group mb-2 mr-2">
-        <button class="btn  btn-outline-primary dropdown-toggle" type="button" data-toggle="dropdown"
-                aria-haspopup="true" aria-expanded="false">{{view}}
-        </button>
-        <div class="dropdown-menu">
-            {%for v in viewers%}
-            <a class="dropdown-item" href="{{url_for('base.files.view', id_=file.id_, viewer=v)}}">
-                {%if v == view%} <i class="feather icon-check"></i> {%endif%} {{v}}
-            </a>
-            {%endfor%}
-        </div>
-    </div>
-    {%include view + "/menu.html" %}
+    {%if file.get_world_size() > 1 %}
+    <label>Viewing Processor:</label>
+    <input style="width:100px;" type='number' class="form-control" id="proc_id" max="{{file.get_world_size()-1}}"
+        min="0" value={{processor}}>
+    {%endif%}
 </div>
 
 <div style="display:flex;">
     <div id="view-view" class="card"
-         style="height:100%; min-width:300px; min-height:100vh; max-width:50%; overflow-x: auto; padding-right:20px; padding-left:20px; padding-top:20px; margin-right:10px; margin-bottom:0px;">
+        style="height:100%; min-width:300px; min-height:100vh; max-width:50%; overflow-x: auto; padding-right:20px; padding-left:20px; padding-top:20px; margin-right:10px; margin-bottom:0px;">
 
         <div id="view-chart">
-            {%include view + "/chart.html" %}
+            <h3>Injection Points</h3>
+            <div id="treeLoading">Loading...</div>
+            <div id="treeview1" class="treeview"></div>
+
+            <script>
+
+                    function update_tree_data(loading) {
+                        var processor = $("#proc_id").val()
+                        var url = `/files/viewers/tree?id={{file.id_}}&processor=${processor}`
+                        if (loading) {
+                            $('#treeview1').hide()
+                            $('#treeLoading').show();
+                        }
+
+                        $.get(url, function (dd) {
+                            $('#treeview1').jstree({ core: { data: dd["data"] } });
+                            $('#treeLoading').hide();
+                            $('#treeview1').show();
+                            if (!dd["done"]) {
+                                chartInterval = window.setTimeout(function () {
+                                    update_tree_data(false)
+                                }, 10000)
+                            }
+                        })
+
+                    }
+
+
+                    $(document).ready(function () {
+                        update_tree_data(true)
+
+                        $('#treeview1').on("select_node.jstree", function (e, data) {
+                            updateIpState(data.node.id, {{ file.id_ }})
+                        });
+
+                        $( "#proc_id" ).change(function() {
+                            update_tree_data(true);
+                        });
+                    });
+
+
+            </script>
         </div>
 
     </div>
-    <div id ="view-slider"></div>
+    <div id="view-slider"></div>
     <div id="injection-element" style="flex:1; min-height:100vh; ">
-      {% if file.has_introduction() %}
-      <div id="injection-element--100" class="injection-element-page">
-        {%with introRender = file.get_introduction() %}
-        {%include "viewers/introduction.html" %}
-        {%endwith%}
-      </div>
-      {%endif%}
+        {% if file.has_introduction() %}
+        <div id="injection-element--100" class="injection-element-page">
+            {%with introRender = file.get_introduction() %}
+            {%include "viewers/introduction.html" %}
+            {%endwith%}
+        </div>
+        {%endif%}
     </div>
 
 </div>
 {%endwith%}
-
