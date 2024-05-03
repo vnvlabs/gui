@@ -1090,23 +1090,6 @@ class VnVFile:
             packageTestObject,
             self.templates).getHtml()
 
-    def reset_proc_iter(self):
-        self.proc_iter = None
-
-    def set_proc_iter(self, proc=0, only=None):
-        self.proc_iter_config = {"id": int(proc),"only": True if only else False, "comm": False}
-        self.proc_iter = self.root.getWalker(json.dumps(self.proc_iter_config))
-        self.currX = -1
-        self.currY = -1
-        self.parents = []
-        return True
-
-    def set_comm_iter(self, comm, only=None):
-        self.proc_iter_config = { "id": int(comm), "only": True if only else False, "comm": True}
-        self.proc_iter = self.root.getWalker(json.dumps(self.proc_iter_config))
-        self.parents = None
-        return True
-
     node_type_map = {
         VnVReader.node_type_POINT: "point",
         VnVReader.node_type_START: "start",
@@ -1121,49 +1104,25 @@ class VnVFile:
             return r.getRequest() is not None
         return False
 
-    def proc_iter_next(self, count=None):
+    def update_children(self, children):
+        for child in children:
+            ip = self.get_injection_point(child["id"])
+            child["text"] = self.getTitle(ip, short=True)
+            child["icon"] = f"letter letter-{ip.getPackage()[0].upper()}"
+            child["state"] = {"opened": True}
+            if "children" in child:
+                self.update_children[child["children"]]
 
-        res = []
-        if self.currX == -1 and self.has_introduction():
-            res.append(
-                {
-                    "id": VnVFile.INJECTION_INTRO,
-                    "title": self.getTitle(None, short=True),
-                    "type": "start",
-                    "package": "Root"
-                }
-            )
-            self.currX = 1
+    def get_tree_for_processor(self, processor):
+        tree = {
+            "id": VnVFile.INJECTION_INTRO,
+            "text": self.getTitle(None, short=True),
+            "state": {"opened": True},
+            "children": self.root.getTree(processor)["children"]
+        }
+        self.update_children(tree["children"])
+        return tree, not self.root.processing()
 
-        while True:
-
-            n = self.proc_iter.next()
-            if n is not None:
-
-                if n.type == VnVReader.node_type_DONE:
-                    res.append({
-
-                        "id": VnVFile.INJECTION_INTRO,
-                        "type": "end",
-                        "title": self.getTitle(None, short=True),
-                        "package": "VnV",
-                        "done": True
-                    })
-                    break
-
-                elif n.type == VnVReader.node_type_WAITING:
-                    break
-
-                elif n.type in [VnVReader.node_type_POINT, VnVReader.node_type_END,VnVReader.node_type_START]:
-                    ip = self.get_injection_point(n.item.getId())
-                    if ip is not None:
-                      res.append({
-                        "title": self.getTitle(ip, short=True),
-                        "id": n.item.getId(),
-                        "package": ip.getPackage(),
-                        "type": VnVFile.node_type_map[n.type]})
-
-        return res
 
     def getTitle(self, ip, short=False):
         if ip is not None:
