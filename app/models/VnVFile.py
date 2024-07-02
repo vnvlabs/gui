@@ -8,12 +8,15 @@ from datetime import datetime
 from urllib.request import pathname2url
 
 import jsonschema
+import markdown
 import pygments.formatters.html
+from ansi2html import Ansi2HTMLConverter
 from pygments.lexers import guess_lexer, guess_lexer_for_filename
 
 from app.models.VnVConnection import VnVConnection, VnVLocalConnection
+from app.models.colors import getKeyedColor
 from python_api.build import VnVReader
-from flask import render_template, make_response, render_template_string
+from flask import render_template, make_response, render_template_string, request, jsonify
 
 from app.models import VnV
 import app.rendering as r
@@ -75,6 +78,9 @@ class ProvFileWrapper:
 
     def json_text(self):
         return json.dumps(json_to_jstree_json(json.loads(self.text())))
+
+    def get_comments(self):
+        return json.loads(self.text()).get("comments","# sdfsdfs\n\n Hello there people. ")
 
     def copy(self):
         return self.file.copy
@@ -182,6 +188,11 @@ class CommObj:
     def keys(self):
         return self.comm_map.keys()
 
+    def comm_contains_proc(self, comm, proc):
+        if not isinstance(proc,int):
+            proc = int(proc)
+        return str(comm) in self.comm_map and proc in self.comm_map[comm]
+
 
 class CommRender:
     def __init__(self, comm, commObj):
@@ -216,6 +227,9 @@ class CommRender:
             i += 1
         return i
 
+colorKeys = {}
+
+
 
 class LogRender:
     def __init__(self, data, commObj, templates):
@@ -225,6 +239,28 @@ class LogRender:
 
     def get_comm(self):
         return CommRender(self.data.getComm(), self.commObj)
+
+    def getComm(self):
+        c = self.data.getComm()
+        s = self.commObj.comm_map[c]
+
+        if len(s) == self.commObj.world_size:
+            return "World"
+        elif len(s) == 1:
+            return "Proc " + str(s[0])
+        elif len(s) < 5:
+            return "Procs " + ",".join(map(str,s))
+        else:
+            return c
+
+
+    def getCommColor(self):
+        return getKeyedColor(self.getComm())
+
+    def getPackageColor(self):
+        return getKeyedColor(self.getPackage())
+
+
 
     def getMessage(self):
         return self.data.getMessage()
@@ -389,6 +425,9 @@ class IntroductionRender:
         if len(a) > 0:
             return a.replace("<p>", "<span>").replace("</p>", "</span>")
         return self.package
+
+    def getProcessor(self):
+        return int(request.args.get("processor","0"))
 
     def getFile(self):
         return self.templates.file
@@ -683,25 +722,31 @@ class VnVFile:
 
         shutil.rmtree(self.template_dir, ignore_errors=True)
 
+        self.tree_cache = {}
         self.th = None
         self.templates = None
-        # self.setupNow()
+        self.setupNow()
 
     # Try and setup the templates once we can.
     def setupNow(self):
         if self.templates is None and self.th is None:
-            self.vnvspec = json.loads(self.root.getVnVSpec().get())
-            if self.vnvspec is not None and len(self.vnvspec) > 0:
-                self.th = threading.Thread(target=self.setup_thread)
-                self.th.start()
+            self.th = threading.Thread(target=self.setup_thread)
+            self.th.start()
+
         return self.templates is not None
 
     def nospec(self):
-        return self.vnvspec is None or len(self.vnvspec) == 0
+        return self.templates is None
 
     def setup_thread(self):
-        self.templates = r.build(self.template_dir, self.vnvspec, self.id_)
-        self.vnvspec = None
+        vnvspec = None
+        while vnvspec is None:
+            vnvspec = json.loads(self.root.getVnVSpec().get())
+            if vnvspec is None:
+                time.sleep(1)
+
+        self.templates = r.build(self.template_dir, vnvspec, self.id_)
+
 
     def update_dispName(self, newName):
         self.dispName = newName
@@ -734,7 +779,9 @@ class VnVFile:
         return self.getWorkflowRender().getHtml(package, name, code)
 
     def render_workflow_rst(self, package, name, jobName=None):
-        return self.getWorkflowRender().getRawRST(package, name, jobName)
+        rst = self.getWorkflowRender().getRawRST(package, name, jobName)
+        dataviewer = ""
+        return {"rst" : rst , "dataviewer" : dataviewer}
 
     def getJobName(self):
         if self.setupNow():
@@ -771,6 +818,20 @@ class VnVFile:
     def isProcessing(self):
         return self.root.processing();
 
+    def get_stdout_raw(self, proc, error):
+        a = self.root.getStdout(proc, error)
+        if not a:
+            a = "No Output Detected"
+        return Ansi2HTMLConverter().convert(a)
+
+    def get_stdout(self, proc, error):
+        t = self.get_stdout_raw(proc,error)
+        return render_template("files/terminal.html", error=error,text=t, processor=proc, file=self)
+
+    def get_logs(self, proc):
+        return  render_template("files/logs.html", file=self, proc=proc)
+
+
     def getById(self, dataid):
         return self.root.findById(dataid,False)
 
@@ -787,7 +848,7 @@ class VnVFile:
     def respond(self, ipid, id_, jid, response):
         try:
 
-            iprender = self.render_ip(ipid)
+            iprender = self.get_iprender(ipid)
             r = iprender.getRequest()
             if r is not None:
                 resp = json.loads(response)
@@ -941,19 +1002,49 @@ class VnVFile:
     def hasUnitTests(self):
         return len(self.root.getUnitTests())
 
-    def getLogs(self):
-        return [LogRender(a, self.getCommObj(), self.templates) for a in self.root.getLogs()]
+    def hasComments(self):
+        return len(self.get_prov().get_input().get_comments()) > 0
 
-    def getLogFilters(self):
+    def get_comments(self):
+        md = self.get_prov().get_input().get_comments()
+        if len(md) > 0:
+            return f'<div>{markdown.markdown(md)}</div>'
+
+        return ""
+
+    def getLogs(self, proc="-1"):
+        if not isinstance(proc, int):
+            proc = int(proc)
+
+        return [LogRender(a, self.getCommObj(), self.templates) for a in self.filterLogsByComm(proc)]
+
+
+    def filterLogsByComm(self, proc):
+        if not isinstance(proc, int):
+            proc = int(proc)
+
+        if proc < 0:
+            return self.root.getLogs()
+
+        logs = self.root.getLogs()
+        res = []
+        commObj = self.getCommObj()
+
+        for a in logs:
+           if commObj.comm_contains_proc(a.getComm(), proc):
+                res.append(a)
+        return res
+
+    def getLogFilters(self, proc=-1):
 
         a = set()
-        for i in self.root.getLogs():
+        for i in self.filterLogsByComm(proc):
             a.add(i.getLevel())
         return a
 
-    def getLogPackages(self):
+    def getLogPackages(self, proc=-1):
         a = set()
-        for i in self.root.getLogs():
+        for i in self.filterLogsByComm(proc):
             a.add(i.getPackage())
         return a
 
@@ -1047,6 +1138,10 @@ class VnVFile:
             return a.cast()
         return None
 
+    def get_injection_point_comm_data(self, ip):
+        a = self.get_injection_point(ip)
+        if a is not None:
+             return CommRender(a.getComm(), self.commObj).getData()
 
     def list_injection_points(self, proc):
         """Return a nested heirarchy of injection points and logs for this comm."""
@@ -1062,18 +1157,72 @@ class VnVFile:
     def get_conclusion(self):
         return render_template(self.templates.get_conclusion())
 
-    def render_ip(self, id):
-        if self.templates is None:
-            return None
-        if id == VnVFile.INJECTION_INTRO:
-            return self.get_introduction()
-        elif id == VnVFile.INJECTION_CONC:
-            return self.get_conclusion()
+    def get_iprender(self,ip):
         ip = self.get_injection_point(id)
         if ip is not None:
             return InjectionPointRender(ip, self.templates, self.getCommObj())
-
         return None
+
+    def get_p(self):
+        try:
+            return int(request.args.get("processor", "0"))
+        except:
+            return 0
+
+    def render_ip(self, id, processors=[0], processor=0):
+
+        if self.templates is None:
+            return None
+
+        if id == VnVFile.INJECTION_INTRO:
+            return render_template("viewers/introduction.html", introRender=self.get_introduction())
+        elif id == -199:
+            return self.get_processor(processor, False)
+        elif id == -200:
+            return self.get_stdout(processor, False)
+        elif id == -201:
+            return self.get_stdout(processor, True)
+        elif id == -202:
+            return render_template("files/provenance_lazy.html", file=self)
+        elif id == -203:
+            return render_template("files/workflow.html", file=self)
+        elif id == -204:
+            return render_template("files/comms_lazy.html", file=self)
+        elif id == -205:
+            return render_template("files/packages.html", file=self)
+        elif id == -206:
+            return render_template("files/unit_testing.html", file=self)
+        elif id == -2061:
+            return render_template("files/comments.html", file=self)
+
+        elif id == -207:
+            return render_template("files/logs.html", file=self, proc=-1)
+        elif id == -208:
+            return render_template("files/data.html", file=self)
+        elif id == -209:
+            return render_template("files/file_browser.html", file=self)
+        elif id == -220:
+            return render_template("files/proc_selector.html", file=self, processors=json.dumps(processors))
+        elif id == -232:
+            return render_template("files/loader.html", file=self)
+        elif id == -245:
+            return render_template("files/main.html", file=self)
+        elif id == -255:
+            return self.get_logs(processor)
+
+        elif id == -210:
+            return render_template("viewers/introduction.html", introRender=self.get_introduction())
+        elif id <= -300:
+            action_index = -1*id - 300
+            action = self.getActions()[action_index]["name"]
+            return self.render_action(action)
+
+        ip = self.get_injection_point(id)
+        if ip is not None:
+            iprender = InjectionPointRender(ip, self.templates, self.getCommObj())
+            return render_template("viewers/injectionPoint.html", iprender=iprender, file=self)
+
+        return render_template("viewers/introduction.html", introRender=self.get_introduction())
 
 
     def render_package(self, package):
@@ -1096,33 +1245,139 @@ class VnVFile:
         VnVReader.node_type_END: "end"
     }
     INJECTION_INTRO = -100
-    INJECTION_CONC = -101
 
     def waiting(self, id_):
-        r = self.render_ip(id_)
+        r = self.get_iprender(id_)
         if r is not None:
             return r.getRequest() is not None
         return False
 
-    def update_children(self, children):
-        for child in children:
-            ip = self.get_injection_point(child["id"])
-            child["text"] = self.getTitle(ip, short=True)
-            child["icon"] = f"letter letter-{ip.getPackage()[0].upper()}"
-            child["state"] = {"opened": True}
-            if "children" in child:
-                self.update_children[child["children"]]
+    def comm_map_name(self, comm):
+        cm = self.getCommObj().comm_map.get(comm,[])
+        if len(cm) == 1:
+            return "S"
+        elif len(cm) == self.get_world_size():
+            return "W"
+        else:
+            return "I"
 
-    def get_tree_for_processor(self, processor):
+
+    def update_children(self, children, proc):
+        for child in children:
+            if "id" in child and child["id"] >= 0:
+                a = child.pop("id")
+                child["fid"] = a
+                child["vid"] = self.id_
+                ip = self.get_injection_point(child["fid"])
+                c = self.comm_map_name(ip.getComm())
+                child["text"] = f"{ip.getPackage()}:{self.getTitle(ip, short=True)}"
+                child["icon"] = f"letter letter-{ip.getPackage()[0].upper()}"
+                child["state"] = {}
+                child["proc"] = proc
+            if "children" in child:
+               self.update_children(child["children"], proc)
+
+    def hasActions(self):
+        return len(self.getActions()) > 0
+
+    def get_tree_for_processor(self, processors = [0,1,2,3]):
+
+        if not self.setupNow():
+            return {"fid": -232, "vid" : self.id_,"text": "Loading", "icon": "feather icon-loader", "proc": 0}, False
+
+        proces = self.root.processing()
+
+        proc_trees = []
+        for i in processors:
+            if 0 <= i < self.get_world_size():
+
+                #Cache the tree for this processor so we don't have to build it every time.
+                if not proces and i in self.tree_cache:
+                    proc_trees.append(self.tree_cache[i])
+                else:
+                    rawtree = self.root.getTree(i)
+                    maintree = json.loads(rawtree)
+                    maintree["proc"] = i
+
+                    self.update_children([maintree], i)
+                    proc_trees.append(maintree)
+                    self.tree_cache[i] = maintree
+
+        infotree = [
+            {"fid": -202,  "vid" : self.id_,"text": "Provenance", "icon": "fa fa-info", "proc" : 0 }
+        ]
+        if self.hasWorkflow():
+            infotree.append({"fid": -203,  "vid" : self.id_,"text": "Workflow", "icon": "fa fa-map", "proc" : 0 })
+        if self.hasComm():
+            infotree.append({"fid": -204, "vid" : self.id_, "text": "Communication", "icon": "feather icon-cpu", "proc" : 0 })
+        if self.hasPackages():
+            infotree.append({"fid": -205,  "vid" : self.id_,"text": "Packages", "icon": "feather icon-package", "proc" : 0 })
+        if self.hasUnitTests():
+            infotree.append({"fid": -206,  "vid" : self.id_,"text": "Unit Tests", "icon": "feather icon-check-square", "proc" : 0 })
+        if self.hasComments():
+            infotree.append({"fid": -2061, "vid": self.id_, "text": "Comments", "icon": "feather icon-check-square", "proc": 0})
+        if self.hasLogs():
+            infotree.append({"fid": -207,  "vid" : self.id_,"text": "Logs", "icon": "feather icon-activity", "proc" : 0 })
+        infotree.append({"fid": -208, "vid" : self.id_, "text": "Data Explorer", "icon": "feather icon-compass", "proc" : 0 })
+        infotree.append({"fid": -209,  "vid" : self.id_,"text": "File Browser", "icon": "fa fa-folder", "proc" : 0 })
+
+        if self.hasActions():
+            action_children = []
+            for n, action in enumerate(self.getActions()):
+                action_children.append({"fid" : -1*(300+n), "vid" : self.id_, "text" : action["display_name"], "icon": "fa fa-terminal", "proc" : 0 })
+            infotree.append({"fid": -210,  "vid" : self.id_, "text": "Actions", "icon": "feather icon-play", "children": action_children, "proc" : 0 })
+
+        ipchildren = []
+        for proc in proc_trees:
+            ch = [
+                {"fid" : -200,  "vid" : self.id_, "text" : "Standard Output", "icon" : "fa fa-terminal", "proc" : proc["proc"], "procv" : True },
+                {"fid" : -201,  "vid" : self.id_, "text" : "Standard Error", "icon" : "fa fa-exclamation-circle", "proc" : proc["proc"], "procv": True },
+                {"fid" : -255,  "vid": self.id_, "text": "Logs", "icon": "feather icon-activity", "proc": proc["proc"], "procv": True},
+
+                 ] + proc["children"]
+
+            ipchildren.append({"fid": -210,  "vid" : self.id_,"text": f"Processor {proc['proc']}", "icon" : "feather icon-cpu", "children" : ch, "proc" : proc['proc']})
+        infotree.append({"fid": -220,  "vid" : self.id_, "state": {"opened": True},  "text": "InjectionPoints", "procs" : processors, "icon": "feather icon-bar-chart", "children" : ipchildren, "proc" : 0 })
+
         tree = {
-            "id": VnVFile.INJECTION_INTRO,
-            "text": self.getTitle(None, short=True),
+            "fid": VnVFile.INJECTION_INTRO,
+            "text": self.name,
             "state": {"opened": True},
-            "children": self.root.getTree(processor)["children"]
+            "icon" : f"feather icon-home trash",
+            "children": infotree,
+            "proc": 0,
+            "vid": self.id_,
         }
-        self.update_children(tree["children"])
+
+
         return tree, not self.root.processing()
 
+    @classmethod
+    def get_trees(cls):
+        tree = {
+            "fid": -245,
+            "text": "VnV Files",
+            "state": {"opened": True},
+            "icon": "feather icon-home",
+            "children": [],
+            "proc": 0,
+            "vid" : 0
+        }
+
+        done = True
+
+        for id in VnVFile.FILES:
+            with VnVFile.find(id) as file:
+                processors = json.loads(request.cookies.get(f"{id}_processors", "[0,1,2,3]"))
+                if not isinstance(processors, list):
+                    processors = [0, 1, 2, 3]
+
+                ftree, fdone = file.get_tree_for_processor(processors)
+                if not fdone:
+                    done = False
+                tree["children"].append(ftree)
+
+        return jsonify({"data": tree, "done": done}), 200
 
     def getTitle(self, ip, short=False):
         if ip is not None:

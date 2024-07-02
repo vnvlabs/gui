@@ -26,32 +26,19 @@ function render_in_main_view(url) {
 }
 
 
-function remove_file(id_, event, refresh) {
-  event.preventDefault()
-  act = refresh ? "Refresh" : "Remove"
+function remove_file(id_) {
 
-  confirm_modal( act + " File", "Are you sure?" , "Yes","No", (e,m)=>{
+  confirm_modal( "Delete File", "Are you sure you want to remove the file from the interface? Note: This will not remove the file from the filesystem." , "Yes","No", (e,m)=>{
 
      if (e) {
 
         url = "/files/delete/" + id_
-        if (refresh) {
-          url += "?refresh=true"
-        } else {
-            $( "#file-" + id_).remove();
-        }
-
         $.post(url, function( data ) {
-            if (refresh) {
-                loading();
-                window.location.href = data
-            } else {
-                m.modal('hide')
-                if (VNV_FILE_ID == id_) {
-                    window.location.href = "/"
-                }
-            }
+            m.modal('hide')
+            update_tree_data(true)
         });
+     } else {
+         m.modal('hide')
      }
   })
 
@@ -66,7 +53,7 @@ function add_file(event) {
 
 function show_ip_rst_editor(fileId, testId, atestId ) {
      $.get('/files/viewers/rst/raw/' + fileId + '/' + testId, function(data) {
-           set_rst(fileId, testId, atestId, data) ;
+           set_rst(fileId, testId, atestId, data["rst"],data["dataviewer"]) ;
            $('#raw-modal').modal('toggle')
      });
 }
@@ -78,7 +65,8 @@ function show_workflow_rst_editor(fileId, dataId,  creator, job ) {
      }
 
      $.get(u, function(data) {
-           set_rst(fileId, dataId, dataId, data) ;
+           set_rst(fileId, dataId, dataId, data["rst"],data["dataviewer"]) ;
+
            $('#raw-modal').modal('toggle')
      });
 }
@@ -334,25 +322,42 @@ $(window).on('load', function() {
 
 IPSTATE_CACHE = {}
 
-function updateIpState(ipid, fileId) {
+function resetIpState() {
+   $('.injection-element-page').remove()
+}
+
+function updateIpState(ipid, fileId, processor, varies_with_proc) {
+
+   if (!fileId) {
+        fileId = 0
+   }
 
    eid = "injection-element-" + ipid;
+
+   if (varies_with_proc) {
+      eid += "-" + processor
+   }
+
    elmid = "#" + eid
-
-
    $('.injection-element-page').toggle(false)
 
    // If we have it already then show it.
    if ( $(elmid).length == 1 ) {
       $(elmid).toggle(true)
    } else {
+
+
+
       // Append to it a new element.
       $('#injection-element').append("<div id='" + eid + "' class='injection-element-page'> Loading .... </div>")
-      var url = '/files/viewers/ip/' + fileId + "?ipid=" + ipid
+      var url = '/files/viewers/ip/' + fileId + "?ipid=" + ipid + "&processor=" + processor;
 
       // Populate the element with the data
       $.get(  url , function( data ) {
+
          $(elmid).html(data)
+
+
       });
    }
 
@@ -392,17 +397,6 @@ $(document).ready(function() {
         }
     }
 
-    if (typeof VNV_FILE_ID !== 'undefined') {
-        x = localStorage.getItem("vnv_ip_state")
-        xx = {}
-        if (x) {
-            xx = JSON.parse(x)
-
-            if (xx[VNV_FILE_ID]) {
-                 updateIpState(xx[VNV_FILE_ID],VNV_FILE_ID);
-            }
-        }
-    }
 
 });
 

@@ -3,25 +3,27 @@
 <!-- 
   column: "Content in Provenence tab"
  -->
-<div class="fcolumn fchild"  style="padding:15px;    border: 1px solid #80808038; ">
 
     <!-- 
       header: "Provenance tab"
         lists info about Executable path, command line path, and date of executable compilation
      -->
+    <h2>Application Provenance</h2>
+
     <div class="">
             <!-- 
               text: "Executable path"
              -->
+
                  <h6>Executable Path: {{ file.get_prov().get_executable().getName() }} </h6>
                  <h6>Executable File Size: {{file.get_prov().get_executable().getDisplaySize()}} </h6>
                  <h6>Executable TimeStamp: {{file.get_prov().get_executable().getDisplayTimeStamp()}} </h6>
                  <h6>Report Generation Date: {{ file.get_prov().get_timestamp() }} </h6>
                  <h6>Executable CRC32 Hash at Runtime: {{ file.get_prov().get_executable().getCrc() }} </h6>
-                 <h6>Executable Modified Since Run: {{file.get_prov().get_executable().was_modified()}} </h6>
                  <h6>Working Directory: {{ file.get_prov().get_working_directory()}}</h6>
                  <h6>Command Line: {{ file.get_prov().get_command_line() }}</h6>
                  <h6>Report Directory: {{ file.filename }}</h6>
+
     </div>
 
     <!-- 
@@ -64,6 +66,5 @@
         {%endfor%}
     </div>
 
-</div>
 {% endwith %}
 {% endwith %}

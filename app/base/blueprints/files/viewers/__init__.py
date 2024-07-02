@@ -20,16 +20,6 @@ blueprint = Blueprint(
 def template_globals(globs):
     globs["viewers"] = ["processor", "communicator"]
 
-@blueprint.route('/render/<int:id_>')
-def render(id_):
-    try:
-        with VnVFile.VnVFile.find(id_) as file:
-            return render_template("viewers/view.html", file=file)
-
-    except Exception as e:
-        return render_error(501, "Error Loading File")
-
-
 @blueprint.route('/package/<int:id_>')
 def package(id_):
     try:
@@ -91,7 +81,7 @@ def respond():
 def validateResponse(id_, ipid):
     try:
         with VnVFile.VnVFile.find(id_) as file:
-            iprender = file.render_ip(ipid)
+            iprender = file.get_iprender(ipid)
             if iprender is None:
                 return make_response("Invalid", 201)
 
@@ -109,7 +99,7 @@ def iprequest(id_, ipid):
     try:
         with VnVFile.VnVFile.find(id_) as file:
 
-            iprender = file.render_ip(ipid)
+            iprender = file.get_iprender(ipid)
             if iprender is None:
                 make_response("Error", 200)
 
@@ -128,7 +118,7 @@ def processing(id_, ipid):
     try:
         with VnVFile.VnVFile.find(id_) as file:
 
-            iprender = file.render_ip(ipid)
+            iprender = file.get_iprender(ipid)
             if iprender is None:
                 make_response("Error", 200)
 
@@ -375,7 +365,6 @@ def rstauto(id_, dataId):
 
     return make_response(jsonify([]), 201)
 
-
 @blueprint.route("/rst/raw/<int:id_>/<int:dataId>")
 def rstraw(id_, dataId):
     try:
@@ -383,9 +372,12 @@ def rstraw(id_, dataId):
         with VnVFile.VnVFile.find(id_) as file:
             data = file.getById(dataId).cast()
             content = file.templates.get_raw_rst(data)
-            return make_response(content, 200)
+            dataviewer = render_template("viewers/data.html", fileId=id_, dataId=dataId)
+            return make_response({"rst" : content,"dataviewer": dataviewer}, 200)
     except Exception as e:
         return make_response("Error\n-----", 200)
+
+
 
 @blueprint.route('/workflow_node/<int:id_>')
 def workflowNode(id_):
@@ -406,42 +398,22 @@ def ip(id_):
     try:
         with VnVFile.VnVFile.find(id_) as file:
             injection = request.args.get('ipid', type=int)
-
-            if injection == -100:
-                return render_template("viewers/introduction.html",introRender=file.get_introduction())
-
-
-            iprender = file.render_ip(injection)
+            procs = json.loads(request.cookies.get(f"{id_}_processors","[0,1,2,3]"))
+            proc = int(request.args.get("processor","0"))
+            iprender = file.render_ip(injection, processor=proc, processors=procs)
             if iprender is None:
-                return render_template("viewers/introduction.html", introRender=file.get_introduction())
-
-            if isinstance(iprender, str):
-                return iprender
-
-            resp = render_template(
-                "viewers/injectionPoint.html",
-                iprender=iprender)
-
-            return resp
+               return render_template("viewers/introduction.html", introRender=file.get_introduction())
+            return iprender
 
     except Exception as e:
+        ipid = request.args.get("ipid", type=int)
+        if ipid == -245:
+            return render_template("files/main.html")
+        elif ipid == -232:
+            return render_template("files/loader.html")
+
         return render_error(501, "Error Loading File")
 
-
-
-@blueprint.route('/render_label/<int:id_>')
-def render_label(id_):
-    try:
-        injection = request.args.get('ipid', type=int)
-        if injection < 0:
-            return "<h4>Main Application</h4>"
-
-        with VnVFile.VnVFile.find(id_) as file:
-
-            iprender = file.render_ip(injection)
-            return render_template("general/label.html", iprender=iprender)
-    except Exception as e:
-        return make_response("error", 200)
 
 
 @blueprint.route('/data_root/<int:id_>', methods=["GET"])
@@ -474,17 +446,33 @@ def query():
     except Exception as e:
         return make_response(jsonify("error"), 200)
 
+@blueprint.route("/set_processors/<int:fid>", methods=["POST"])
+def set_processors(fid):
+    procs = request.get_json()
+    r = make_response("Done", 200)
+    r.set_cookie(f"{fid}_processors",procs.get("procs",[0,1,2,3]))
+    return r
 
-@blueprint.route("tree")
+
+@blueprint.route("/tree")
 def get_tree():
     try:
-        id_ = request.args.get("id_", type=int)
-        proc = request.args.get("processor", default=0, type=int)
-        with VnVFile.VnVFile.find(id_) as file:
-            tree, done = file.get_tree_for_processor(proc)
-            return jsonify({"data": tree, "done": done}), 200
+        return VnVFile.VnVFile.get_trees()
 
     except BaseException as e:
         print(e)
         return render_error(501, "Error Loading File")
 
+@blueprint.route("/stdout/<int:id_>")
+def get_stdout(id_):
+    try:
+
+        proc = request.args.get("processor", default=0, type=int)
+        error = "error" in request.args
+
+        with VnVFile.VnVFile.find(id_) as file:
+            return file.get_stdout_raw(proc, error)
+
+    except BaseException as e:
+        print(e)
+        return render_error(501, "Error Loading File")

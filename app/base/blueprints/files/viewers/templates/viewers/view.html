@@ -1,73 +1,101 @@
-{% with processor = request.args.get("processor",0) %}
-
-<div class="" style="position:absolute; top:10px; z-index:1000; right:10px; display:flex; flex-direction:row; ">
-    {%if file.get_world_size() > 1 %}
-    <label>Viewing Processor:</label>
-    <input style="width:100px;" type='number' class="form-control" id="proc_id" max="{{file.get_world_size()-1}}"
-        min="0" value={{processor}}>
-    {%endif%}
-</div>
-
 <div style="display:flex;">
-    <div id="view-view" class="card"
-        style="height:100%; min-width:300px; min-height:100vh; max-width:50%; overflow-x: auto; padding-right:20px; padding-left:20px; padding-top:20px; margin-right:10px; margin-bottom:0px;">
-
+    <div id="view-view" class="card" style=" min-width:500px; height: calc(100vh - 126px); max-width:50%; overflow-x: auto; padding-right:20px; padding-left:20px; padding-top:20px; margin-right:10px; margin-bottom:0px;">
+        <div style="display:flex; align-items:center; margin-bottom:15px;">
+            <h3 style="flex:1; margin:0;">VnV Reports</h3>
+            <div style="display:flex; cursor:pointer; font-size:30px; justify-content:flex-end" onclick="load_new_file()">
+                <i class="feather icon-plus-circle"></i></div>
+        </div>
         <div id="view-chart">
-            <h3>Injection Points</h3>
             <div id="treeLoading">Loading...</div>
             <div id="treeview1" class="treeview"></div>
-
             <script>
 
-                    function update_tree_data(loading) {
-                        var processor = $("#proc_id").val()
-                        var url = `/files/viewers/tree?id={{file.id_}}&processor=${processor}`
-                        if (loading) {
-                            $('#treeview1').hide()
-                            $('#treeLoading').show();
-                        }
+                function adddelete() {
+                            $('a:has(>.trash)').each(function() {
 
-                        $.get(url, function (dd) {
-                            $('#treeview1').jstree({ core: { data: dd["data"] } });
-                            $('#treeLoading').hide();
-                            $('#treeview1').show();
-                            if (!dd["done"]) {
-                                chartInterval = window.setTimeout(function () {
-                                    update_tree_data(false)
-                                }, 10000)
+                                    var $anchor = $(this);
+                                    if ($anchor.find('.addDelete').length == 0 ) {
+
+                                        var $span = $('<span>').html('<i class="feather icon-trash"></i>')
+                                        .on('click', function() {
+                                            const fileId = $('#treeview1').jstree(true).get_node('#' + $anchor.attr('id')).original.vid
+                                            remove_file(fileId);
+                                        }).addClass('addDelete')
+
+                                        $anchor.append($span);
+                                        $anchor.css('width','98%');
+                                    }
+                            });
+
+                }
+
+
+                function update_tree_data(loading, processors) {
+                    var url = `/files/viewers/tree`
+                    if (loading) {
+                        $('#treeview1').hide()
+                        $('#treeLoading').show();
+                    }
+
+                    $.get(url, function (dd) {
+
+                        $('#treeview1').jstree("destroy").empty();
+                        $('#treeview1').jstree({ core: { data: dd["data"] } });
+                        $('#treeview1').on("ready.jstree", function (e, data) {
+                            adddelete();
+                        })
+                        $('#treeview1').on("open_node.jstree", function (e, node) {
+                            if (node.node.original.fid == -245) {
+                                adddelete();
                             }
                         })
 
-                    }
-
-
-                    $(document).ready(function () {
-                        update_tree_data(true)
-
                         $('#treeview1').on("select_node.jstree", function (e, data) {
-                            updateIpState(data.node.id, {{ file.id_ }})
+                            updateIpState(data.node.original.fid, data.node.original.vid, data.node.original.proc, data.node.original.procv)
                         });
 
-                        $( "#proc_id" ).change(function() {
-                            update_tree_data(true);
-                        });
-                    });
+
+
+                        $('#treeLoading').hide();
+                        $('#treeview1').show();
+                        if (!dd["done"]) {
+                            chartInterval = window.setTimeout(function () {
+                                update_tree_data(false)
+                            }, 10000)
+                        }
+                        updateIpState("-245", 0, 0, false)
+
+                    })
+
+                }
+
+
+                $(document).ready(function () {
+                    update_tree_data(true)
+                });
 
 
             </script>
         </div>
 
     </div>
-    <div id="view-slider"></div>
-    <div id="injection-element" style="flex:1; min-height:100vh; ">
-        {% if file.has_introduction() %}
-        <div id="injection-element--100" class="injection-element-page">
-            {%with introRender = file.get_introduction() %}
-            {%include "viewers/introduction.html" %}
-            {%endwith%}
+    <div id="view-content" class="card" style="width:100%; padding:10px; margin-right:20px; min-height: calc(100vh - 126px); ">
+        <div class="slider-container" style="position:absolute; top:5px; right:5px;">
+            <input style="float:right" type="range" id="widthSlider" min="0" max="100" value="100" onmouseup="adjustWidth()">
         </div>
-        {%endif%}
+        <div id="injection-element" style="flex:1; margin-top:20px;"></div>
     </div>
-
+    <div style="width:30px; "></div>
 </div>
-{%endwith%}
+
+<script>
+    function load_new_file() {
+         $('#new_file_modal').modal()
+    }
+
+    function adjustWidth() {
+            const slider = document.getElementById('widthSlider');
+            const box = document.getElementById('view-content');
+            box.style.width = slider.value + '%';
+    }
+</script>

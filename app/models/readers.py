@@ -12,7 +12,7 @@ import docutils
 import markdown as markdown
 import flask
 import pygments
-from flask import render_template, make_response, jsonify
+from flask import render_template, make_response, jsonify, current_app
 from pygments.lexers import guess_lexer_for_filename
 
 from app import Directory
@@ -100,9 +100,6 @@ def json_to_jstree_json(j):
             children = [get_json_obj(k, v) for k, v in value.items()]
         elif isinstance(value, list):
             children = [get_json_obj(str(k), v) for k, v in enumerate(value)]
-
-        print(value.__class__.__name__, icon_map)
-
         return {
             "text": f"{key}: {valstr}",
             "icon": f" feather icon-{icon_map.get(value.__class__.__name__, 'minus')}",
@@ -138,7 +135,8 @@ FILE_READERS = {
     "markdown": render_markdown,
     "rst": render_rst,
     "json": render_json,
-    "auto" : auto_reader
+    "auto" : auto_reader,
+    "pdf" : render_pdf
 }
 
 EXT_MAP = {
@@ -150,7 +148,7 @@ EXT_MAP = {
     ".md": "markdown",
     ".e": "paraview",
     ".json": "json",
-    ".i" : "hive"
+    ".pdf" : "pdf"
 }
 
 
@@ -177,6 +175,7 @@ icon_map = {
     bool.__name__: "check",
     str.__name__: "type"
 }
+
 
 
 class LocalFile:

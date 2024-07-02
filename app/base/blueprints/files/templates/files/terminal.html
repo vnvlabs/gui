@@ -1,0 +1,7 @@
+
+<div class="card" style="padding:20px; height:100%;" id="proc_text_{{error}}_{{file.id_}}">
+    <div style="display:flex;">
+    <h2 style="flex:1">Standard {% if error %}Error{%else%}Output{%endif%} for Processor {{processor}}</h2>
+    </div>
+    {{text | safe }}
+</div>

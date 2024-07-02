@@ -23,6 +23,11 @@
     std::cout << rootNode->getDataChildren(rootNode->getId(),2) << std::endl;
   }
 
+  void VnV::Python::ReaderWrapper::gettree() {
+    std::cout << rootNode->getTree(0) << std::endl;
+  }
+
+
   void VnV::Python::ReaderWrapper::join() {
       rootNode->getThread()->join();
   }

@@ -3,11 +3,6 @@
 
 
     <div class="m-header">
-        
-        {%if not no_sidebar %}
-            <a class="mobile-menu" id="mobile-collapse" href="#!"><span></span></a>
-        {%endif%}
-   
 
         <a href="#!" class="b-brand">
             <img src="{{logo_small()}}" alt="" class="logo" onclick="window.location.href='/'">
@@ -23,12 +18,6 @@
         <ul class="navbar-nav mr-auto" style="flex:1">
         
         </ul>
-        <ul class="navbar-nav mr-auto">
-            <li class="nav-item">
-                <a href="#!" class="full-screen" onclick="javascript:toggleFullScreen()"><i
-                        class="feather icon-maximize"></i> Full Screen</a>
-            </li>
-        </ul>
 
         <ul class="navbar-nav ml-auto">
             <li>
@@ -39,7 +28,7 @@
         {% if theia_configured() %}
         <ul class="navbar-nav ml-auto">
             <li>
-                <a href="/ide"><i class="feather icon-code"></i> Develop</a>
+                <a href="/ide"><i class="feather icon-code"></i> VSCode</a>
             </li>
         </ul>
         {% endif %}
@@ -47,7 +36,7 @@
         {% if paraview_configured() %}
         <ul class="navbar-nav ml-auto">
             <li>
-                <a href="/viz"><i class="fa fa-chart-bar"></i> Visualize</a>
+                <a href="/viz"><i class="fa fa-chart-bar"></i> Paraview</a>
             </li>
         </ul>
         {% endif %}
@@ -60,12 +49,13 @@
         {%endwith%}
         {%endfor%}
 
-
+        {% if auth_on() %}
         <ul class="navbar-nav ml-auto">
             <li>
                 <a href="#" onclick="$('#logoutbutton').click()"><i class="icon fa fa-sign-out-alt"></i> Logout</a>
             </li>
         </ul>
+        {% endif %}
 
 
     </div>

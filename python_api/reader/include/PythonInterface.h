@@ -38,6 +38,7 @@ class ReaderWrapper {
   void join();
 
   void datachildren();
+  void gettree();
 
   virtual ~ReaderWrapper(); 
 };

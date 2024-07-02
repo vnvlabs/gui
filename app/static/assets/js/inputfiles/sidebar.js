@@ -1,5 +1,5 @@
 
-function remove_inputfile(id_, event) {
+function remove_inputfile(id_) {
   event.preventDefault()
 
   confirm_modal("Remove Input File", "Removing an input file will remove it from the view, but not the file system. Do you still want to remove this file? ", "Yes","No", (e,m) =>{
@@ -185,5 +185,37 @@ function cancel_exe_job(e, fileId, jobId) {
     $.post("/inputfiles/cancel_job/" + fileId + "/" + jobId, function(data) {
             $('#input-file-job-list').html(data)
     })
+
+}
+
+
+function resetIFState() {
+   $('.if-element-page').remove()
+}
+
+function updateIFState(ipid, fileId) {
+
+   if (!fileId) {
+        fileId = 0
+   }
+
+   eid = "if-element-" + ipid;
+   elmid = "#" + eid
+   $('.if-element-page').toggle(false)
+
+   // If we have it already then show it.
+   if ( $(elmid).length == 1 ) {
+      $(elmid).toggle(true)
+   } else {
+
+      // Append to it a new element.
+      $('#if-element').append("<div id='" + eid + "' class='if-element-page'> Loading .... </div>")
+      var url = '/inputfiles/render/' + fileId + "?ipid=" + ipid;
+
+      // Populate the element with the data
+      $.get(  url , function( data ) {
+         $(elmid).html(data)
+      });
+   }
 
 }

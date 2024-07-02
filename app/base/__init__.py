@@ -39,18 +39,6 @@ CUSTOM_BLUEPRINTS = []
 
 
 DEFAULT_SCHEMA = {
-    "logo" : {
-        "small" : "<filename>",
-        "icon" : "<filename: image>",
-        "large" : "<filename: image>",
- 
-    },
-    "home" : "<filename: html shown in main view after logging in.>",
-    "title" : "<string - title at top of window>",
-    "copyright" : {
-        "message" : "<string - copyright message bottom left >",
-        "link" : "<string http address to go to when copyright message is clicked"
-    },
     "exclude_parent_blueprints" : "<bool - dont include any previously defined blueprints",
     "exclude_parent_executables" : "<bool - dont include any previously defined executables",
     "exclude_parent_reports" : "<bool - dont include any previously defined reports",
@@ -71,45 +59,20 @@ DEFAULT_SCHEMA = {
     }
 }
 
+def load_blueprint(name, directory):
+    temp_bp_dir = os.path.join(VNV_DIR_PATH, "temp", "blueprints", name)
+    if os.path.exists(temp_bp_dir):
+        shutil.rmtree(temp_bp_dir)
+
+    print("Adding Additional module ", name)
+    shutil.copytree(os.path.join(directory), temp_bp_dir, dirs_exist_ok=True)
+    threading.Event().wait(1)
+    ALL_BLUEPRINTS[name] = importlib.import_module("app.temp.blueprints." + name)
+    blueprint.register_blueprint(ALL_BLUEPRINTS[name].blueprint)
+
 
 def updateBranding(config, pd):
     
-    logo = config.get("logo", {})
-    if "small" in logo and os.path.exists(os.path.join(pd, logo["small"])):
-        global LOGO_SMALL
-        LOGO_SMALL = os.path.basename(logo["small"])
-        shutil.copy(os.path.join(pd, logo["small"]), IMAGES_DIR)
-
-    if "icon" in logo and os.path.exists(os.path.join(pd, logo["icon"])):
-        global LOGO_ICON
-        LOGO_ICON = os.path.basename(logo["icon"])
-        shutil.copy(os.path.join(pd, logo["icon"]), IMAGES_DIR)
-
-    if "large" in logo and os.path.exists(os.path.join(pd, logo["large"])):
-        global LOGO_LARGE
-        LOGO_LARGE = os.path.basename(logo["large"])
-        shutil.copy(os.path.join(pd, logo["large"]), IMAGES_DIR)
-
-    if "home" in config:
-        global HOME_FILE
-        HOME_FILE = "includes/home_custom.html"
-        shutil.copy(os.path.join(pd, config["home"]), os.path.join(TEMPLATES_DIR, HOME_FILE))
-
-    if "title" in config:
-        global TITLE_NAME
-        TITLE_NAME = config["title"]
-
-    copy = config.get("copyright", {})
-    if "message" in copy:
-        global COPYRIGHT_MESSAGE
-        COPYRIGHT_MESSAGE = copy["message"]
-        print("Update Copyright Message", COPYRIGHT_MESSAGE)
-
-    if "link" in copy:
-        global COPYRIGHT_LINK
-        COPYRIGHT_LINK = copy["link"]
-        print("Update Copyright Link", COPYRIGHT_LINK)
-
     if "blueprints" in config:
  
         if config.get("exclude_parent_blueprints", False):
@@ -173,13 +136,21 @@ if FIRST_TIME is None:
             "temp": blueprints.tempfiles,
             "help": blueprints.help,
             "directives": blueprints.directives,
-        }
-        
+            }
+
+        try:
+            ALL_BLUEPRINTS["moose"] = blueprints.plugins.moose
+        except:
+            print("Could not load moose")
+
         blueprints.inputfiles.vnv_executables["Custom"] = {
             "filename" : "",
             "description" : "Custom Path",
             "package" : ""   
         }
+
+    
+    
 
     #Load the users home registration file. 
     global_reg_file = os.path.expanduser("~/.vnv")
@@ -237,6 +208,10 @@ def theia_route():
     # for the serve app -- should really allow the serve app to add buttons.
     return render_error(200, "Eclipse Theia is not configured", nohome=True)
 
+@blueprint.route("/plugin")
+def add_plugin():
+    load_blueprint("psip","/home/ben/source/vnvlabs.com/vnvlabs/plugins/psip/vnv/config/psip")
+    return make_response("Ok",200)
 
 @blueprint.route('/paraview')
 def paraview_route():
@@ -298,10 +273,7 @@ def icon():
 
 @blueprint.route("/")
 def home():
-    if blueprints.HAS_VNV:
-        return render_template("index.html", segment="index")
-    else:
-        return render_template("ide.html")
+    return redirect("/files/view"),302
 
 def available_ports():
     return range(14000, 14010)
@@ -365,6 +337,9 @@ def template_globals(d):
     def title_name():
         return TITLE_NAME
 
+    def auth_on():
+        return AUTHENTICATE
+
     def paraview_configured(): return current_app.config["PARAVIEW"] > 0 
     def theia_configured(): return current_app.config["THEIA"] > 0 
     
@@ -383,6 +358,7 @@ def template_globals(d):
     d["paraview_configured"] = paraview_configured
     d["theia_configured"] = theia_configured
     d["getUUID"] = get_uuid
+    d["auth_on"] = auth_on
     
     for kk, vv in ALL_BLUEPRINTS.items():
         if hasattr(vv, "template_globals"):

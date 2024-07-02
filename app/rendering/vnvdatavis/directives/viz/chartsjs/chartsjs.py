@@ -79,8 +79,9 @@ class ChartsJsChartDirective(ApexChartDirective):
                  url = "/directives/updates/{uid}/{{{{data.getFile()}}}}/{{{{data.getAAId()}}}}{context}"
                  update_now(url, 1000, function(config) {{
                      z = JSON.parse(config)
+                     myChart.options = z.options
                      myChart.config = z 
-                     myChart.update()  
+                     myChart.update()
                      if (z["errors"]) {{
                         parent.find('.main-errors').show()   
                         parent.find('.main-error-message').html(z["errors"])

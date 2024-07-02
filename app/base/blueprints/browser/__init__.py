@@ -119,6 +119,7 @@ def reader(id_):
             if connection.exists(filename):
                 file = LocalFile(filename, id_, connection, reader=reader, **render_args)
                 return render_template("browser/browser.html", file=file, modal=modal)
+            return render_error(501, "File Does not exist: " + filename)
 
         except Exception as e:
             return render_template("browser/browser.html",

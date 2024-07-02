@@ -75,3 +75,9 @@ function aceView(title, script,mode) {
 
 
 </script>
+
+{% for k,v in ALL_BLUEPRINTS.items() %}
+{%with get_template_file = v.get_template_file %}
+    {% include k + "/modals.html" ignore missing %}
+{%endwith%}
+{%endfor%}

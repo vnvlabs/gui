@@ -13,6 +13,8 @@ from flask_socketio import SocketIO
 from werkzeug.utils import redirect
 import signal
 import os
+from paraview import download_paraview, launch_paraview, set_paraview_forwards
+from theia import launch_theia, set_theia_forwards
 
 
 class Config:
@@ -20,6 +22,7 @@ class Config:
     port = 5000
     HOST = "0.0.0.0"
     WSPATH = f"ws://{HOST}:{port}"
+    PROTOCOL = "http://"
 
     PARAVIEW=True
     PARAVIEW_DIR="/vnvgui/paraview"
@@ -37,6 +40,7 @@ class Config:
     VNV_DIR="./"
     VNV_PORT = 5000
 
+    SECRET_KEY="supersecret"
 
 blueprint = Blueprint(
     'base',
@@ -90,6 +94,16 @@ def vis_file():
     src_url = f'/paraview?file={request.args.get("file","")}'
     iframe = f"""<iframe id='paraview' src="{src_url}" style="flex: 1; width:100%; height:100%; margin-bottom: 0px; border: none;"></iframe>"""
     return iframe,200
+
+
+@blueprint.route("/theia")
+def theia_file():
+    if Config.THEIA == 0:
+        return f"""<div> Error: Theia Is Not Configured. Cannot open file.</div>"""
+
+    iframe = f"""<iframe id='theia' src="{Config.PROTOCOL}{Config.HOST}:{Config.THEIA_PORT}" style="flex: 1; width:100%; height:100%; margin-bottom: 0px; border: none;"></iframe>"""
+    return iframe, 200
+
 
 @blueprint.route("/paraview/", methods=["POST"])
 def paraview_o():
@@ -356,76 +370,9 @@ def create_serve_app(config):
 
 child_processes = []
 
-def launch_theia(theia_directory, logs_directory, hostname, port):
-       if os.path.exists(f"{theia_directory}/browser-app/src-gen/backend/main.js"):
-            
-            curr_dir = os.getcwd()
-            os.chdir(theia_directory)
-  
-            command = [
-                'node',
-                './browser-app/src-gen/backend/main.js',
-                '/',
-                '--port', str(port),
-                '--hostname=' + hostname,
-                f'--plugins=local-dir:{Config.THEIA_DIR}/browser-app/plugins'
-            ]
-            
-            log_file = f'{logs_directory}/theia_logs'
-            with open(log_file, 'w') as log:
-                child_processes.append(subprocess.Popen(command, stdout=log, stderr=log))
 
-            os.chdir(curr_dir)
-       else:
-           Config.THEIA=0
-           print("Could not start Theia")
  
-def set_theia_forwards():
-    forwards = []
-    theiaforwards = subprocess.run(["ls", os.path.join(Config.THEIA_DIR,"browser-app/lib/frontend")], stdout=subprocess.PIPE).stdout.decode(
-        'ascii').split("\n")
-    for line in theiaforwards:
-        kk = line.replace("\t", " ")
-        forwards = forwards + kk.split(" ")
-    Config.THEIA_FORWARDS = [a.strip() for a in forwards if len(a) > 0 and a != "index.html"] + ["os"]
-   
-   
-   
-def launch_paraview(paraview_directory, data_directory, logs_directory, hostname, port):
-    if os.path.exists(f"{paraview_directory}/bin/pvpython"):
-        
-        curr_dir = os.getcwd()
-        os.chdir(paraview_directory)
-  
-        command = [
-            'bin/pvpython',
-            '-m',
-            'paraview.apps.visualizer',
-            '--host', hostname,
-            '--data', data_directory,
-            '--port', str(port),
-            '--timeout', "600000"
-        ]
-        
-        log_file = f'{logs_directory}/paraview_logs'
-        with open(log_file, 'w') as log:
-            child_processes.append(subprocess.Popen(command, stdout=log, stderr=log))
 
-        os.chdir(curr_dir)
-    else:
-        Config.PARAVIEW = 0
-        print("Could not start Paraview")
- 
-def set_paraview_forwards():
-     
-     forwards = []
-     pvforwards = subprocess.run(["ls", os.path.join(Config.PARAVIEW_DIR,"share/paraview-5.10/web/visualizer/www")], stdout=subprocess.PIPE).stdout.decode('ascii').split("\n")
-
-     for line in pvforwards:
-        kk = line.replace("\t", " ")
-        forwards = forwards + kk.split(" ")
-
-     Config.PARAVIEW_FORWARDS = [a.strip() for a in forwards if len(a) > 0 and a != "index.html"]
             
 
 def launch_vnv_gui(vnv_directory, logs_directory, hostname, port):
@@ -470,7 +417,6 @@ signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
 
 
-    
 if __name__ == "__main__":
 
 
@@ -483,7 +429,7 @@ if __name__ == "__main__":
     parser.add_argument("--ssl_cert", type=str, help="file containing the ssl cert", default=None)
     parser.add_argument("--ssl_key", type=str, help="file containing the ssl cert key", default=None)
     parser.add_argument("--logs_dir", type=str, help="directory to write all the logs", default="/vnvgui/logs")
-    
+    parser.add_argument("--download-paraview", type=int, help="Download And Install Paraview in paraview_dir", default=0)
     parser.add_argument("--paraview",type=int, help="Run Paraview (0=off, 1=launch, 2=already running)",default=1)
     parser.add_argument("--paraview_port",type=int, help="port running paraview",default=9000)
     parser.add_argument("--paraview_port_start",type=int, help="port running paraview",default=9001)
@@ -509,23 +455,33 @@ if __name__ == "__main__":
         Config.WSPATH = f"wss://{Config.HOST}:{Config.port}"
     else:
         Config.WSPATH = f"ws://{Config.HOST}:{Config.port}"
-    
+
+
     Config.PARAIVEW = args.paraview
     Config.PARAVIEW_PORT = args.paraview_port
     Config.PARAVIEW_DIR = args.paraview_dir
     Config.PARAVIEW_DATA_DIR = args.paraview_data_dir
     Config.PARAVIEW_SESSION_PORT_START = args.paraview_port_start
-    
+
+    if args.download_paraview:
+        download_paraview(args.paraview_dir)
+
+
     if Config.PARAVIEW > 0:
         if Config.PARAVIEW == 1:
-            launch_paraview(
+            p = launch_paraview(
                 paraview_directory=Config.PARAVIEW_DIR, 
                 hostname=Config.HOST,
                 data_directory=args.paraview_data_dir,
                 logs_directory=args.logs_dir,
                 port=Config.PARAVIEW_PORT)
+            if p is None:
+                Config.PARAIVEW = 0
+            else:
+                child_processes.append(p)
+
         if Config.PARAVIEW > 0:
-            set_paraview_forwards()
+            Config.PARAVIEW_FORWARDS = set_paraview_forwards(Config.PARAVIEW_DIR)
         
 
     Config.THEIA=args.theia
@@ -534,13 +490,18 @@ if __name__ == "__main__":
     
     if Config.THEIA > 0:
         if Config.THEIA == 1:
-            launch_theia(
+            a = launch_theia(
             theia_directory=Config.THEIA_DIR, 
             hostname=Config.HOST,
             logs_directory=args.logs_dir,
             port=Config.THEIA_PORT)
-        if Config.THEIA > 0:    
-            set_theia_forwards()
+            if a is None:
+                Config.THEIA = 0
+            else:
+                child_processes.append(a)
+
+        if Config.THEIA > 0:
+            Config.THEIA_FORWARDS = set_theia_forwards(Config.THEIA_DIR)
         
     
     Config.VNV=args.vnv
@@ -567,6 +528,7 @@ if __name__ == "__main__":
     
     if args.ssl:
         opts["ssl_context"] = (args.ssl_cert, args.ssl_key)
+        Config.PROTOCOL = "https://"
 
     socketio.run(app, **opts)
 

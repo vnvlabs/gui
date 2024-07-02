@@ -12,16 +12,14 @@ from app import Directory
 
 conf_template = '''
 import sys
-sys.path.append("{path}")
+
+{SYSPATHS}
 
 project = "VNV"
 copyright = f"2021, VNV"
 author = "VNV"
 release = "VNV"
-extensions = [
-    "sphinx.ext.mathjax",
-    "vnvdatavis"
-]
+extensions = {extensions}
 vnv_file={fileId}
 update_dir="{updateDir}"
 
@@ -32,9 +30,20 @@ html_static_path = ['_static']
 
 '''
 
+EXTS = ["sphinx.ext.mathjax", "vnvdatavis"]
+PATHS = [os.path.abspath(os.path.join('app', 'rendering'))]
+
+def add_custom_vnv_directive(filepath, module_name):
+    PATHS.append(filepath)
+    EXTS.append(module_name)
+
 
 def get_conf_template(fileId):
-    return conf_template.format(fileId=fileId, updateDir=Directory.UPDATE_DIR, path=os.path.abspath(os.path.join('app', 'rendering')))
+
+    syspaths = [
+        "sys.path.append(\"" + p + "\")" for p in PATHS
+    ]
+    return conf_template.format(fileId=fileId, extensions=EXTS, SYSPATHS="\n".join(syspaths), updateDir=Directory.UPDATE_DIR, path=os.path.abspath(os.path.join('app', 'rendering')))
 
 
 def setup_build_directory(src_dir, fileId):
@@ -110,17 +119,17 @@ class TemplateBuild:
         return self.get_html_file_name("Actions", package, name)
 
     def get_job_creator(self, package, name):
-        return self.get_html_file_name("JobCreators", package, name)
+        return self.get_html_file_name("Workflows", package, name)
 
     def get_job_creator_job(self, package, name, jobName):
         return os.path.join("renders", self.src_dir, "_build", "html",
-                            f"JobCreator_Job_{package}_{name}_{jobName}.html")
+                            f"Workflow_Job_{package}_{name}_{jobName}.html")
 
     def get_raw_job_creator_job(self, package, name, jobName):
-        return self.read(f"JobCreator_Job_{package}_{name}_{jobName}.rst")
+        return self.read(f"Workflow_Job_{package}_{name}_{jobName}.rst")
 
     def get_raw_job_creator(self, package, name):
-        return self.read(f"JobCreators_{package}_{name}.rst")
+        return self.read(f"Workflows_{package}_{name}.rst")
 
     def get_unit_test_test_content(self, package, name, test):
         return os.path.join("renders", self.src_dir, "_build", "html", f"UnitTest_Test_{package}_{name}_{test}.html")
@@ -297,10 +306,10 @@ def build(src_dir, templates, id_):
                             else:
                                 w.write(f"\n{textwrap.dedent(tests[test])}\n\n")
 
-                elif type_ == "JobCreators":
+                elif type_ == "Workflows":
                     tests = point["jobs"]
                     for test in tests.keys():
-                        fnames.append(f"JobCreator_Job_{name_package[0]}_{name_package[1]}_{test}.rst")
+                        fnames.append(f"Workflow_Job_{name_package[0]}_{name_package[1]}_{test}.rst")
                         with open(os.path.join(src_dir, fnames[-1]), 'w') as w:
                             if len(tests[test]) == 0:
                                 w.write(f"\n\n\n\n")

@@ -163,6 +163,10 @@ class CustomVnVFunctions(functions.Functions):
         # Given a object return it as json encoded string
         return json.dumps(s, cls=VnVJsonEncoder)
 
+    @functions.signature({"types": []})
+    def _func_iota(self,s):
+        return [ i for i in range(0, len(s))]
+
     @functions.signature({"types": []}, {"types": []})
     def _func_vnv_join(self, sep, obj):
         if hasattr(obj, "__getType__") and obj.__getType__() == "array":

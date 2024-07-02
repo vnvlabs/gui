@@ -1,0 +1,80 @@
+
+<div style="display:flex;">
+    <div id="view-view" class="card" style=" min-width:500px; height: calc(100vh - 126px); max-width:50%; overflow-x: auto; padding-right:20px; padding-left:20px; padding-top:20px; margin-right:10px; margin-bottom:0px;">
+        <div style="display:flex; align-items:center; margin-bottom:15px;">
+        <h3 style="flex:1; margin:0;">Job Execution</h3>
+        <div style="display:flex; cursor:pointer; font-size:30px; justify-content:flex-end" onclick="$('#new_inputfile_modal').modal()"><i class="feather icon-plus-circle"></i></div>
+        </div>
+        <div id="view-chart">
+            <div id="treeLoading">Loading...</div>
+            <div id="treeview1" class="treeview"></div>
+
+            <script>
+
+                function adddelete() {
+                            $('a:has(>.trash)').each(function() {
+
+                                    var $anchor = $(this);
+                                    if ($anchor.find('.addDelete').length == 0 ) {
+
+                                        var $span = $('<span>').html('<i class="feather icon-trash"></i>')
+                                        .on('click', function() {
+                                            const fileId = $('#treeview1').jstree(true).get_node('#' + $anchor.attr('id')).original.vid
+                                            remove_inputfile(fileId);
+                                        }).addClass('addDelete')
+
+                                        $anchor.append($span);
+                                        $anchor.css('width','98%');
+                                    }
+                            });
+
+                }
+
+
+                function update_inputtree_data(loading, processors) {
+                    var url = `/inputfiles/tree`
+                    if (loading) {
+                        $('#treeview1').hide()
+                        $('#treeLoading').show();
+                    }
+
+                    $.get(url, function (dd) {
+
+                        $('#treeview1').jstree("destroy").empty();
+                        $('#treeview1').jstree({ core: { data: dd["data"] } });
+                        $('#treeview1').on("ready.jstree", function (e, data) {
+                            adddelete();
+                        })
+                        $('#treeview1').on("open_node.jstree", function (e, node) {
+                            if (node.node.original.fid == "root") {
+                                adddelete();
+                            }
+                        })
+
+                        $('#treeview1').on("select_node.jstree", function (e, data) {
+                            updateIFState(data.node.original.fid, data.node.original.vid)
+                        });
+
+                        $('#treeLoading').hide();
+                        $('#treeview1').show();
+
+                        updateIFState("root", 0)
+
+                    })
+
+                }
+
+
+                $(document).ready(function () {
+                    update_inputtree_data(true)
+                });
+
+
+            </script>
+        </div>
+
+    </div>
+    <div class="card" style=" width:100%; padding:10px; margin-right:20px; height: calc(100vh - 126px); ">
+        <div id="if-element" style="flex:1; "></div>
+    </div>
+</div>

@@ -1,12 +1,14 @@
 
-
-<div id="rawDiv">
-  <pre id="rawDivPre"></pre>
+{%with uuid = getUUID() %}
+<div id="{{uuid}}">
+  <pre id="{{uuid}}Pre"></pre>
 </div>
 
 <script>
-  const dictValuesAsCsv = tabledata.map(function(e){return columnData.map(function(ee){ return e[ee["title"]]}).join(",")})
-  
-  const result = [columnData.map(function(row){return row["title"]}).join(","), ...dictValuesAsCsv].join('\n');
-  $('#rawDivPre').html(result);
+  $(document).ready(function(){
+    const dictValuesAsCsv = tabledata.map(function(e){return columnData.map(function(ee){ return e[ee["title"]]}).join(",")})
+    const result = [columnData.map(function(row){return row["title"]}).join(","), ...dictValuesAsCsv].join('\n');
+    $('#{{uuid}}Pre').html(result);
+  })
 </script>
+{% endwith%}

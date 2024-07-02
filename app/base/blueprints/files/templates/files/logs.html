@@ -1,32 +1,32 @@
+
 <div class="card" style="padding:10px; margin-bottom:4px;">
+    <h2>{%if proc < 0 %} All Logs {%else%} Logs as seen on Processor {{proc}} {%endif%}</h2>
     <div style="display:flex; align-items:center; ">
         <h5 style="margin-right:10px; margin-bottom:0px; ">Log Levels:</h5>
-        {% for filter in file.getLogFilters() %}
+        {% for filter in file.getLogFilters(proc) %}
         <div class="form-check" style="margin-left:10px;">
-            <input checked class="vnv-filter form-check-input" vnv-filter="{{filter}}" type="checkbox"
-                   id="filter-{{loop.index}}">
-            <label class="form-check-label" for="filter-{{loop.index}}">{{filter}}</label>
+            <input checked class="vnv-filter{{proc}} form-check-input" vnv-filter="{{filter}}" type="checkbox" id="filter-{{loop.index}}{{proc}}">
+            <label class="form-check-label" for="filter-{{loop.index}}{{proc}}">{{filter}}</label>
         </div>
         {%endfor%}
     </div>
     <div style="display:flex; align-items:center; ">
         <h5 style="margin-right:10px; margin-bottom:0px; ">Packages:</h5>
-        {% for filter in file.getLogPackages() %}
+        {% for filter in file.getLogPackages(proc) %}
         <div class="form-check" style="margin-left:10px;">
-            <input checked class="vnv-filter form-check-input" vnv-filter="{{filter}}" type="checkbox"
-                   id="filterp-{{loop.index}}">
-            <label class="form-check-label" for="filterp-{{loop.index}}">{{filter}}</label>
+            <input checked class="vnv-filter{{proc}} form-check-input" vnv-filter="{{filter}}" type="checkbox" id="filterp-{{loop.index}}{{proc}}">
+            <label class="form-check-label" for="filterp-{{loop.index}}{{proc}}">{{filter}}</label>
         </div>
         {%endfor%}
     </div>
 </div>
-{% for logRender in file.getLogs() %}
+{% for logRender in file.getLogs(proc) %}
 {%include "files/log.html"%}
 {% endfor %}
 
 
 <script>
-  $('.vnv-filter').change(function(ev) {
+  $('.vnv-filter{{proc}}').change(function(ev) {
 
     filter = $(this).attr("vnv-filter")
 
@@ -46,11 +46,11 @@
         }
     }
 
-    $('.vnv-log[vnv-level="' + filter + '"]').each(function(e){
+    $('.vnv-log{{proc}}[vnv-level="' + filter + '"]').each(function(e){
         process_filters($(this),checked)
     })
 
-    $('.vnv-log[vnv-package="' + filter + '"]').each(function(e){
+    $('.vnv-log{{proc}}[vnv-package="' + filter + '"]').each(function(e){
         process_filters($(this),checked)
     })
 

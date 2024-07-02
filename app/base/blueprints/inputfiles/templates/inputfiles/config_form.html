@@ -2,29 +2,21 @@
   modal: "Configuration"
     visible when the "Configure" button is clicked 
 -->
-
-{%with connection = file.connection %}
-
-<form id="input-configuration-form" method="post" action="/inputfiles/configure/{{file.id_}}">
-
+{%with uuid = getUUID() %}
+<form id="{{uuid}}" method="post" action="/inputfiles/configure/{{file.id_}}">
     <div class="form-group" style="position:relative">
         <label for="inputfile_application">Application</label>
         <input name="application" type="text" class="autocomplete form-control" id="inputfile_application"
                placeholder="Enter Path to application" value="{{file.filename}}">
-
         <script>
             $(document).ready(function(){
                autocomplete(document.getElementById('inputfile_application'), function() {
                         return "&file={{file.id_}}&context=inputfile";
-               },"/inputfiles")
-            })
+               }, "/inputfiles")
+            });
         </script>
     </div>
 
-    <!-- 
-      input text field: "Application"
-        path to application
-    -->
     <div class="form-group">
         <label for="specDump">Command required to extract application schema.</label>
         <input name="specDump" type="text" class="form-control" id="specDump" value="{{file.specDump}}">
@@ -34,16 +26,12 @@
             will substitute the value of ${application} with the file path configured above.
             On the off chance that you need it, the value %{inputfile} will be substituted with a path
             to the VnV Input file that will be used.
-
         </small>
     </div>
-    <!-- 
-      input text field: "Command required to extract application schema"
-        specifies command for schema
-    -->
+
     <div class="form-group">
         <label for="specDump">Additional Plugins</label>
-        <textarea name="plugs" type="text" class="form-control" id="plugins" row="10">{{file.plugs_str()}}</textarea>
+        <textarea name="plugs" type="text" class="form-control" id="plugins" rows="10">{{file.plugs_str()}}</textarea>
         <small>
             This should be a key value map representing the additional vnv plugins you would
             like to be included when generating the specification. You have to explicitly
@@ -53,11 +41,33 @@
         </small>
     </div>
 
-
-
-     <div class="form-group">
+    <div class="form-group">
          <button type="submit" class="btn btn-primary" style="width:100%">Save</button>
     </div>
-
 </form>
+
+<script>
+    $(document).ready(function(){
+        $('#{{uuid}}').on('submit', function(event){
+
+
+            event.preventDefault(); // Prevent default form submission
+
+            $.ajax({
+                url: $(this).attr('action'),
+                type: $(this).attr('method'),
+                data: $(this).serialize(),
+                success: function(response) {
+                    update_inputtree_data(true)
+                    $('#config-file-modal-{{file.id_}}').modal('hide')
+                },
+                error: function(xhr, status, error) {
+                    // Handle any errors that occurred during the submission
+                    console.error('Form submission failed:', status, error);
+                    alert('An error occurred while submitting the form. Please try again.');
+                }
+            });
+        });
+    });
+</script>
 {%endwith%}

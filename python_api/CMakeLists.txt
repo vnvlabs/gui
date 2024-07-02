@@ -4,7 +4,6 @@ set(PROJECT_VERSION 1.0.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS YES)
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 
 
 # SWIG: use standard target name.
@@ -16,8 +15,6 @@ endif()
 if(POLICY CMP0086)
   cmake_policy(SET CMP0086 NEW)
 endif()
-
-find_package(Threads REQUIRED)
 
 # Python is required to build the reports.
 find_package(

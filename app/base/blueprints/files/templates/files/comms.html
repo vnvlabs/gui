@@ -1,7 +1,8 @@
 
 <div class="">
+    <h2 >Application Communication Patterns</h2>
+
     <div class="card-body">
-        <h4 style="text-align:center"> Communication Library Information:</h4>
 
         <div class=" card">
             <div class="card-body">
@@ -17,16 +18,9 @@
         </div>
         <div class="" style="width:100%; max-width:100%">
             <div class="" style="display:flex; justify-content:space-between">
-                <div class="card" style="width:48%">
+                <div class="card" style="width:100%; padding:10px;">
                     <h4 style="text-align:center;">Communication Graph</h4>
-                    <div  id="commMapGraph" style="flex:1"></div>
-                </div>
-
-                <div class="card" style="width:48%">
-                    <h4 style="text-align:center;">Communicator Composition</h4>
-                    <div  id="commMapContent" style="flex:1">
-                        {{ file.renderDefaultComm()|safe}}
-                    </div>
+                    <div  id="commMapGraph" style="flex:1; display:flex; align-items:center; justify-content:center;"></div>
                 </div>
             </div>
         </div>
@@ -35,6 +29,7 @@
 
 <script>
 $(document).ready(function(){
+    const wd = $('commMapGraph').width()
     const gData = JSON.parse('{{file.getGlobalCommMap()|safe}}')
 
     selected = gData.nodes[0]
@@ -44,32 +39,26 @@ $(document).ready(function(){
         .cooldownTicks(100)
         .width(600).height(600)
         .graphData(gData)
-        .onNodeClick(node => {
+        .nodeCanvasObject( (node, ctx, globalScale) => {
+                ctx.fillStyle = (node.group === "World") ? "#11345d" : (node.group.toString().length > 1) ? "blue": "#73b4ff"
+                ctx.beginPath();
+                const size =  (node.group === "World") ? 6 : (node.group.toString().length > 1) ? 4 : 3
+                ctx.arc(node.x, node.y, size, 0, 2 * Math.PI, false);
+                ctx.fill();
+                ctx.font = '4px Sans-Serif';
+                ctx.fillStyle = "white"
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText((node.group === "World") ? "W" : (node.group.toString().length > 1) ? "I" : node.group,  node.x, node.y);
 
-           Graph.centerAt(node.x, node.y, 1000);
-           var url = '{{url_for('base.files.comm', id_=file.id_)}}'
-           url += "?cid=" + node.id
-           $.get(  url , function( data ) {
-               $('#commMapContent').html(data)
-           });
-           selected = node
-         })
-         .nodeColor(node => {
-            if (node == selected)
-                return "#11345d";
-            return "#73b4ff"
-         });
+          })
+         .linkColor(node => "black");
 
+    var once = true;
     Graph.d3Force('center', null);
-    once = false;
+    Graph.centerAt(selected.x, selected.y, 200);
+    Graph.onEngineStop(() => {  if (once) {Graph.zoomToFit(400,100); once=false; }} );
 
-    // fit to canvas when engine stops
-    Graph.onEngineStop(() => { if (!once) { Graph.zoomToFit(400,100); once = true;} });
-
-    elementResizeDetectorMaker().listenTo(
-       container,
-       el => {Graph.width(el.offsetWidth); Graph.zoomToFit(400,100);}
-    );
 });
 
 

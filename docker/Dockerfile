@@ -57,7 +57,7 @@ RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
 
 #Copy theia config Leave this seperate so we can cache that god awfull thing above. 
 COPY theia /vnvgui/theia
-RUN cd /vnvgui/theia && yarn --pure-lockfile && cd browser-app && yarn theia download:plugins 
+RUN cd /vnvgui/theia && yarn --pure-lockfile && cd browser-app && yarn theia download:plugins --ignore-errors 
 
 #Install paraview
 COPY ./scripts/download_paraview.sh /vnvgui/paraview/download_paraview.sh
@@ -76,6 +76,8 @@ COPY ./router.py /vnvgui/gui/router.py
 COPY ./run.py /vnvgui/gui/run.py
 COPY ./app /vnvgui/gui/app
 COPY ./launch.sh /vnvgui/gui/launch.sh
+COPY ./paraview /vnvgui/gui/paraview
+COPY ./theia /vnvgui/gui/theia
 
 EXPOSE 5000
 WORKDIR /vnvgui/gui

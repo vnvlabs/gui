@@ -34,11 +34,5 @@ $('#data_tree_div_ip').jstree(
 
 $("#data_tree_div_ip").jstree("open_all");
 
-$("#jmes_query").change(function() {
-  $.get('/files/viewers/jmes-query?fileId={{fileId}}&dataId={{dataId}}&query=' + encodeURIComponent($(this).val()) , function(data) {
-    $('#jmes_query_result').html(data);
-  });
-});
-
 });
 </script>

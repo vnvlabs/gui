@@ -1,3 +1,20 @@
+<div style="display:flex; margin-bottom:20px;">
+
+    <h2 style="flex:1">Execute The Job</h2>
+    <button id="exec_prev" class="btn btn-primary input-save-button" style="margin-left:10px"
+            onclick='preview_the_job({{file.id_}})'>Preview
+   </button>
+   <!--
+    button: Execute
+   -->
+   <button id="exec_exec" class="btn btn-primary input-save-button" style="margin-left:10px"
+            onclick='execute_the_job({{file.id_}})'>Execute
+   </button>
+
+</div>
+
+
+
 <div id="jobslist-{{file.id_}}"style="display:flex; align-items:center; "></div>
 
 <div class="" id="input-file-job-list" style="padding:20px;margin-top:20px;">
@@ -6,5 +23,19 @@
 </div>
 
 <script>
+
+function execute_the_job(fileid) {
+
+  $.get(`/inputfiles/execute/${fileid}`, function(data) {
+      refresh_jobs_list(fileid)
+      $('#pills-jobs-tab').click()
+  });
+}
+
+function preview_the_job(fileid) {
+   $.get(`/inputfiles/execute/${fileid}?highlight&dryrun=1`, function(data) {
+           aceView("Executable Script Preview", data,"sh")
+   });
+}
 
 </script>

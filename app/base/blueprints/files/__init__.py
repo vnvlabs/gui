@@ -163,6 +163,13 @@ def comm(id_):
         commrender = file.getCommRender(commId)
         return render_template("files/comm.html", commrender=commrender)
 
+@blueprint.route('/comm_data/<int:id_>/<int:ipid>')
+def comm_data(id_, ipid):
+    with VnVFile.find(id_) as file:
+        commId = request.args.get("cid")
+        commrender = file.get_injection_point_comm_data(ipid)
+        return make_response(jsonify(commrender),200)
+
 
 @blueprint.route("/workflow/node_image/<string:nodeType>")
 def workflow_node_image(nodeType):
@@ -183,7 +190,6 @@ def workflow_render_job(id_):
     except Exception as e:
         print(e)
     return make_response("", 200)
-
 
 @blueprint.route("/workflow/raw_rst/<int:id_>")
 def workflow_render_rst(id_):
@@ -220,18 +226,58 @@ def data_root(id_):
         return make_response(jsonify([]), 200)
 
 
-@blueprint.route('/view/<int:id_>')
-def view(id_):
+@blueprint.route('/view')
+def view():
     try:
-        with VnVFile.find(id_) as file:
-            if "full" in request.args:
-                return render_template("files/tab-view-content.html", file=file,
-                                       count=int(request.args.get("count", "0")))
-            return render_template("files/tab-view.html", file=file)
+        return render_template("files/tab-view.html")
     except Exception as e:
         print(e)
         return render_error(501, str(e))
 
+@blueprint.route('/prov/<int:id_>')
+def prov(id_):
+    try:
+        with VnVFile.find(id_) as file:
+            return render_template("files/provenance.html", file=file)
+    except Exception as e:
+        print(e)
+        return render_error(501, str(e))
+
+@blueprint.route('/browser/<int:id_>')
+def browser(id_):
+    try:
+        with VnVFile.find(id_) as file:
+            return render_template("files/file_browser.html", file=file)
+    except Exception as e:
+        print(e)
+        return render_error(501, str(e))
+
+@blueprint.route('/unittests/<int:id_>')
+def unittesting(id_):
+    try:
+        with VnVFile.find(id_) as file:
+            return render_template("files/unit_testing.html", file=file)
+    except Exception as e:
+        print(e)
+        return render_error(501, str(e))
+
+@blueprint.route('/comms/<int:id_>')
+def comms(id_):
+    try:
+        with VnVFile.find(id_) as file:
+            return render_template("files/comms.html", file=file)
+    except Exception as e:
+        print(e)
+        return render_error(501, str(e))
+
+@blueprint.route('/logs/<int:id_>')
+def logs(id_):
+    try:
+        with VnVFile.find(id_) as file:
+            return render_template("files/logs.html", file=file, proc=request.args.get("processor","-1"))
+    except Exception as e:
+        print(e)
+        return render_error(501, str(e))
 
 @blueprint.route('/processing/<int:id_>')
 def processing(id_):
@@ -272,5 +318,5 @@ def faker(PREFIX="../build"):
     return
 
 
-VnVFile.add("Demo", "/home/ben/injectionPoint/out", "file",
+VnVFile.add("Demo", "/home/ben/o11", "file",
             get_file_template_root(), {})

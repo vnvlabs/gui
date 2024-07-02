@@ -46,10 +46,8 @@
                         <h1 style="flex:1"> VnV Job Creator: {{creator.name}} </h1>
                         <a href="#!"
                            onclick="show_workflow_rst_editor({{workflowRender.getFile()}} , {{workflowRender.getId() }}, '{{creator.name}}'  )"
-                           class="badge badge-success" style="margin-left:10px">RST</a>
-                        <a href="#!"
-                           onclick="show_data_explorer({{workflowRender.getFile()}}, {{workflowRender.getId()}})"
-                           class="badge badge-info" style="margin-left:10px" ;>Data Explorer</a>
+                           class="" style="margin-left:10px; font-size:15px;"><i class="feather icon-edit"></i></a>
+
                     </div>
                     <div class="iscale">
                         {{ creator.html | safe}}
@@ -60,7 +58,7 @@
                             <h1 style="flex:1"> VnV Job Creator: {{job.name}} </h1>
                             <a href="#!"
                                onclick="show_workflow_rst_editor({{workflowRender.getFile()}} , {{workflowRender.getId() }}, '{{creator.name}}' , '{{job.name}}' )"
-                               class="badge badge-success" style="margin-left:10px">RST</a>
+                               class="" style="margin-left:10px; font-size:15px;"><i class="feather icon-edit"></i></a>
                         </div>
                         <div class="iscale">
                             {{ job.html | safe }}

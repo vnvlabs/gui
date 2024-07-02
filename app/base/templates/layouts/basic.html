@@ -3,7 +3,7 @@
 
 <head>
     <title>
-        VNV - {% block title %}{% endblock %}
+        VnV Toolkit {% block title %}{% endblock %}
     </title>
     <!-- HTML5 Shim and Respond.js IE11 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -28,12 +28,17 @@
 
     <!-- Specific CSS goes HERE -->
     {% include 'includes/stylesheets.html' %}
-
     {% block stylesheets %}{% endblock stylesheets %}
+
     {% include 'includes/scripts.html' %}
     {% block javascripts %}{% endblock javascripts %}
 </head>
 <body class="" >
+
+{%include "includes/modals.html"  %}
+
+
+
 
 <!-- [ Pre-loader ] start -->
 <div class="loader-bg">

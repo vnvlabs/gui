@@ -2,29 +2,26 @@
 <div class="card" style="padding:20px; height:100%">
 
     <div style="position:relative; align-items:center; margin-bottom:30px;">
-        <h2 style="flex:1">{{iprender.getTitle() | safe }}</h2>
-        <div class="card" style="display:flex; flex-direction:row;  position:absolute; top:calc(50% - 16px); right:10px;">
-            {% if iprender.getLogs() | length %}
-            <a href="#!" onclick="$('#log-modal').modal('toggle')" class="vnvh badge badge-success"
-               style="margin-left:10px; display:none">Logs</a>
-            {%endif%}
+        <h2 style="flex:1">
             {% if iprender.processing() %}
-            <a id='ipprocessing-{{iprender.getId()}}' href="#!" onclick="" class="vnvh badge badge-warning"
-               style="margin-left:10px;display:none;">{{iprender.getStatus()}}</a>
-            {% endif %}
-            {% if iprender.needs_comm_map() %}
-            <a href="#!" onclick="$('#comm-modal').modal('toggle')" class="vnvh badge badge-success"
-               style="margin-left:10px; display:none" ;>Communication Map </a>
+                <a id='ipprocessing-{{iprender.getId()}}' href="#!" onclick="" class="vnvh"
+               style="margin-left:10px;"><i style="color:orange;" title="Processing" class="feather icon-circle"></i></a>
+            {% endif %} {{iprender.getTitle() | safe }}</h2>
+
+        <div class="" style="display:flex; flex-direction:row;  position:absolute; top:calc(50% - 16px); right:10px;">
+            {% if iprender.getLogs() | length %}
+            <a href="#!" onclick="$('#log-modal').modal('toggle')" class="vnvh"
+               style="margin-left:10px;"><i class="feather icon-alert-triangle"></i> </a>
             {%endif%}
-            <a href="#!"
-               onclick="show_ip_rst_editor({{iprender.getFile()}}, {{iprender.getId()}}, {{iprender.getInternalTest().getData().getId()}} )"
-               class="vnvh badge badge-success" style="margin-left:10px;display:none;"
-               ;>RST</a>
-            <a href="#!" onclick="show_data_explorer({{iprender.getFile()}}, {{iprender.getId()}})"
-               class="vnvh badge badge-info"
-               style="margin-left:10px;display:none" ;>Data
-                Explorer</a>
-            <a href="#!" onclick="$('.vnvh').toggle(300)" class="badge badge-info" style="margin:10px;"><</a>
+            {% if iprender.needs_comm_map() %}
+            <a href="#!" onclick="show_comm_map('{{file.id_}}', '{{iprender.getId()}}')" class="vnvh"
+               style="margin-left:10px;  font-size:15px;" ><i title="Communication Map" class="feather icon-cpu"></i></a>
+            {%endif%}
+            <a href="#!" onclick="show_ip_rst_editor({{iprender.getFile()}}, {{iprender.getId()}}, {{iprender.getInternalTest().getData().getId()}} )"
+               class="vnvh" style="margin-left:10px; font-size:15px;"
+            ><i class="feather icon-edit"></i></a>
+
+
 
         </div>
         <script>
@@ -56,25 +53,20 @@
 
             <div style="position:relative; align-items:center ">
                 <h3 style="flex:1; margin-bottom:30px;"> {{ testrender.getTitle() | safe }} </h3>
-                <div class="card" style="display:flex; flex-direction:row;  position:absolute; top:calc(50% - 16px); right:10px;">
+                <div class="" style="display:flex; flex-direction:row;  position:absolute; top:calc(50% - 16px); right:10px;">
 
                 {% if testrender.getLogs() | length %}
                 <a href="#!"
                    onclick="$('#test-log-modal-{{testrender.getId()}}').modal('toggle')"
-                   class="vnvhg badge badge-success" style="margin-left:10px; display:none;">Logs</a>
+                   class="vnvhg" style="margin-left:10px; font-size:15px;"><i class="feather icon-alert-triangle"></i></a>
                 {%endif%}
 
                 <a href="#!"
                    onclick="show_ip_rst_editor({{iprender.getFile()}}, {{testrender.getId()}} , {{testrender.getData().getId()}} )"
-                   class="vnvhg badge badge-success" style="margin-left:10px; display:none;">RST</a>
-                <a href="#!" onclick="show_data_explorer({{iprender.getFile()}}, {{testrender.getId()}})"
-                   class="vnvhg badge badge-info" style="margin-left:10px; display:none;" ;>Data Explorer</a>
-                <a href="#!" onclick="$('#render-{{loop.index}}').toggle(300)" class="vnvhg badge badge-info"
-                   style="margin-left:10px; display:none;" ;>+/-</a>
+                   class="vnvhg" style="margin-left:10px; font-size:15px;"><i class="feather icon-edit"></i></a>
 
-
-                 <a href="#!" onclick="$('.vnvhg').toggle(300)" class="badge badge-info" style="margin:10px;"><</a>
-
+                <a href="#!" onclick="$('#render-{{loop.index}}').toggle(300); $(this).find('i').toggle(300);" class="vnvhg"
+                   style="margin-left:10px; font-size:15px;"><i class="feather icon-minimize"></i><i class="feather icon-maximize" style="display:none"></i></a>
                 </div>
             </div>
             <div id="render-{{loop.index}}" class="iscale">
@@ -110,25 +102,6 @@
 {%endif%}
 
 
-<div id="comm-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="comm-modal-label"
-     aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="comm-modal-label">Injection Point Communication Map</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body" id="comm-modal-body">
-                {% with commrender = iprender.getCommRender() %}
-                {%include 'files/comm.html' %}
-                {%endwith%}
-            </div>
-        </div>
-    </div>
-</div>
-
-
 <div id="source-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="source-modal-label"
      aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document" style="max-width:90%">
@@ -148,7 +121,52 @@
 </div>
 
 
+
 <script>
 
+ var apex_chart_comm_map = null
+
+ function draw_apex_chart(series) {
+    var options = {
+            series: series,
+            chart: {
+              height: "100%",
+              type: 'heatmap',
+            },
+            heatmap: {
+               reverseNegativeShade : true
+            },
+            dataLabels: {
+              enabled: true,
+              formatter: function (val, opts) {
+                    d = opts.w.config.series[opts.seriesIndex].data[opts.dataPointIndex]
+                    rr =  "Rank " + d.r ;
+                    return rr
+              },
+              textAnchor: 'middle',
+            },
+
+            colors: ["#11345d"]
+        };
+        apex_chart_comm_map =  new ApexCharts(document.querySelector("#commmap-chart"), options);
+        apex_chart_comm_map.render();
+
+ }
+ $(document).ready(function() {
+    draw_apex_chart([])
+ })
+
+
+function show_comm_map(fileId, injectionPointId) {
+    $.get("/files/comm_data/" + fileId + "/" + injectionPointId, function(data) {
+        debugger;
+        if (apex_chart_comm_map) {
+            apex_chart_comm_map.destroy()
+            $('#commmap-chart').empty();
+        }
+        draw_apex_chart(JSON.parse(data))
+        $('#comm-modal').modal('show')
+     });
+}
 
 </script>

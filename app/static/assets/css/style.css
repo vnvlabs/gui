@@ -11697,6 +11697,7 @@ li.cross::marker {
     content: "Z"
 }
 
+
 .logrule{
 border: 1px solid #e0e0e3;
 width: 95%;
@@ -11709,22 +11710,18 @@ margin: 5px;
 }
 
 .letter:before {
-display: inline-block;
-font-size: 10px;
-font-family: monospace;
-width: 20px;
-height: 20px;
-line-height: 15px;
-text-align: center;
-border-radius: 50%;
-background: white;
-vertical-align: middle;
-margin-right: 1em;
-color: #12355f;
-border: 3px solid #12355f;
-font-weight: 900;
-padding: 0px 3px 0px 2px;
-
+    display: inline-block;
+    font-size: 20px;
+    font-family: cursive;
+    width: 20px;
+    height: 20px;
+    line-height: 24px;
+    text-align: center;
+    border-radius: 50%;
+    vertical-align: middle;
+    margin-right: 1em;
+    color: #12355f;
+    font-weight: bolder;
 }
 
 
@@ -12387,6 +12384,22 @@ padding: 0px 3px 0px 2px;
 
 .icon-user:before {
     content: "\e8e9";
+}
+
+.addDelete {
+	float: right;
+	margin-right:10px;
+	border-radius: 100%;
+    width: 22px;
+    height: 22px;
+    text-align: center;
+    line-height: 20px;
+    cursor:pointer;
+}
+
+.addDelete:hover {
+
+    border:1px solid gray;
 }
 
 .icon-users:before {
@@ -18253,7 +18266,7 @@ padding: 0px 3px 0px 2px;
 }
 
 .card:hover, .admonition:hover {
-    box-shadow: 0 0 25px -5px #9e9c9e;
+    box-shadow: 0 0 25px -5px #9e9c9e !important;
 }
 
 .card_hover {

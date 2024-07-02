@@ -1,0 +1,15 @@
+<h2>Application Standard {% if error %}Error{%else%}Output{%endif%}</h2>
+
+<div class="card" style="padding:20px; height:100%;" id="proc_text_{{error}}_{{file.id_}}">
+    {{text | safe }}
+</div>
+
+<script>
+    $('#proc_std_{{error}}_{{file.id_}}').on('change', function() {
+        var proc = $(this).val();
+        const url = `/files/viewers/stdout/{{file.id_}}?processor=${proc}`{% if error %}+ "&error"{%endif%}
+        $.get(url, function(data) {
+           $('#proc_text_{{error}}_{{file.id_}}').html(data);
+        })
+    })
+</script>

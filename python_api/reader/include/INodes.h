@@ -17,7 +17,7 @@
 // TODO
 #include "shared/Provenance.h"
 #include "shared/exceptions.h"
-#include "shared/nlohmann/json.hpp"
+#include "shared/json.hpp"
 
 #define ID_NOT_INITIALIZED_YET -1000
 
@@ -30,8 +30,6 @@ namespace VnV
 
   namespace Nodes
   {
-
-    class IWalker;
 
     enum class node_type
     {
@@ -226,7 +224,7 @@ namespace VnV
       static DataBase::DataType getDataTypeFromString(std::string s);
 
       virtual void open(bool value) { setopen(value); }
-
+    
       virtual bool check(DataType type);
 
       virtual void setRootNode(long id, IRootNode *rootNode)
@@ -613,7 +611,7 @@ namespace VnV
 
       virtual std::string getComms() const { return listComms().dump(); }
       virtual std::string toJsonStr(bool strip) const = 0;
-
+      virtual long getCommForProcessor(long proc) const  = 0;
       virtual json getAsDataChild(int fileId, int level) 
       {
         json j = json::object();
@@ -650,7 +648,7 @@ namespace VnV
 
       virtual std::string getNodeMap() = 0;
       virtual std::string getVersion() = 0;
-
+      virtual long getCommForProcessor(long proc) const = 0;
       virtual std::string icon() { return "cpu"; }
 
       virtual json getDataChildren_(int fileId, int level) override
@@ -1113,26 +1111,7 @@ namespace VnV
       std::string code(std::string package, std::string name) const { return getter("CodeBlocks", package + ":" + name); }
     };
 
-    class WalkerNode
-    {
-    public:
-      std::shared_ptr<Nodes::DataBase> item;
-      Nodes::node_type type;
-      std::set<long> edges;
-    };
 
-    class WalkerWrapper
-    {
-      std::shared_ptr<IWalker> ptr;
-      std::shared_ptr<WalkerNode> node;
-      IRootNode *_rootNode;
-
-      IRootNode *rootNode() { return _rootNode; }
-
-    public:
-      WalkerWrapper(std::shared_ptr<IWalker> walker, IRootNode *root);
-      std::shared_ptr<WalkerNode> next();
-    };
 
     class IRootNode : public DataBase
     {
@@ -1168,7 +1147,6 @@ namespace VnV
         }
       }
 
-      WalkerWrapper getWalker(std::string config);
 
       void registerNode(std::shared_ptr<DataBase> ptr)
       {
@@ -1183,6 +1161,47 @@ namespace VnV
         }
         registerNodeInternal(ptr);
       }
+
+      std::string getTree(long processor) {
+
+          auto nodes = getNodes();
+          auto commMap = getCommInfoNode()->getCommMap();
+
+          json root = json::object();
+          root["id"] = -1;
+          root["children"] = json::array();
+
+          auto ptr = "/children"_json_pointer;
+
+          for (auto &ind : nodes) {
+            auto index = ind.first;
+            for (auto &idn : ind.second) {
+                if (commMap->commContainsProcessor(idn.streamId, processor)) {
+
+                   if (idn.type == node_type::END) {
+                      ptr.pop_back(); // pop the children element
+                      ptr.pop_back(); // pop the list element
+                   } else if (idn.type == node_type::START) {
+
+                      //Add the element
+                      json newpoint = json::object();
+                      newpoint["id"] = idn.id;
+                      newpoint["children"] = json::array();
+                      root.at(ptr).push_back(newpoint);
+
+                      //Append to the stack
+                      ptr.push_back(std::to_string(root.at(ptr).size()-1));
+                      ptr.push_back("children");
+                   } else {
+                    throw "Unsupported node type in IDN list";
+                   }
+              }
+            }
+          }
+          return root.dump();
+
+      }
+
 
       virtual void addIDN(long id, long streamId, node_type type, long index, std::string stage) = 0;
       void join()
@@ -1205,6 +1224,8 @@ namespace VnV
       virtual std::shared_ptr<IArrayNode> getLogs() = 0;
       virtual std::shared_ptr<ITestNode> getInitialization() = 0;
       virtual std::string getReportDirectory() = 0;
+
+      virtual std::string getStdout(long comm, bool error) = 0;
 
       virtual long getEndTime()
       {
@@ -1312,21 +1333,6 @@ namespace VnV
       virtual ~IRootNode();
     };
 
-    class IWalker
-    {
-      Nodes::IRootNode *rootNode;
-
-      virtual bool _next(Nodes::WalkerNode &item) = 0;
-
-    public:
-      IWalker(Nodes::IRootNode *root) : rootNode(root) {}
-
-      virtual bool next(Nodes::WalkerNode &item) { return _next(item); }
-
-      virtual ~IWalker();
-    };
-
-    std::shared_ptr<IWalker> getProcWalker(IRootNode *rootnode, long processor, bool only, bool comm);
     std::shared_ptr<Nodes::IRootNode> getEngineReader(std::string filename, bool async, bool lock);
 
   } // namespace Nodes

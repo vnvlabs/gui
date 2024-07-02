@@ -107,6 +107,12 @@ def load_input(id_):
         else:
             return make_response("File does not exist", 200)
 
+@blueprint.route("/save_comments/<int:id_>", methods=["POST"])
+def save_comments(id_):
+    with VnVInputFile.find(id_) as file:
+        form = request.get_json()
+        file.comments = form["value"]
+        return make_response("", 200)
 
 @blueprint.route('/load_exec/<int:id_>', methods=["POST"])
 def load_exec(id_):
@@ -191,31 +197,36 @@ def get_desc(id_):
 def configure(id_):
     with VnVInputFile.find(id_) as file:
 
-        if "local" in request.form:
-            file.setConnectionLocal()
-        else:
-            username = request.form["username"]
-            port = request.form["port"]
-            domain = request.form["domain"]
-            password = request.form["password"]
-            file.setConnection(domain, username, password, port)
-
+        file.setConnectionLocal()
         res = file.setFilename(request.form.get("application"), request.form.get("specDump"), request.form.get("plugs"))
         if res:
             return redirect(url_for(".view", id_=id_, error="Application Configuration Completed Successfully."), 302)
         return redirect(url_for(".view", id_=id_, error="Configuration Failed!"), 302)
 
 
-@blueprint.route('/view/<int:id_>')
-def view(id_):
-
+@blueprint.route('/view')
+def view():
     try:
-        with VnVInputFile.find(id_) as file:
-            return render_template("inputfiles/view.html", file=file, error=request.args.get("error"))
+        return render_template("inputfiles/view.html", error=request.args.get("error"))
     except Exception as e:
-        import traceback
-        traceback.print_exc()
         return render_error(501, "Error Loading File")
+
+@blueprint.route('/tree')
+def tree():
+    try:
+        return  VnVInputFile.get_trees()
+    except Exception as e :
+        return make_response(jsonify({}),500)
+
+@blueprint.route('/render/<int:fileId>')
+def render(fileId):
+    try:
+        if fileId == 0:
+            return render_template("inputfiles/main.html")
+        with VnVInputFile.find(fileId) as file:
+            return make_response(file.render(request.args.get("ipid")),200)
+    except Exception as e:
+        return make_response("Error",500)
 
 
 @blueprint.route('/joblist/<int:id_>')
@@ -257,13 +268,20 @@ def cancel_job(id_, jobid):
 def openreport(id_):
     try:
         with VnVInputFile.find(id_) as file:
-            pref = os.path.join(request.args["dir"], "vnv_" + request.args["id"] + "_")
+
+            jobId = request.args.get("id")
+            job = file.get_job(jobId)
+            workflowId = job.metadata.get("workflow_id")
+            workflowDir = job.metadata.get("workflow_dir")
+
+            pref = os.path.join(workflowDir, "vnv_" + workflowId + "_")
             reports = file.connection.autocomplete(pref)
 
             if "confirmed" in request.args:
                 for i in reports:
                     with open(file.connection.download(i), 'r') as ff:
                         ff = get_file_from_runinfo(json.load(ff))
+                        ff.name = job.getName()
                         return make_response(url_for('base.files.view', id_=ff.id_), 200)
 
             return make_response("Error", 201)
@@ -302,10 +320,10 @@ def execute(id_):
     try:
         with VnVInputFile.find(id_) as file:
             if "dryrun" in request.args:
-                script, name = file.script(request.args.get("val", ""), "SAMPLE")
+                script, name = file.script(None, "SAMPLE")
                 return make_response(script, 200)
             else:
-                return make_response(file.execute(request.args.get("val", "")), 200)
+                return make_response(file.execute(), 200)
 
     except Exception as e:
         print(e)

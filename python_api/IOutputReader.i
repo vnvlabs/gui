@@ -40,7 +40,6 @@
 %shared_ptr(VnV::Nodes::FetchRequest)
 %shared_ptr(VnV::VnVProv)
 %shared_ptr(VnV::ProvFile)
-%shared_ptr(VnV::Nodes::WalkerNode)
 
 %exception { 
     try {

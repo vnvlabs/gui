@@ -17,15 +17,39 @@ class JsonElement {
   JsonElement(long i, const json& d) : id(i), data(d) {}
 };
 
+template<typename V>
+class Current {
+   
+   long second_;
+   V first_;
+
+public:
+   void setCurrent(V f, long s) {
+    second_ = s;
+    first_ = f;
+   }
+
+   V first() {
+    return first_;
+   }
+
+   long second(){
+    return second_;
+   }
+
+};
+
 template <typename V> class Iterator {
  private:
-  std::pair<V, long> current;
 
-  std::stack<std::shared_ptr<DataBase>> stack;
+
+  Current<V> current;
+
+  std::deque<std::shared_ptr<DataBase>> ptr_queue;
   bool peaked = false;
   bool donedone = false;
 
-  virtual void getLine(V& currentJson, long& currentValue) = 0;
+  virtual Current<V> getLine() = 0;
 
  public:
   Iterator(){};
@@ -37,28 +61,31 @@ template <typename V> class Iterator {
 
   virtual bool isDone() { return donedone; };
 
-  virtual std::pair<V, long> next() {
+  virtual Current<V> next() {
     pullLine(false);
     return current;
   }
 
   void pullLine(bool peek) {
     if (!peaked && hasNext()) {
-      getLine(current.first, current.second);
-
-      if (!current.first.contains(JSD::node)) {
-        throw INJECTION_EXCEPTION("Stream sent info without node %s", current.first.dump().c_str());
+      
+      current = getLine();
+      
+      if (!current.first().contains(JSD::node)) {
+        throw INJECTION_EXCEPTION("Stream sent info without node %s", current.first().dump().c_str());
       }
-      if ((current.first)[JSD::node].template get<std::string>() == JSN::done) {
+      
+      if ((current.first())[JSD::node].template get<std::string>() == JSN::done) {
         donedone = true;
       }
+
     }
     peaked = peek;
   }
 
   virtual long peekId() {
     pullLine(true);
-    return current.second;
+    return current.second();
   };
 
   virtual void respond(long id, long jid, const json& response) {
@@ -67,18 +94,33 @@ template <typename V> class Iterator {
 
   virtual ~Iterator(){};
 
-  virtual void push(std::shared_ptr<DataBase> d) { stack.push(d); }
+  virtual void push(std::shared_ptr<DataBase> d) { ptr_queue.push_back(d); }
+  
   virtual std::shared_ptr<DataBase> pop() {
-    if (stack.size() > 0) {
-      auto s = stack.top();
-      stack.pop();
+    if (ptr_queue.size() > 0) {
+      std::shared_ptr<DataBase> s = ptr_queue.back();
+      ptr_queue.pop_back();
       return s;
     }
     return nullptr;
   }
   virtual std::shared_ptr<DataBase> top() {
-    if (stack.size() > 0) {
-      return stack.top();
+    if (ptr_queue.size() > 0) {
+      return ptr_queue.back();
+    }
+    return nullptr;
+  }
+
+  template<typename T>
+  std::shared_ptr<T> findInjectionPoint(std::string package, std::string id, long long commid) {
+    for (auto r = ptr_queue.rbegin(); r > ptr_queue.rend(); r++) {
+        auto ptr = *r;
+        if (ptr->check(VnV::Nodes::DataBase::DataType::InjectionPoint)) {
+           auto p = std::dynamic_pointer_cast<T>(ptr);
+           if (p->getPackage().compare(package) == 0 && p->getName().compare(id)==0 && p->getcommId() == commid) {
+            return p;
+           }
+        }
     }
     return nullptr;
   }
@@ -88,7 +130,7 @@ template <typename T, typename V> class MultiStreamIterator : public Iterator<V>
   std::list<std::shared_ptr<T>> instreams;
   typename std::list<std::shared_ptr<T>>::iterator min;
 
-  virtual void getLine(V& current, long& cid) override {
+  virtual Current<V> getLine() override {
     min = std::min_element(instreams.begin(), instreams.end(),
                            [](const std::shared_ptr<T>& x, const std::shared_ptr<T>& y) {
                              if (x->isDone() && y->isDone())
@@ -101,9 +143,7 @@ template <typename T, typename V> class MultiStreamIterator : public Iterator<V>
                              return (x->peekId() < y->peekId());
                            });
 
-    auto p = (*min)->next();
-    current = p.first;
-    cid = p.second;
+    return (*min)->next();
   }
 
  public:
@@ -180,7 +220,6 @@ template <class DB> class StreamParserTemplate {
       base_ptr.reset(new A());
       rootInternal()->registerNode(base_ptr);
       base_ptr->setname(noName);
-      std::cout << "SETTING STREAM ID " << jstream->streamId() << std::endl;
       base_ptr->setstreamId(jstream->streamId());
       return base_ptr;
     }
@@ -437,6 +476,7 @@ template <class DB> class StreamParserTemplate {
       return n;
     };
 
+   
     virtual std::shared_ptr<typename DB::UnitTestNode> visitUnitTestNodeStarted(const T& j) {
       auto n = mks<typename DB::UnitTestNode>(j);
       n->open(true);
@@ -506,9 +546,7 @@ template <class DB> class StreamParserTemplate {
       n->setpackage(j[JSD::package].template get<std::string>());
       n->setcommId(j[JSD::comm].template get<long>());
       n->setstartIndex(elementId);
-      // n->setstartTime(time);
       n->open(true);
-      std::cout << n->getcommId() << " is the commId " << std::endl;
       return n;
     }
 
@@ -595,7 +633,7 @@ template <class DB> class StreamParserTemplate {
         while (i++ < 10000) {
           if (jstream->hasNext()) {
             auto p = jstream->next();
-            visit(p.first, p.second);
+            visit(p.first(), p.second());
             changed = true;
             j++;
           }
@@ -695,6 +733,47 @@ template <class DB> class StreamParserTemplate {
       }
     }
 
+    using ip_stack =  std::stack<std::shared_ptr<typename DB::InjectionPointNode>>;
+    using comm_ip_stack_map = std::map<long, ip_stack>;
+    using key_comm_ip_stack_map = std::map<std::string, comm_ip_stack_map>;
+
+    key_comm_ip_stack_map ip_comm_stack_map;
+    void add_to_map(std::string package, std::string name, long comm, std::shared_ptr<typename DB::InjectionPointNode> ptr) {
+      std::string key = package + ":" + name;
+      auto it = ip_comm_stack_map.find(key);
+      if (it == ip_comm_stack_map.end()) {
+        ip_stack s;
+        s.push(ptr);
+        
+        comm_ip_stack_map cp;
+        cp[comm] = s;
+        
+        ip_comm_stack_map[key] = cp; 
+      
+      } else {
+         auto& comm_ip_s = it->second;
+         auto commstack = it->second.find(comm);
+         if (commstack == it->second.end() ) {
+             ip_stack s;
+             s.push(ptr);
+             (it->second)[comm] = s;
+         } else {
+          (commstack->second).push(ptr);
+         }
+      }
+    }
+
+    auto top_from_map(std::string package, std::string name, long comm) {
+      return ip_comm_stack_map[package+":"+name][comm].top();
+    }
+
+    auto pop_from_map(std::string package, std::string name, long comm) {
+      auto ptr = top_from_map(package,name,comm);
+      ip_comm_stack_map[package+":"+name][comm].pop();
+      return ptr;
+    }
+
+  
     void visit(const T& j, long elementId) {
       std::string node = j[JSD::node].template get<std::string>();
 
@@ -725,7 +804,14 @@ template <class DB> class StreamParserTemplate {
         visitWorkflowEndedNode(j);
       } else if (node == JSN::info) {
         rootInternal()->setinfoNode(visitInfoNode(j));
-      } else if (node == JSN::fetch) {
+      } else if (node == JSN::stdout) {
+        rootInternal()->addStdout(
+          j[JSD::comm].template get<long>(), 
+          j[JSD::value].template get<std::string>(),
+          j.value(JSD::stage, false)
+        );
+      } 
+      else if (node == JSN::fetch) {
         if (jstream->top()->check(DataBase::DataType::Test)) {
           std::shared_ptr<typename DB::TestNode> p = std::dynamic_pointer_cast<typename DB::TestNode>(jstream->top());
           visitFetchNode(j, p, elementId);
@@ -740,10 +826,42 @@ template <class DB> class StreamParserTemplate {
           std::shared_ptr<typename DB::TestNode> p = std::dynamic_pointer_cast<typename DB::TestNode>(jstream->top());
           visitFetchSuccessNode(j, p, elementId);
         }
-      } else if (node == JSN::injectionPointEnded) {
+      }  else if (node == JSN::injectionPointStarted) {
+        
+        std::shared_ptr<typename DB::InjectionPointNode> p = visitInjectionPointStartedNode(j, elementId);
+
+        p->setisOpen(true);
+        childNodeDispatcher(p);
+        jstream->push(p);
+
+        rootInternal()->addIDN(p->getId(), p->getstreamId(), node_type::START, elementId, "Begin");
+        add_to_map(p->getPackage(), p->getName(), p->getcommId(), p);
+      }  else if (node == JSN::injectionPointIterStarted) {
+        
+        std::string package = j[JSD::package].template get<std::string>();
+        std::string name = j[JSD::name].template get<std::string>();
+        long commid = j[JSD::comm].template get<long>();  
+        auto p = top_from_map(package, name, commid);
+        if (p==nullptr) {
+          throw "Invalid -- Could not find injection point to set iter values on";
+        }
+        visitInjectionPointIterStartedNode(j, p, elementId);
+        p->setisOpen(true);
+        p->setisIter(true);
+        jstream->push(p);
+
+      } else if (node == JSN::injectionPointIterEnded) {
+        
+        std::shared_ptr<typename DB::InjectionPointNode> p = std::dynamic_pointer_cast<typename DB::InjectionPointNode>(jstream->pop());
+        visitInjectionPointIterEndedNode(j, p, elementId);
+        p->setisOpen(false);
+        p->setisIter(false);
+
+      } 
+      else if (node == JSN::injectionPointEnded) {
+        
         // This injection point is done.
-        std::shared_ptr<typename DB::InjectionPointNode> p =
-            std::dynamic_pointer_cast<typename DB::InjectionPointNode>(jstream->pop());
+        std::shared_ptr<typename DB::InjectionPointNode> p = std::dynamic_pointer_cast<typename DB::InjectionPointNode>(jstream->pop());
         p->setisOpen(false);
         visitInjectionPointEndedNode(j, p, elementId);
 
@@ -752,34 +870,8 @@ template <class DB> class StreamParserTemplate {
         for (int i = 0; i < tests->size(); i++) {
           tests->get(i)->open(false);
         }
-
+        pop_from_map(p->getPackage(),p->getName(),p->getcommId());
         rootInternal()->addIDN(p->getId(), p->getstreamId(), node_type::END, elementId, "End");
-
-      } else if (node == JSN::injectionPointStarted) {
-        std::shared_ptr<typename DB::InjectionPointNode> p = visitInjectionPointStartedNode(j, elementId);
-
-        p->setisOpen(true);
-        childNodeDispatcher(p);
-        jstream->push(p);
-
-        rootInternal()->addIDN(p->getId(), p->getstreamId(), node_type::START, elementId, "Begin");
-
-      } else if (node == JSN::injectionPointIterEnded) {
-        std::shared_ptr<typename DB::InjectionPointNode> p =
-            std::dynamic_pointer_cast<typename DB::InjectionPointNode>(jstream->top());
-        visitInjectionPointIterEndedNode(j, p, elementId);
-        p->setisOpen(false);
-        p->setisIter(false);
-
-      } else if (node == JSN::injectionPointIterStarted) {
-        assert(jstream->top()->getType() == DataBase::DataType::InjectionPoint);
-        std::shared_ptr<typename DB::InjectionPointNode> p =
-            std::dynamic_pointer_cast<typename DB::InjectionPointNode>(jstream->top());
-
-        visitInjectionPointIterStartedNode(j, p, elementId);
-        std::string stage = j[JSD::stageId].template get<std::string>();
-        p->setisOpen(true);
-        p->setisIter(true);
 
       } else if (node == JSN::log) {
         std::shared_ptr<typename DB::LogNode> n = visitLogNode(j);
@@ -946,8 +1038,7 @@ template <class DB> class StreamParserTemplate {
 
     virtual std::thread* getThread() override { return &tworker; }
 
-    static std::shared_ptr<IRootNode> parse(bool async, std::shared_ptr<T> stream,
-                                            std::shared_ptr<ParserVisitor<V>> visitor = nullptr) {
+    static std::shared_ptr<IRootNode> parse(bool async, std::shared_ptr<T> stream, std::shared_ptr<ParserVisitor<V>> visitor = nullptr) {
       std::shared_ptr<RootNodeWithThread> root = std::make_shared<RootNodeWithThread>();
       root->registerNode(root);
       root->setname("Root Node");

@@ -8,7 +8,6 @@
 
     <h6 style="flex:1">Path </h6>
     <h6 style="width:150px; text-align:center; ">File Size</h6>
-    <h6 style="width:200px; text-align:center;">Modified Since Run</h6>
     <h6 href="#!" style="width:100px; text-align:center;">View</h6>
     {% if minimize %}
     <h6 href="#!" title="Show Description" style="width:50px; text-align:center;">+/-</h6>
@@ -17,10 +16,9 @@
 {% else %}
 
 {%with randid = getUUID() %}
-<div style="display: flex; align-items:center; justify-content:center;{% if file.was_modified()%}color:red;{%endif%}" {% if file.was_modified()%}title="Modified Since Last Executed" {%endif%}>
+<div style="display: flex; align-items:center; justify-content:center;">
     <h6 style="flex:1"> {{prefix}} {{ file.getName() }} </h6>
     <h6 style="width:150px; text-align:center; ">{{file.getDisplaySize()}} </h6>
-    <h6 style="width:200px; text-align:center;">{{file.was_modified()}} </h6>
     {%if file.readable() %}
     <div href="#!" onclick='show_file_reader({{file.getVnVFileId()}},"{{file.getUrl()}}","{{file.reader()}}","")' style="cursor:pointer; width:100px; display:flex; align-items:center; justify-content:center;">
         <i style="color:black" class="feather icon-file-text"></i>

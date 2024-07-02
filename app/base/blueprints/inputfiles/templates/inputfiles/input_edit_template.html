@@ -38,7 +38,7 @@ function save_{{VALUE}}_file(fileid) {
 
 $( document ).ready(function(){
 
-    get_ace_editor({{file.id_}}, "{{VALUE}}file","json", true,
+    get_ace_editor({{file.id_}}, "{{VALUE}}file","{{MODE}}", true,
 
     function(editor, session, pos, prefix, callback) {
             $.get(`/inputfiles/autocomplete/{{VALUE}}/{{file.id_}}?row=${pos.row}&col=${pos.column}&pre=${prefix}&val=${encodeURIComponent(editor.getValue())}`, function(data) {

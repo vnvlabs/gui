@@ -1,5 +1,6 @@
 #!/bin/bash 
 
+
 # Launch with mapping Theia and Paraview. This is used by the serve app
 ROOTDIR=""
 
@@ -33,4 +34,4 @@ virt/bin/python router.py \
             --paraview ${PARAVIEW} --paraview_dir ${PARAVIEW_DIR} \
             --paraview_port ${PARAVIEW_PORT} --paraview_port_start ${PARAVIEW_PORT_START} \
             --paraview_data_dir ${PARAVIEW_DATA_DIR} \
-            ${@:1} :
+            ${@:1} 

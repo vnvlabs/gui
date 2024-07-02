@@ -1,63 +1,24 @@
-<!-- this HTML file
- displays the overall HTML for viewing the input file
--->
-
 {% extends "layouts/base.html" %}
 
-{% block title %} {{file.name}} {% endblock %}
+{% block title %}{% endblock %}
 
-{% block stylesheets %}
-{% endblock stylesheets %}
+{% block stylesheets %} {% endblock stylesheets %}
 
 {% block content %}
 
-<!-- defines clickable tabs and their HTML paths -->
-{%with
-tablist = file.tablist()
-%}
-<!-- inclues main header HTML -->
-<div id="main_header" style="display:flex; align-items:start; margin-bottom:20px;max-width:1400px;">
-{%include "inputfiles/main_header_content.html" %}
-</div>
-
-<!-- creates HTML for the list of tabs -->
-<div id="inputfile-view-content" style="position:relative; max-width:1400px;">
-<ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
-    <!-- iterates through list of tabs to create buttons for them -->
-    {% for tab in tablist %}
-    <li class="nav-item">
-        <a class="nav-link {% if loop.index ==  1 %} active {%endif %}" id="pills-{{tab}}-tab" data-toggle="pill"
-           href="#pills-{{tab}}" role="tab" state="inputfiles"
-           aria-controls="pills-{{tab}}" aria-selected="true">{{tablist[tab][0]}}</a>
-    </li>
-    {%endfor%}
-</ul>
-
-<div class="tab-content fcolumn fchild " id="pills-tabContent">
-    {%for tab in tablist %}
-    <div class="tab-pane fade {% if loop.index == 1 %} show active {%endif%} finlinecolumn fchild" id="pills-{{tab}}"
-         role="tabpanel"
-         aria-labelledby="pills-{{tab}}-tab">
-        {% include tablist[tab][1] %}
+{% with count = 0 %}
+<div id="tab-view-content" style="position:relative; margin:20px;">
+    <div class=" fcolumn fchild">
+        <div class="tab-content fcolumn fchild " id="pills-tabContent">
+            {% include "inputfiles/view1.html" %}
+        </div>
     </div>
-    {%endfor%}
 </div>
-
-</div>
-
-{% if error is not none %}
-<script>
-    $(document).ready(function() {
-        addToast("{{error}}", "", 5000)
-    });
-</script>
-{%endif%}
-
-
 {% endwith %}
 
 {% endblock content %}
 
 <!-- Specific Page JS goes HERE  -->
 {% block javascripts %}
+
 {% endblock javascripts %}

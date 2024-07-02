@@ -6,7 +6,7 @@ import uuid
 import flask
 import jsonschema
 from ansi2html import Ansi2HTMLConverter
-from flask import jsonify
+from flask import jsonify, render_template
 from jsonschema.exceptions import ErrorTree, ValidationError, SchemaError
 
 from app.models import VnV
@@ -107,8 +107,9 @@ class VnVInputFile:
 
             a = {
             #! "exec": ["Execution Configuration", "inputfiles/execute.html"],
-            "description" : ["About", "inputfiles/about.html"],
+            "description" : ["Configuration", "inputfiles/about.html"],
             "inputfile": ["VnV Input File", "inputfiles/input.html"],
+            "comments" : ["Comments", "inputfiles/comments.html"],
             "browse": ["Browse", "files/file_browser.html"],
             }
 
@@ -117,7 +118,6 @@ class VnVInputFile:
                 for kk,vv in v.tablist().items():
                     a[kk] = vv
 
-            a["jobs"] =["Results", "inputfiles/jobs.html"]
             return a
        except Exception as e:
            print("HEy YO ", e)
@@ -128,6 +128,8 @@ class VnVInputFile:
         self.name = name
         self.displayName = name
         self.filename = path if path is not None else "path/to/application"
+
+        self.comments = ""
 
         self.icon = "icon-box"
         self.id_ = VnVInputFile.get_id()
@@ -503,6 +505,13 @@ class VnVInputFile:
     def get_jobs(self):
         return [a for a in self.connection.get_jobs()]
 
+    def get_job(self, id):
+        for i in self.get_jobs():
+            if id == i.getId():
+                return i
+        return None
+
+
     def vnvInputFile(self):
         j = json.loads(self.value)
         if "actions" not in j:
@@ -510,6 +519,9 @@ class VnVInputFile:
 
         for k,v in self.extra.items():
             v.fullInputFile(j)
+
+        if len(self.comments):
+            j["comments"] = self.comments
 
         j.pop("execution",{})
         return json.dumps(j, indent=4)
@@ -528,7 +540,7 @@ class VnVInputFile:
 
     
     def execute(self, val = None):
-        if val is None:
+        if val is None or len(val) == 0:
             val = self.value
 
         inp_dir = json.loads(val).get("job", {}).get("dir", "/tmp")
@@ -546,6 +558,10 @@ class VnVInputFile:
 
 
     def script(self, val, workflowId):
+
+        if val is None:
+            val = self.value
+
         inputfile = json.loads(val)
         data = inputfile.get("execution",{})
         for i in data.get("active_overrides", []):
@@ -588,9 +604,66 @@ class VnVInputFile:
 
     @staticmethod
     def find(id_):
+        if not isinstance(id_, int):
+           try:
+               id_ = int(id_)
+           except:
+               raise Exception("Invalid file id")
         if id_ in VnVInputFile.FILES:
             return VnVInputFile.FileLockWrapper(VnVInputFile.FILES[id_])
         raise FileNotFoundError
+
+    def render(self,key):
+        if key == "exe":
+            return render_template("inputfiles/jobs.html", file=self)
+
+        f = self.tablist().get(key)
+        if f is not None:
+            return render_template(f[1],file=self)
+        return "Error: Unknown Page"
+
+    def get_tree_for_processor(self):
+
+        infotree = [
+            {"fid" : k , "vid" : self.id_, "text" : v[0], "icon" : "fa fa-info" }  for k,v in self.tablist().items()
+        ]
+
+        infotree.append(
+                {"fid": "exe", "vid": self.id_, "text": "Execute", "icon": "feather icon-cpu"}
+        )
+
+
+
+        tree = {
+            "fid": "description",
+            "text": self.name,
+            "state": {"opened": True},
+            "icon" : f"feather icon-home trash",
+            "children": infotree,
+            "vid": self.id_,
+        }
+
+        return tree
+
+    @classmethod
+    def get_trees(cls):
+        tree = {
+            "fid": "root",
+            "text": "VnV Input Files",
+            "state": {"opened": True},
+            "icon": "feather icon-home",
+            "children": [],
+            "vid" : 0
+        }
+
+        done = True
+
+        for id in VnVInputFile.FILES:
+            with VnVInputFile.find(id) as file:
+                ftree =  file.get_tree_for_processor()
+                tree["children"].append(ftree)
+
+        return jsonify({"data": tree}), 200
 
     class FileLockWrapper:
         def __init__(self, file):

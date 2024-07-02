@@ -3,7 +3,7 @@
 
 <head>
     <title>
-        VNV - {% block title %}{% endblock %}
+        VnV Toolkit
     </title>
     <!-- HTML5 Shim and Respond.js IE11 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -42,15 +42,11 @@
     </div>
 </div>
 <!-- [ Pre-loader ] End -->
-
-{% include 'includes/sidebar.html' %}
-
 {% include 'includes/navigation.html' %}
 {% include 'includes/loading.html' %}
 
-
-<div class="pcoded-main-container fcolumn" style="padding-bottom:50px;" >
-    <div class="pcoded-content fcolumn fchild" {% if no_padding %} style="padding:0px;" {% endif %} >
+<div class="fcolumn" style="padding-bottom:40px; padding-top:56px; height:100vh" >
+    <div class="fcolumn fchild" {% if no_padding %} style="padding:0px;" {% endif %} >
         <div id="formControlElm" class="page-block fcolumn fchild">
 
             {% block content %}{% endblock content %}
@@ -60,7 +56,7 @@
 </div>
 
 {%include "includes/toast.html" %}
-
+{%include "includes/modals.html" %}
 {% include 'includes/scripts.html' %}
 
 <!-- Specific Page JS goes HERE  -->
@@ -79,7 +75,6 @@ $('#formControlElm').css('max-width', $('#formControlRange').val() + "%")
 </script>
 
 <footer>
-    <div class="vnv-foot-spacer"></div>
     <div class="vnv-foot" >
        <a style="color:white" href="{{COPYRIGHT_LINK|safe}}">&copy {{COPYRIGHT_MESSAGE}}</a>
        <img height="30px" src="{{logo_small()}}">

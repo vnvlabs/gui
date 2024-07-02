@@ -4,3 +4,9 @@
 <link rel="stylesheet" href="/static/assets/css/plugins/gridstack.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css" />
 <link rel="stylesheet" href="/static/assets/css/style.css">
+
+{% for k,v in ALL_BLUEPRINTS.items() %}
+{%with get_template_file = v.get_template_file %}
+{% include k + "/stylesheets.html" ignore missing %}
+{%endwith%}
+{%endfor%}

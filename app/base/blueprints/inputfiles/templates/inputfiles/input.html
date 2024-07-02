@@ -1,4 +1,7 @@
-{%with NAME = "VnV Input File", VALUE= "input" , TEXT=file.value, DEFAULTFILE=file.loadfile, LABEL="Path to Input File",
+<h2>Input File Editor</h2>
+
+
+{%with NAME = "VnV Input File", VALUE= "input" , TEXT=file.value, DEFAULTFILE=file.loadfile, MODE="json", LABEL="Path to Input File",
 EXTBTN = [["format_input_file", "Format"],["shrink_input_file", "Minify"]] %}
 {%include "inputfiles/input_edit_template.html" %}
 {%endwith%}

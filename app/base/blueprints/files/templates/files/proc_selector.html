@@ -1,0 +1,30 @@
+<div>
+<h2>VnV Injection Point Report</h2>
+
+<div>VnV Injection point reports are displayed from the point of view of a processor. Please specify
+the processors you would like to view as a JSON list of processor ranks. This simulation was executed using
+{{file.get_world_size()}} processors in total.</div>
+
+<textarea style="width:100%; font-size:18px;" class="form-control" id="{{file.id_}}_proc_list">{{processors}}</textarea>
+<button class="btn btn-primary" style="width:100%; margin-top:10px;" id="{{file.id_}}_proc_button">Update Processor List</button>
+</div>
+<script>
+    $('#{{file.id_}}_proc_button').on('click', function() {
+        debugger;
+        const val =  $('#{{file.id_}}_proc_list').val();
+        try {
+            const res = JSON.parse(val)
+            $.ajax({
+                 type: "POST",
+                 contentType: "application/json; charset=utf-8",
+                 url: "/files/viewers/set_processors/{{file.id_}}",
+                 data: JSON.stringify({"procs": val}),
+                 success: function (data) {
+                    update_tree_data(true);
+                 }
+            });
+        } catch(e) {
+            alert("Error: Invalid JSON detected")
+        }
+    })
+</script>

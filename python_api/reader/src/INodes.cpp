@@ -6,7 +6,7 @@
 #include <sstream>
 
 #include "shared/exceptions.h"
-#include "shared/nlohmann/json.hpp"
+#include "shared/json.hpp"
 
 namespace VnV {
 namespace Nodes {
@@ -131,39 +131,6 @@ void IArrayNode::iter(std::function<void(std::shared_ptr<DataBase>)>& lambda) {
   for (std::size_t i = 0; i < size(); i++) {
     lambda(get(i));
   }
-}
-
-WalkerWrapper::WalkerWrapper(std::shared_ptr<IWalker> walker, IRootNode* root) : ptr(walker), _rootNode(root) {
-  node.reset(new WalkerNode());
-}
-
-std::shared_ptr<WalkerNode> WalkerWrapper::next() {
-  if (ptr->next(*node)) {
-    return node;
-  }
-
-  node->item = nullptr;
-  node->edges.clear();
-  if (!rootNode()->processing()) {
-    node->type = node_type::DONE;
-  } else {
-    node->type = node_type::WAITING;
-    node->edges.clear();
-  }
-  return node;
-}
-
-IWalker::~IWalker(){};
-
-WalkerWrapper IRootNode::getWalker(std::string config) {
-  nlohmann::json j = nlohmann::json::parse(config);
-
-  long processor = j["id"].get<long>();
-  bool only = j.value("only",false);
-  bool comm = j.value("comm",false);
-  
-  auto a = VnV::Nodes::getProcWalker(rootNode(), processor, only, comm);
-  return WalkerWrapper(a, rootNode());
 }
 
 json IWorkflowNode::getDataChildren_(int fileId, int level) {
