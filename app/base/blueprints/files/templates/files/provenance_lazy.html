@@ -1,0 +1,11 @@
+<div id="prov_lazy" class="fcolumn fchild"  style="padding:15px;    border: 1px solid #80808038; ">
+    Loading...
+</div>
+
+<script>
+    $(document).ready(function(){
+        $.get("/files/prov/{{file.id_}}", function(data) {
+            $('#prov_lazy').html(data);
+        })
+    })
+</script>
