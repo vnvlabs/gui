@@ -13,6 +13,7 @@ from pygments.formatters.html import HtmlFormatter
 from werkzeug.utils import redirect
 from pygments.lexers import get_lexer_by_name
 
+from paraview import start_paraview_server, wait_for_paraview_to_start
 from . import blueprints
 
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -29,10 +30,7 @@ blueprint = Blueprint(
 
 
 def config(conf):
-    global PASSWORD
-    PASSWORD = generate_password_hash(conf.passw)
-    global AUTHENTICATE
-    AUTHENTICATE = conf.auth
+    pass
 
 
 CUSTOM_BLUEPRINTS = []
@@ -111,9 +109,7 @@ FIRST_TIME = None
 if FIRST_TIME is None:
     FIRST_TIME = False
 
-    AUTHENTICATE = False
-    PASSWORD = generate_password_hash("password")
-    COOKIE_PASS = uuid.uuid4().hex
+
     IMAGES_PATH = "/static/assets/images"
     IMAGES_DIR = os.path.join(VNV_DIR_PATH, IMAGES_PATH[1:])
     TEMPLATES_DIR = os.path.join(VNV_DIR_PATH, "base/templates")
@@ -136,6 +132,7 @@ if FIRST_TIME is None:
             "temp": blueprints.tempfiles,
             "help": blueprints.help,
             "directives": blueprints.directives,
+            "xterm" : blueprints.xterm
             }
 
         try:
@@ -176,93 +173,76 @@ if FIRST_TIME is None:
     for k, v in ALL_BLUEPRINTS.items():
         blueprint.register_blueprint(v.blueprint)
 
-def GET_COOKIE_TOKEN():
-    return COOKIE_PASS
-
-def verify_cookie(cook):
-    if cook is not None and cook == COOKIE_PASS:
-        return True
-    return False
 
 
-@blueprint.before_request
-def check_valid_login():
-    if not AUTHENTICATE:
-        return
+@blueprint.route("/ping")
+def ping():
+    return make_response("pong",200)
 
-    login_valid = verify_cookie(request.cookies.get("vnv-login"))
-    if request.form.get("__token__") is not None:
-        if not check_password_hash(PASSWORD, request.form["__token__"]):
-            return make_response("Authorization Failed", 401)
 
-    elif request.endpoint and request.endpoint != "base.login" and 'static' not in request.endpoint and not login_valid:
-        return render_template('login.html', next=request.url)
+@blueprint.route('/paraview')
+def paraview_route():
 
+    if current_app.config["PARAVIEW"]:
+
+        filename = request.args.get("file","")
+        if len(filename) and os.path.exists(filename):
+            uid, success = start_paraview_server(filename)
+            autostop=10
+        else:
+            uid , success = start_paraview_server(None)
+            autostop = 10000
+
+        if uid is None:
+            return render_error(200, "All available Paraview Ports are in use.", nohome=True)
+
+        smurl = f"/paraview/session/{uid}"
+
+        if "wrapper" in request.args:
+            return render_template("paraview/wrapper.html",  sessionManagerUrl=smurl, success=True, autostop=autostop)
+
+        return make_response(render_template('paraview/index.html', sessionManagerUrl=smurl, success=True, autostop=autostop) ,200)
+
+    return render_error(200, "ParaviewVisualzier is not configured", nohome=True)
+
+
+
+@blueprint.route("/paraview/session/<int:uid>", methods=["POST"])
+def paraview_websocket(uid):
+    if current_app.config["PARAVIEW"] == 0:
+        return make_response(jsonify({"error": "paraview not configured"}), 200)
+
+    port, success = wait_for_paraview_to_start(uid)
+    return make_response(jsonify({"sessionURL": f"ws://{current_app.config['NGINX_ADDRESS']}:{current_app.config['NGINX_PORT']}/ws/{uid}"}), 200)
 
 
 
 @blueprint.route('/theia')
 def theia_route():
-    # This route should get intercepted by the "serve" app, so, when
-    # serving, this should never be called. This button is just a placeholder
-    # for the serve app -- should really allow the serve app to add buttons.
+    if current_app.config["THEIA"] == 1:
+
+
+        src=f"http://{current_app.config['NGINX_ADDRESS']}:{current_app.config['NGINX_PORT']}/theia_redirect"
+        if "wrapped" in request.args:
+            return render_template("ide.html", src=src)
+        else:
+            return make_response(redirect(src), 302)
+
     return render_error(200, "Eclipse Theia is not configured", nohome=True)
 
-@blueprint.route("/plugin")
-def add_plugin():
-    load_blueprint("psip","/home/ben/source/vnvlabs.com/vnvlabs/plugins/psip/vnv/config/psip")
-    return make_response("Ok",200)
 
-@blueprint.route('/paraview')
-def paraview_route():
-    # This route should get intercepted by the "serve" app, so, when
-    # serving, this should never be called. This button is just a placeholder
-    # for the serve app -- should really allow the serve app to add buttons.
-    return render_error(200, "ParaviewVisualzier is not configured", nohome=True)
+@blueprint.route('/theia_redirect/')
+def theia_route_redirect():
+    if current_app.config["THEIA"] == 1:
+        src=f"http://localhost:{current_app.config['THEIA_PORT']}"
+        return make_response(redirect(src), 302)
 
-
-@blueprint.route("/ide")
-def ide_route():
-    return render_template("ide.html", filename=request.args.get("filename",""))
-
-
-@blueprint.route("/viz")
-def viz_route():
-    return render_template("para.html", src_url="/paraview")
-
-@blueprint.route("/viz-file")
-def vis_file():
-    src_url = f'/paraview?file={request.args.get("file","none")}'  
-    iframe = f"""<iframe id='paraview' src="{src_url}" style="flex: 1; margin-bottom: 0px; border: none;"></iframe>"""
-    return render_template(iframe,200)
+    return render_error(200, "Eclipse Theia is not configured", nohome=True)
 
 
 @blueprint.route('/avatar/<username>')
 def avatar_route(username):
     return send_file("static/assets/images/user/AVATARS.png")
-
-
-@blueprint.route('/login', methods=["POST"])
-def login():
-    if not AUTHENTICATE:
-        return make_response(redirect("/"))
-
-    if check_password_hash(PASSWORD, request.form.get("password")):
-        response = make_response(redirect("/"))
-        response.set_cookie('vnv-login', GET_COOKIE_TOKEN())
-        return response
-    return render_template("login.html", error=True)
-
-
-@blueprint.route('/logout', methods=["POST"])
-def logout():
-    global COOKIE_PASS
-    COOKIE_PASS = uuid.uuid4().hex
-    response = make_response(redirect("/"))
-    response.set_cookie('vnv-login', "", expires=0)
-    response.set_cookie('vnv-container-ip', "", expires=0)
-    response.set_cookie(current_app.config["LOGOUT_COOKIE"], "", expires=0)
-    return response
 
 
 @blueprint.route("icon")
@@ -311,6 +291,11 @@ def highlight_code(code, type):
         print(e)
         return code
 
+def setup_app(app):
+    for kk, vv in ALL_BLUEPRINTS.items():
+        if hasattr(vv, "setup_app"):
+            vv.setup_app(app)
+
 
 def template_globals(d):
     # Strings are not mutable -- This class just delays so we get the current value
@@ -337,10 +322,8 @@ def template_globals(d):
     def title_name():
         return TITLE_NAME
 
-    def auth_on():
-        return AUTHENTICATE
+    def paraview_configured(): return current_app.config["PARAVIEW"] > 0
 
-    def paraview_configured(): return current_app.config["PARAVIEW"] > 0 
     def theia_configured(): return current_app.config["THEIA"] > 0 
     
     def get_uuid(): return uuid.uuid4().hex
@@ -358,8 +341,9 @@ def template_globals(d):
     d["paraview_configured"] = paraview_configured
     d["theia_configured"] = theia_configured
     d["getUUID"] = get_uuid
-    d["auth_on"] = auth_on
+
     
     for kk, vv in ALL_BLUEPRINTS.items():
         if hasattr(vv, "template_globals"):
             vv.template_globals(d)
+

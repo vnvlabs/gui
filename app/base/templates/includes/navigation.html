@@ -28,7 +28,7 @@
         {% if theia_configured() %}
         <ul class="navbar-nav ml-auto">
             <li>
-                <a href="/ide"><i class="feather icon-code"></i> VSCode</a>
+                <a href="/theia?wrapped"><i class="feather icon-code"></i> VSCode</a>
             </li>
         </ul>
         {% endif %}
@@ -36,7 +36,7 @@
         {% if paraview_configured() %}
         <ul class="navbar-nav ml-auto">
             <li>
-                <a href="/viz"><i class="fa fa-chart-bar"></i> Paraview</a>
+                <a href="/paraview?wrapper"><i class="fa fa-chart-bar"></i> Paraview</a>
             </li>
         </ul>
         {% endif %}
@@ -49,14 +49,11 @@
         {%endwith%}
         {%endfor%}
 
-        {% if auth_on() %}
         <ul class="navbar-nav ml-auto">
             <li>
                 <a href="#" onclick="$('#logoutbutton').click()"><i class="icon fa fa-sign-out-alt"></i> Logout</a>
             </li>
         </ul>
-        {% endif %}
-
 
     </div>
 

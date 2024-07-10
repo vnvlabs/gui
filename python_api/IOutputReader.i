@@ -566,7 +566,25 @@ PY_GETATTRWORK(VnV::Nodes::IWorkflowNode)
       def __str__(self):
           return str(self.__json__())
 
-      
+      def __sub__(self, b):
+         return self.getValue() - b
+
+      def __rsub__(self, b):
+        return b - self.getValue()
+
+      def __add__(self, b):
+        return self.getValue() + b
+
+      def __radd(self, b):
+        return b + self.getValue()
+
+      def __mult__(self, b):
+        return self.getValue()*b
+
+      def __rmult__(self, b):
+        return b* self.getValue()
+
+
       def __json__(self):
    
          s,t,nps = self.shape()

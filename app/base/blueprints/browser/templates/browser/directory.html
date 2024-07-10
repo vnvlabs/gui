@@ -10,9 +10,40 @@
         "row" in the column that lists files used in building the report
         clickable to view the respective file
      -->
-    <div class='' onclick="show_file_reader({{i.getVnVFileId()}}, '{{i.url()}}', '{{i.reader}}','{{modal}}')" style="margin-bottom:5px; font-size:15px; align-items:center; cursor:pointer; display:flex; flex-direction:row;">
+    <div class='{{i.hidden()}}' onclick="show_file_reader({{i.getVnVFileId()}}, '{{i.url()}}', '{{i.reader}}','{{modal}}')" style="margin-bottom:5px; font-size:15px; align-items:center; cursor:pointer; display:flex; flex-direction:row;">
         <i class="feather icon-{{i.icon()}}" style="margin-right:10px;"> </i> <span style="flex:1">{{i.name}}</span> <span>{{i.size}} Bytes</span>  <span style="margin-left:20px;">{{i.lastModStr}}</span>
     </div>
-    <hr class="logrule" style="width:99%;">
+    <hr class="logrule {{i.hidden()}}" style="width:99%;">
   {%endfor%}
 </ul>
+
+<script>
+  function set_hidden_folders(value) {
+    debugger;
+    if (value === null) value = "true";
+
+    localStorage.setItem("show_hidden_files",value)
+    if (value === "true") {
+       $('.hidden-file').show()
+       $('#hidden_file_toggle').text("Hide Hidden")
+    } else {
+          $('.hidden-file').hide()
+          $('#hidden_file_toggle').text("Show Hidden")
+    }
+  }
+
+  set_hidden_folders(localStorage.getItem('show_hidden_files'))
+
+
+
+  function toggle_hidden_folders() {
+      var a = localStorage.getItem("show_hidden_files")
+      if (a === "true") {
+        a = "false"
+      } else {
+        a = "true"
+      }
+      set_hidden_folders(a)
+  }
+
+</script>

@@ -16,7 +16,7 @@ from .moose import *
 #Step 0:
 
 ##### Step 1 -- CHANGE THIS NAME TO BE UNIQUE TO THIS BLUEPRINT
-TEMPLATE_NAME="moose"
+TEMPLATE_NAME="hive"
 
 # Blueprint must be named "blueprint"
 blueprint = Blueprint(
@@ -30,7 +30,7 @@ blueprint = Blueprint(
 
 
 @blueprint.route("/hive/autocomplete", methods=["GET"])
-def hive_autocomplete_endpoint():
+def autocomplete():
     text = request.args.get("val")
     row = request.args.get("row")
     col = request.args.get("col")
@@ -44,7 +44,7 @@ def hive_autocomplete_endpoint():
 
 
 @blueprint.route("/hive/save", methods=["POST"])
-def hive_save_endpoint():
+def save():
     text = request.args.get("val")
     schemaId = request.args.get("schema")
 
@@ -55,7 +55,7 @@ def hive_save_endpoint():
     return make_response(jsonify({"error" : "file not found"}), 404)
 
 @blueprint.route("/hive/format", methods=["GET"])
-def hive_format_endpoint():
+def format():
     text = request.args.get("val")
     schemaId = request.args.get("schema")
 
@@ -66,7 +66,7 @@ def hive_format_endpoint():
     return make_response(text, 404)
 
 @blueprint.route("/hive/validate", methods=["GET"])
-def hive_validate_endpoint():
+def validate():
     text = request.args.get("val")
     schemaId = request.args.get("schema")
 
@@ -76,7 +76,7 @@ def hive_validate_endpoint():
     return make_response(jsonify([]), 404)
 
 @blueprint.route("/hive/schema", methods=["POST"])
-def hive_schema_endpoint():
+def schema():
 
     schemaId = request.args.get("schema")
     exe = request.args.get("val")
@@ -88,7 +88,7 @@ def hive_schema_endpoint():
     return make_response("Error: File not found ", 404)
 
 @blueprint.route("/hive/mesh", methods=["POST"])
-def hive_mesh_endpoint():
+def mesh():
     text = request.args.get("val")
     schemaId = request.args.get("schema")
 

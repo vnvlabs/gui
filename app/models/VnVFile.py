@@ -4,6 +4,7 @@ import random
 import shutil
 import threading
 import time
+import uuid
 from datetime import datetime
 from urllib.request import pathname2url
 
@@ -38,7 +39,9 @@ def seconds_to_human_readable(seconds_since_epoch):
         return human_readable_string
     except:
         return f"----"
+
 class ProvFileWrapper:
+    root_prefix = os.environ.get("VNV_DOCKER_PREFIX", "")
 
     def __init__(self, vnvfileid, pfile, description):
         self.file = pfile
@@ -56,7 +59,7 @@ class ProvFileWrapper:
     
 
     def getUrl(self):
-        return pathname2url(self.getName())
+        return pathname2url(ProvFileWrapper.root_prefix + self.getName())
 
     def getSize(self):
         return self.file.info.size
@@ -103,11 +106,11 @@ class ProvFileWrapper:
     def was_modified(self):
         
         if self.file.crc: 
-            crc = self.file.getCurrentCRC32(self.getName())
+            crc = self.file.getCurrentCRC32(ProvFileWrapper.root_prefix + self.getName())
             return crc != self.file.crc
 
-        if os.path.exists(self.getName()):
-            ti_m = os.path.getmtime(self.getName())
+        if os.path.exists(ProvFileWrapper.root_prefix + self.getName()):
+            ti_m = os.path.getmtime(ProvFileWrapper.root_prefix + self.getName())
             return abs(ti_m - self.getTimeStamp()) > 2
         
         return False
@@ -120,8 +123,7 @@ class ProvWrapper:
         self.vnvfileid = vnvfileid
 
     def getD(self, provfile):
-        return render_template(
-            self.templates.get_file_description(provfile.package, provfile.name))
+        return render_template(self.templates.get_file_description(provfile.package, provfile.name))
 
     def get_executable(self):
         return ProvFileWrapper(self.vnvfileid, self.prov.executable, "")
@@ -688,7 +690,7 @@ class InjectionPointRender:
         #source = json.loads(self.ip.getSourceMap())
 
         ss = self.templates.getSourceMap(self.getPackage(),self.getName())
-        return { a: LocalFile(b["filename"],self.getFile(),conn) for a,b in ss.items()}
+        return { a: LocalFile(b["filename"],self.getFile(),conn, root_p=True) for a,b in ss.items()}
 
         #return {a: LocalFile(b[0], self.getFile(), conn, highlightline=b[1]) for a, b in source.items()}
 
@@ -698,8 +700,10 @@ class VnVFile:
 
     FILES = VnV.FILES
 
-    def __init__(self, name, filename, reader, template_root, icon="icon-box", _cid=None, reload=False,
+    def __init__(self, name, filename, reader, template_root, icon="icon-box", _cid=None, reload=False, root="/",
                  **kwargs):
+
+        self.root=root
 
         self.filename = filename
         self.reader = reader
@@ -726,6 +730,7 @@ class VnVFile:
         self.th = None
         self.templates = None
         self.setupNow()
+        self.xtermId = uuid.uuid4().hex
 
     # Try and setup the templates once we can.
     def setupNow(self):
@@ -737,6 +742,14 @@ class VnVFile:
 
     def nospec(self):
         return self.templates is None
+
+    def get_working_directory(self):
+        if os.path.isdir(self.filename):
+            return os.path.abspath(self.filename)
+        return os.path.abspath(os.path.dirname(self.filename))
+
+    def getXtermId(self):
+        return self.xtermId
 
     def setup_thread(self):
         vnvspec = None
@@ -789,7 +802,7 @@ class VnVFile:
         return None
 
     def clone(self):
-        return VnVFile(self.name, self.filename, self.reader, self.template_root, self.icon, _cid=self.id_)
+        return VnVFile(self.name, self.filename, self.reader, self.template_root, self.icon, _cid=self.id_, root=self.root)
 
     def getDataRoot(self):
         return self.getDataChildren("#")
@@ -1201,6 +1214,8 @@ class VnVFile:
             return render_template("files/data.html", file=self)
         elif id == -209:
             return render_template("files/file_browser.html", file=self)
+        elif id == -2091:
+            return render_template("files/xterm.html", file=self)
         elif id == -220:
             return render_template("files/proc_selector.html", file=self, processors=json.dumps(processors))
         elif id == -232:
@@ -1320,6 +1335,7 @@ class VnVFile:
             infotree.append({"fid": -207,  "vid" : self.id_,"text": "Logs", "icon": "feather icon-activity", "proc" : 0 })
         infotree.append({"fid": -208, "vid" : self.id_, "text": "Data Explorer", "icon": "feather icon-compass", "proc" : 0 })
         infotree.append({"fid": -209,  "vid" : self.id_,"text": "File Browser", "icon": "fa fa-folder", "proc" : 0 })
+        infotree.append({"fid": -2091, "vid": self.id_, "text": "Terminal", "icon": "fa fa-terminal", "proc": 0})
 
         if self.hasActions():
             action_children = []

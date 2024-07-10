@@ -164,6 +164,14 @@ class CustomVnVFunctions(functions.Functions):
         return json.dumps(s, cls=VnVJsonEncoder)
 
     @functions.signature({"types": []})
+    def _func_vec_delta(self, s):
+        res = [0]
+        for i in range(1, len(s)):
+            res.append(s[i] - s[i-1])
+        return res
+
+
+    @functions.signature({"types": []})
     def _func_iota(self,s):
         return [ i for i in range(0, len(s))]
 

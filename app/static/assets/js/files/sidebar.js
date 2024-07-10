@@ -321,6 +321,7 @@ $(window).on('load', function() {
 
 
 IPSTATE_CACHE = {}
+current_ip_display = []
 
 function resetIpState() {
    $('.injection-element-page').remove()
@@ -331,6 +332,8 @@ function updateIpState(ipid, fileId, processor, varies_with_proc) {
    if (!fileId) {
         fileId = 0
    }
+
+   current_ip_display = [fileId, ipid, processor, varies_with_proc]
 
    eid = "injection-element-" + ipid;
 
@@ -361,13 +364,6 @@ function updateIpState(ipid, fileId, processor, varies_with_proc) {
       });
    }
 
-   xx = {}
-   x = localStorage.getItem("vnv_ip_state")
-   if (x){
-        xx = JSON.parse(x)
-   }
-   xx[fileId] = ipid
-   localStorage.setItem("vnv_ip_state", JSON.stringify(xx))
 }
 
 $(document).ready(function() {

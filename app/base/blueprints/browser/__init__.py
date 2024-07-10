@@ -7,46 +7,31 @@ from werkzeug.utils import redirect
 
 from app.base.utils.utils import render_error
 
-from app.models.VnVConnection import MAIN_CONNECTION, SetMainConnection, SetFileConnection, VnVLocalConnection
+from app.models.VnVConnection import MAIN_CONNECTION, VnVLocalConnection
 from app.models.readers import LocalFile
 
 try:
     from app.models.VnVFile import VnVFile
+
     HAS_VNV = True
 except:
     HAS_VNV = False
+
+from app.models.VnVInputFile import VnVInputFile
 
 blueprint = Blueprint(
     'browser',
     __name__,
     url_prefix='/browser',
-    template_folder='templates'
+    template_folder='templates',
+    static_folder='static'
 )
 @blueprint.route("")
 def browse_route():
     filename = request.args.get("filename","")
     return render_template("browser/browse.html", model="inline-", filename=filename)
     
-@blueprint.route("/edit/<int:id_>", methods=["GET", "POST"])
-def edit_file(id_):
-    filename=request.args.get("filename")
-    connection = None
-    if id_ == 1000 or not HAS_VNV:
-        connection = MAIN_CONNECTION()
 
-    if HAS_VNV:
-        if connection is None and id_ in VnVFile.FILES:
-            connection = VnVFile.FILES[id_].connection
-
-        if connection is None:
-            from app.models.VnVInputFile import VnVInputFile
-            if id_ in VnVInputFile.FILES:
-                connection = VnVInputFile.FILES[id_].connection
-
-    if isinstance(connection,VnVLocalConnection):
-        return make_response(redirect(f"/ide?filename={filename}"), 302)
-    else:
-        return render_error(502, "Editing is not supported on remote connections yet", nohome=False)
 
 @blueprint.route("/render/<int:id_>", methods=["GET", "POST"])
 def render(id_):
@@ -75,6 +60,20 @@ def render(id_):
     except Exception as e:
         return render_error(203,"Could not open file", nohome=True)
 
+@blueprint.route('/save_file/<int:id_>', methods=["GET","POST"])
+def save_file(id_):
+
+    if id_ == 1000 or not HAS_VNV:
+        connection = MAIN_CONNECTION()
+    elif id_ in VnVFile.FILES:
+         connection = VnVFile.FILES[id_].connection
+    elif id_ in VnVInputFile.FILES:
+         connection = VnVInputFile.FILES[id_].connection
+    else:
+        connection = MAIN_CONNECTION()
+
+    connection.write(request.form["value"], request.form["filename"])
+    return make_response("Ok", 200)
 
 @blueprint.route("/reader/<int:id_>", methods=["GET", "POST"])
 def reader(id_):
@@ -130,28 +129,4 @@ def reader(id_):
         return render_error(501, "Error Loading File:" + str(e))
 
 
-@blueprint.route('/close_connection/<int:id_>')
-def close_connection(id_):
-    if id_ == 1000 or not HAS_VNV:
-        MAIN_CONNECTION().disconnect()
-    else:
-        with VnVFile.find(id_) as file:
-            file.connection.disconnect()
-    return make_response("Ok", 200)
 
-
-@blueprint.route('/open_connection/<int:id_>', methods=["POST"])
-def open_connection(id_):
-    local = request.form.get('local', False)
-    uname = request.form.get("username")
-    domain = request.form.get('domain')
-    port = int(request.form.get('port'))
-    password = request.form.get("password")
-
-    if id_ == 1000 or not HAS_VNV:
-        r = SetMainConnection(local, uname, domain, password, port)
-    else :
-        with VnVFile.find(id_) as file:
-            r = SetFileConnection(file, local, uname, domain, password, port)
-
-    return make_response("Ok", 200 if r else 201)

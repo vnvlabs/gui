@@ -2,8 +2,12 @@
     <div id="view-view" class="card" style=" min-width:500px; height: calc(100vh - 126px); max-width:50%; overflow-x: auto; padding-right:20px; padding-left:20px; padding-top:20px; margin-right:10px; margin-bottom:0px;">
         <div style="display:flex; align-items:center; margin-bottom:15px;">
             <h3 style="flex:1; margin:0;">VnV Reports</h3>
+            <div id="report_refresh_button" style="display:flex; cursor:pointer; font-size:30px; justify-content:flex-end; margin-right:10px;" onclick="update_tree_data(false)">
+                <i class="feather icon-refresh-ccw"></i>
+            </div>
             <div style="display:flex; cursor:pointer; font-size:30px; justify-content:flex-end" onclick="load_new_file()">
-                <i class="feather icon-plus-circle"></i></div>
+                <i class="feather icon-plus-circle"></i>
+            </div>
         </div>
         <div id="view-chart">
             <div id="treeLoading">Loading...</div>
@@ -59,9 +63,9 @@
                         $('#treeLoading').hide();
                         $('#treeview1').show();
                         if (!dd["done"]) {
-                            chartInterval = window.setTimeout(function () {
-                                update_tree_data(false)
-                            }, 10000)
+                            $('#report_refresh_button').show()
+                        } else {
+                            $('#report_refresh_button').hide()
                         }
                         updateIpState("-245", 0, 0, false)
 

@@ -72,14 +72,17 @@ RUN cd /vnvgui/gui && virtualenv virt && virt/bin/pip install -r ./requirements.
 COPY ./python_api /vnvgui/gui/python_api
 RUN cd /vnvgui/gui/python_api && mkdir -p build && cd build && rm -rf * && cmake .. && make -j 
 
-COPY ./router.py /vnvgui/gui/router.py
 COPY ./run.py /vnvgui/gui/run.py
 COPY ./app /vnvgui/gui/app
 COPY ./launch.sh /vnvgui/gui/launch.sh
 COPY ./paraview /vnvgui/gui/paraview
 COPY ./theia /vnvgui/gui/theia
 
-EXPOSE 5000
+EXPOSE 5100
+EXPOSE 5101
+EXPOSE 5102
+EXPOSE 5103
+
 WORKDIR /vnvgui/gui
 ENTRYPOINT ["./launch.sh"]
 

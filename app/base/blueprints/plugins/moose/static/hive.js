@@ -1,89 +1,9 @@
-
-function upload_file_b(vnvfileid, filename, type, options) {
-
-      url = "/browser/reader/upload/" + vnvfileid
-      url += "?filename=" + filename
-      url += "&modal=" + type
-
-       $.post(url, function(data) {
-          if (type.length == 0 ) {
-            $('#file_viewer_modal_body').html(data)
-            $('#file_viewer_modal').modal('show')
-          } else {
-            $('#' + type).html(data)
-          }
-       });
-
-}
-
-
-
-function show_file_reader(vnvfileid, filename, reader , type, options) {
-       
-        var pageUrl = '?filename=' + encodeURIComponent(filename);
-        window.history.pushState('', '', pageUrl);
-
-       if (type.length == 0 ) {
-         $('#file_viewer_modal').modal('show')
-         if (options && !("noload" in options)) {
-           $('#file_viewer_modal_body').html("<div>Loading...</div>")
-         }
-         $('#file_view_modal_dialog').css("max-width","90%")
-       } else if (!options || !("noload" in options)) {
-         $('#' + type ).html("<div>Loading...</div>")
-       }
-
-       url = "/browser/reader/" + vnvfileid
-       url += "?filename=" + filename
-       url += "&modal=" + type
-       if (reader.length > 0 ) {
-            url += "&reader=" + reader
-       }
-       if (options) {
-           for (i in options) {
-             url += "&render_" + i + "=" + options[i]
-           }
-       }
-
-       if (reader == "actual_upload") {
-           var formData = new FormData();
-           formData.append("filename",$('#uploadfilename').val());
-           formData.append("file", $('#uploadfile').prop('files')[0])
-
-           $.ajax({
-              type : "POST",
-              processData: false,
-              contentType: false,
-              url : url,
-              data : formData,
-              success : function(data) {
-                if (type.length == 0 ) {
-                  $('#file_viewer_modal_body').html(data)
-                  $('#file_viewer_modal').modal('show')
-                 }  else {
-                   $('#' + type).html(data)
-                 }
-              }
-           })
-       } else {
-
-        $.get(url, function(data) {
-          if (type.length == 0 ) {
-            $('#file_viewer_modal_body').html(data)
-            $('#file_viewer_modal').modal('show')
-          } else {
-            $('#' + type).html(data)
-          }
-        });
-       }
-}
-
-
 /**
  * This is a small plugin demonstrating how to do custom languages.
  * You pretty much just define an Ace mode, make a FileKind for it,
  * and link your FileKind to it's appropriate extensions.
  */
+
 (function() {
 
 	// custom highlighting rules with GML-style tokens... and less code
@@ -391,3 +311,132 @@ function show_file_reader(vnvfileid, filename, reader , type, options) {
 		exports.Mode = Mode;
 	});
 })();
+
+
+function set_schema(uuid) {
+
+    $.post(`${HIVE_SCHEMA_URL}?schema=${uuid}&val=${encodeURIComponent($('#moose-exe').val())}`, function(data, s, xhr){
+
+        addToast("Setting Schema", "", 4000)
+        $('#schema_error').html(data)
+        if (data.length > 0 ) {
+            $('#schema_icon').show()
+        } else {
+            $('#schema_icon').hide()
+        }
+
+        if (xhr.status == 200) {
+
+            addToast("Schema Set", "", 4000)
+        } else {
+            addToast("Schema Failed: " + data, "", 4000)
+        }
+    });
+}
+
+function set_hive_input_file(fileId) {
+
+    $.post(`${HIVE_INPUT_URL}?inputfile=${encodeURIComponent($('#moose-input-file').val())}`, function(data, s, xhr){
+
+        addToast("Setting Input File", "", 4000)
+
+        if (xhr.status == 200) {
+            $("#inp").html(data)
+            addToast("Input File Loaded", "", 4000)
+        } else {
+            addToast("Input File Load Failed: " + data, "", 4000)
+        }
+    });
+}
+
+function save_hive_file(uuid) {
+    var editor = ace.edit("view_file");
+    var code = editor.getValue();
+    addToast("Saving File", "", 4000)
+    $.post(`${HIVE_SAVE_URL}?schema=${uuid}&val=${encodeURIComponent(code)}`, function(data, s, xhr){
+        if (xhr.status == 200) {
+            addToast("Save Successful","", 4000)
+        } else {
+            addToast("Save Failed: " + data, "", 4000)
+        }
+     });
+}
+
+function regen_mesh(uuid) {
+    var editor = ace.edit("view_file");
+    var code = editor.getValue();
+    addToast("Regenerating Mesh", "", 4000)
+    $.post(`${HIVE_MESH_URL}?schema=${uuid}&val=${encodeURIComponent(code)}`, function(data, s, xhr){
+
+        if (xhr.status == 200) {
+            $('#mesh_frame').attr('src', data)
+            addToast("Regen Success","", 4000)
+        } else {
+            addToast("Mesh Generation Failed: " + data, "", 4000)
+        }
+     });
+}
+
+
+function toggle_mesh(uuid) {
+    var editor = ace.edit("view_file");
+    var code = editor.getValue();
+    $('#mesh_file').toggle()
+}
+
+
+function format_hive_file(uuid) {
+    var editor = ace.edit("view_file");
+    var code = editor.getValue();
+    addToast("Formatting File", "", 4000)
+    $.get(`${HIVE_FORMAT_URL}?schema=${uuid}&val=${encodeURIComponent(code)}`, function(data, s, xhr){
+        if (xhr.status == 200) {
+            addToast("File Formatting Successful", "", 4000)
+            editor.setValue(data)
+        } else {
+            addToast("Something went wrong", "", 4000)
+        }
+     });
+}
+
+function setup_hive_ace_editor(uuid){
+
+    var input_editor = ace.edit(view_file,
+    {
+        theme: "ace/theme/tomorrow_night_blue",
+        mode: "ace/mode/moose",
+        autoScrollEditorIntoView: true,
+        minLines: 40,
+        enableBasicAutocompletion: true,
+        enableLiveAutocompletion: false
+    });
+
+    var inputWordCompleter = {
+      getCompletions: function(editor, session, pos, prefix, callback) {
+        $.get(`${HIVE_AUTOCOMPLETE_URL}?schema=${uuid}&row=${pos.row}&col=${pos.column}&pre=${prefix}&val=${encodeURIComponent(editor.getValue())}`, function(data) {
+            callback(null, data );
+        });
+      },
+      getDocTooltip: function(item) {
+         if (item.desc.length > 0 ) {
+            item.docHTML = item.desc
+         }
+      }
+    }
+    langTools.addCompleter(inputWordCompleter)
+
+    input_editor.session.on('change', function(delta) {
+
+        $.get(`${HIVE_VALIDATE_URL}?schema=${uuid}&val=${encodeURIComponent(input_editor.getValue())}`, function(data, s, xhr) {
+                input_editor.session.setAnnotations(data)
+        });
+    });
+
+    //validate
+    $.get(`${HIVE_VALIDATE_URL}?schema=${uuid}&val=${encodeURIComponent(input_editor.getValue())}`, function(data, s, xhr) {
+                input_editor.session.setAnnotations(data)
+    });
+
+    //gen the mesh
+    regen_mesh(uuid)
+}

@@ -1,5 +1,9 @@
 import json
 import os
+import pty
+import select
+import subprocess
+import tempfile
 import textwrap
 import uuid
 
@@ -111,6 +115,8 @@ class VnVInputFile:
             "inputfile": ["VnV Input File", "inputfiles/input.html"],
             "comments" : ["Comments", "inputfiles/comments.html"],
             "browse": ["Browse", "files/file_browser.html"],
+            "terminal": ["Terminal", "inputfiles/xterm.html"],
+
             }
 
             for k,v in self.extra.items():
@@ -150,6 +156,10 @@ class VnVInputFile:
 
         # Update my specification -- based on the input file.
         self.updateSpec()
+
+        self.master_fd = None
+        self.slave_fd = None
+
 
         #Get the default as defined in the specification which was loaded on the prev line
         defs = self.get_executable_defaluts()
@@ -192,7 +202,11 @@ class VnVInputFile:
             self.plugs = defs["plugins"]
 
         self.updateSpec()
-            
+
+        self.xtermid = uuid.uuid4().hex
+
+    def getXtermId(self):
+        return self.xtermid
 
     def toJson(self):
         a = {}
@@ -381,6 +395,9 @@ class VnVInputFile:
 
     def get_executable_timestamp(self):
         return self.connection.get_timestamp(self.filename)
+
+    def get_working_directory(self):
+        return os.path.abspath(os.path.dirname(self.filename))
 
     def get_executable_size(self):
         return self.connection.get_filesize(self.filename)
@@ -616,20 +633,43 @@ class VnVInputFile:
     def render(self,key):
         if key == "exe":
             return render_template("inputfiles/jobs.html", file=self)
+        if key[0:4] == "job-":
+            jobId = key[4:]
+            return render_template("inputfiles/job.html", file=self, job=self.get_job(jobId))
 
         f = self.tablist().get(key)
         if f is not None:
             return render_template(f[1],file=self)
         return "Error: Unknown Page"
 
-    def get_tree_for_processor(self):
+    def is_selected(self,myelm, myfile,selectedElement,selectedFile):
+        return myelm == selectedElement and myfile == selectedFile
+
+
+
+    def get_tree_for_processor(self, selectedElement, selectedFile):
+
+        seFound = [False]
+
+        def get_is_selected(myelm):
+            a = myelm == selectedElement and selectedFile == self.id_
+            if a:
+                seFound[0] = True
+            return a
+
+        def get_state(myelm):
+            return { "opened" : True, "selected" : get_is_selected(myelm) }
 
         infotree = [
-            {"fid" : k , "vid" : self.id_, "text" : v[0], "icon" : "fa fa-info" }  for k,v in self.tablist().items()
+            {"fid" : k , "vid" : self.id_, "text" : v[0], "icon" : "fa fa-info", "state" : get_state(k)}  for k,v in self.tablist().items()
+        ]
+
+        jlist = [
+            {"fid": "job-" + j.getId(), "vid": self.id_, "text": j.getName(), "icon": j.icon(), "state" : get_state(f"job-{j.getId()}")} for j in self.get_jobs()
         ]
 
         infotree.append(
-                {"fid": "exe", "vid": self.id_, "text": "Execute", "icon": "feather icon-cpu"}
+                {"fid": "exe", "vid": self.id_, "text": "Execute", "icon": "feather icon-cpu" , "children" : jlist,  "state" : get_state("exe") }
         )
 
 
@@ -637,16 +677,19 @@ class VnVInputFile:
         tree = {
             "fid": "description",
             "text": self.name,
-            "state": {"opened": True},
+            "state": get_state("description"),
             "icon" : f"feather icon-home trash",
             "children": infotree,
             "vid": self.id_,
         }
 
-        return tree
+        return tree, seFound[0]
 
     @classmethod
-    def get_trees(cls):
+    def get_trees(cls, selectedElement, selectedFile):
+
+        sefound = False
+
         tree = {
             "fid": "root",
             "text": "VnV Input Files",
@@ -655,15 +698,22 @@ class VnVInputFile:
             "children": [],
             "vid" : 0
         }
+        if selectedElement == "root" and selectedFile == 0:
+            tree['state']['selected'] = True
+            sefound = True
 
         done = True
 
         for id in VnVInputFile.FILES:
             with VnVInputFile.find(id) as file:
-                ftree =  file.get_tree_for_processor()
+                ftree, found =  file.get_tree_for_processor(selectedElement, selectedFile)
                 tree["children"].append(ftree)
-
-        return jsonify({"data": tree}), 200
+                if found:
+                    sefound = True
+        if sefound:
+            return jsonify({"data": tree,"se" : selectedElement, "sf" : selectedFile}), 200
+        else:
+            return jsonify({"data": tree, "se": "root", "sf": 0}), 200
 
     class FileLockWrapper:
         def __init__(self, file):
@@ -684,7 +734,7 @@ def njoin(array):
 
 def get_bash_header(application_path, data, workflowName):
     
-    inputfilename = data.get("vnv-input-file") if data.get("vnv-input-file","GUI") not in ["","GUI"] else ".vnv-input-${VNV_WORKFLOW_ID}"
+    inputfilename = data.get("vnv-input-file") if data.get("vnv-input-file","GUI") not in ["","GUI"] else os.path.join(tempfile.gettempdir(),".vnv-input-${VNV_WORKFLOW_ID}")
     add_inputfile = "" if data.get("vnv-input-file") == None else f"export VNV_INPUT_FILE={inputfilename}"
     
     return textwrap.dedent(f"""

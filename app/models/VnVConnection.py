@@ -38,6 +38,14 @@ class VnVJob:
         a = self.getCtx().running()
         return a
 
+    def icon(self):
+        if self.running():
+            return "feather icon-refresh-ccw"
+        elif self.exitcode() == 0:
+            return "feather icon-check"
+        else:
+            return "feather icon-x"
+
     def script(self):
         return self.script_
 
@@ -311,6 +319,7 @@ class VnVLocalConnection:
     def __init__(self):
         self.connected_ = True
         self.running_procs = {}
+        self.root_prefix = os.environ.get("VNV_DOCKER_PREFIX","")
 
     def toJson(self):
         return {}
@@ -340,8 +349,8 @@ class VnVLocalConnection:
     def connected(self):
         return self.connected_
 
-    def autocomplete(self, pref):
-        return glob.glob(pref + "*")
+    def autocomplete(self, pref, root_p=False):
+        return glob.glob(self.abspath(pref,root_p) + "*")
 
     class SessionContext:
 
@@ -410,14 +419,19 @@ class VnVLocalConnection:
     def cancel_job(self, jobId):
         self.running_procs[jobId].getCtx().cancel()
 
-    def exists(self, path):
-        return os.path.exists(os.path.abspath(path))
+    def abspath(self, path, root_p=False):
+        return self.root_prefix + os.path.abspath(path) if root_p else os.path.abspath(path)
 
-    def is_dir(self, path):
-        return os.path.isdir(os.path.abspath(path))
+    def exists(self, path, root_p = False):
+        return os.path.exists(self.abspath(path,root_p))
 
-    def info(self, path):
-        abspath = os.path.abspath(path)
+    def is_dir(self, path, root_p = False):
+        return os.path.isdir(self.root_prefix + os.path.abspath(path) if root_p else os.path.abspath(path))
+
+
+
+    def info(self, path, root_p = False):
+        abspath = self.abspath(path,root_p)
         dir = os.path.dirname(abspath)
         name = os.path.basename(abspath)
         if os.path.exists(abspath):
@@ -432,19 +446,22 @@ class VnVLocalConnection:
         ext = "directory" if os.path.exists(abspath) and Path(abspath).is_dir() else os.path.splitext(abspath)[1]
         return abspath, dir, name, ext, size, lastMod, lastModStr
 
-    def get_filesize(self,path ):
-        abspath = os.path.abspath(path)
+    def get_filesize(self,path, root_p = False ):
+        abspath = self.abspath(path, root_p)
         if os.path.exists(abspath):
             return os.lstat(abspath).st_size if len(abspath) else 0
         return 0
-    def get_timestamp(self,path):
-        abspath = os.path.abspath(path)
+
+    def get_timestamp(self,path, root_p=False):
+        abspath = self.abspath(path, root_p)
         lastMod = os.lstat(abspath).st_mtime if len(abspath) else 0
         return (datetime.fromtimestamp(lastMod).strftime('%Y-%m-%d %H:%M:%S')) if len(abspath) else ""
 
-    def write(self, txt, path):
+    def write(self, txt, path, root_p=False):
         if path is None:
             path = self.execute("mktemp").rstrip().lstrip()
+        else:
+            path = self.abspath(path, root_p)
 
         with open(path, 'w') as f:
             f.write(txt)
@@ -457,17 +474,19 @@ class VnVLocalConnection:
     def root(self):
         return os.path.abspath(os.sep)
 
-    def children(self, abspath):
+    def children(self, abspath, root_p = False):
+        abspath = self.abspath(abspath, root_p)
         return [os.path.join(abspath, i) for i in os.listdir(abspath)]
 
-    def download(self, remote):
-        return remote
+    def download(self, remote, root_p = False):
+        return self.abspath(remote, root_p)
 
     def upload(self, remote, local):
         shutil.copy(local, remote)
 
-    def crumb(self, dir):
-        c = os.path.normpath(dir).split(os.path.sep)
+    def crumb(self, dir, root_p=False):
+        abspath = self.abspath(dir,root_p)
+        c = os.path.normpath(abspath).split(os.path.sep)
         cc = os.path.abspath(os.sep)
         loc = []
         for i in c:
@@ -485,28 +504,6 @@ def connectionFromJson(j):
 
 class MainConnection:
     MAIN_CONNECTION = VnVLocalConnection()
-
-
-def SetMainConnection(local, username, domain, password, port):
-    MainConnection.MAIN_CONNECTION.disconnect()
-
-    if local:
-        MainConnection.MAIN_CONNECTION = VnVLocalConnection()
-    else:
-        MainConnection.MAIN_CONNECTION = VnVConnection()
-
-    return MainConnection.MAIN_CONNECTION.connect(username, domain, int(port), password)
-
-
-def SetFileConnection(file, local, username, domain, password, port):
-    file.connection.disconnect()
-
-    if local:
-        file.connection = VnVLocalConnection()
-    else:
-        file.connection = VnVConnection()
-
-    return file.connection.connect(username, domain, int(port), password)
 
 
 def MAIN_CONNECTION():

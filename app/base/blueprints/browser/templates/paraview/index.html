@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+    <link rel="icon" type="image/png" href="favicon-32x32.png">
+    <title>ParaViewWeb Visualizer</title>
+  </head>
+  <body>
+    {% if not success %}
+    <div onclick="window.location.reload();">Loading Server: Click to refresh </div>
+    {% else %}
+      <div class='content' style="display:flex; align-items:center; justify-content:center; font-size:30px" >
+        Loading Paraview
+    </div>
+    <script src="{{url_for('base.browser.static', filename='Visualizer.js')}}"></script>
+    <script>
+      // Visualizer.connect({ application: 'visualizer' });
+      Visualizer.connectWithArgsAsConfig({ application: 'visualizer', "sessionManagerURL" : "{{sessionManagerUrl}}" });
+      Visualizer.autoStopServer({{autostop}});
+    </script>
+    {% endif %}
+  </body>
+</html>

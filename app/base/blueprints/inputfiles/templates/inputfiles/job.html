@@ -1,0 +1,120 @@
+<div style="display:flex; align-items:center;">
+
+    {%if job.running() == True %}
+    <div id="astatus_{{job.getId()|safe}}" class="badge badge-warning" {%if job.running() !=True %} hidden {%endif%}>Running</div>
+    {%elif job.exitcode() == 0 %}
+    <div id="astatus_{{job.getId()|safe}}" class="badge badge-success">Completed</div>
+    {%else%}
+    <div id="astatus_{{job.getId()|safe}}" class="badge badge-danger">Error {{job.exitcode()}}</div>
+    {%endif%}
+
+    <div style="flex:1; font-size:35px; margin-left:10px; font-weight:bold;">{{job.getName()}}</div>
+    <div style="display:flex; justify-content:flex-end">
+
+        <button class="{{job.getId()|safe}}_rn btn btn-primary" style="margin-right:10px;" {%if not job.running()%} hidden {%endif%} onclick='refresh_exe_job("{{job.getId()}}")'>Refresh</button>
+
+        <!--
+          button: "Cancel"
+            cancels a job while it's executing
+
+         -->
+
+        <button class="{{job.getId()|safe}}_rn btn btn-primary" style="margin-right:10px;" {%if not job.running()%} hidden {%endif%} onclick='cancel_exe_job(event, {{file.id_}},"{{job.getId()}}")'>Cancel</button>
+
+        <!--
+          button: "VnV Report"
+            creates/opens a report from a completed job
+         -->
+
+        <button class="{{job.getId()|safe}}_nn btn btn-primary" style="margin-right:10px;" {%if job.running()%} hidden {%endif%} onclick='open_vnv_report(event, "{{job.getId()}}")'>
+            VnV Report
+        </button>
+
+        <!--
+          button: "Delete"
+            deletes a job
+         -->
+
+        <button class="{{job.getId()|safe}}_nn btn btn-primary" style="margin-right:10px;" {%if job.running()%} hidden {%endif%} onclick='delete_exe_job(event, {{file.id_}},"{{job.getId()}}")'>Delete</button>
+    </div>
+
+</div>
+
+
+<div class="jcontent" style="overflow:auto; margin-top:20px; ">
+    <ul class="nav nav-pills mb-3" id="apills-tab" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" state="main-tab" id="apills-script-tab-{{job.getId()}}" data-toggle="pill" href="#apills-script-{{job.getId()}}" role="tab" aria-controls="pills-script" aria-selected="true">Script</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="apills-input-tab-{{job.getId()}}" data-toggle="pill" href="#apills-input-{{job.getId()}}" role="tab" aria-controls="pills-input" aria-selected="true">Input File</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="apills-output-tab-{{job.getId()}}" data-toggle="pill" href="#apills-output-{{job.getId()}}" role="tab" aria-controls="pills-output" aria-selected="true">Output</a>
+        </li>
+    </ul>
+
+    <div class="tab-content fcolumn fchild " id="apills-tabContent">
+
+        <div class="tab-pane fade show active finlinecolumn fchild" id="apills-script-{{job.getId()}}" role="tabpanel" aria-labelledby="pills-script-tab-{{job.getId()}}">
+            {{highlight_code(job.script(), "sh")|safe}}
+        </div>
+        <div class="tab-pane fade finlinecolumn fchild" id="apills-input-{{job.getId()}}" role="tabpanel" aria-labelledby="pills-input-tab-{{job.getId()}}">
+            {{highlight_code(job.metadata.get("vnv_input"),"json")|safe}}
+        </div>
+        <div class="tab-pane fade finlinecolumn fchild" id="apills-output-{{job.getId()}}" role="tabpanel" aria-labelledby="pills-output-tab-{{job.getId()}}">
+            <div id="astdout_{{job.getId()|safe}}">{{job.stdout()|safe}}</div>
+        </div>
+
+    </div>
+</div>
+
+{% if job.running() %}
+<script>
+    $(document).ready(function() {
+      refresh_exe_job('{{job.getId()}}')
+    })
+
+</script>{% endif %}
+
+<script>
+    function open_vnv_report(e, id) {
+        e.stopPropagation();
+        markAsLoading(true,"Loading")
+        $.get("/inputfiles/openreport/{{file.id_}}?confirmed&id=" + id , function(data1, status,xhr) {
+
+            if (xhr.status == 200) {
+                window.location.href = data1
+            } else {
+                alert("Could not a find valid vnv report for this job")
+            }
+        })
+    }
+
+
+    function refresh_exe_job(jobId) {
+
+        $.get("/inputfiles/refresh_job/{{file.id_}}/" + jobId , function(data) {
+
+            sta = data["status"]
+            if (sta != "running") {
+                $("." + jobId + "_nn" ).removeAttr("hidden")
+                $("." + jobId + "_rn" ).attr("hidden","")
+                $('#stdout_' + jobId).html(data["stdout"])
+                if (data["exitcode"] == 0) {
+                    $('#astatus_' + jobId).html("Complete")
+                    $('#astatus_' + jobId).removeClass()
+                    $('#astatus_' + jobId).addClass("badge badge-success")
+                } else if ( sta === "error" ) {
+                    $('#astatus_' + jobId).html("Error " + data["exitcode"] )
+                    $('#astatus_' + jobId).removeClass()
+                    $('#astatus_' + jobId).addClass("badge badge-danger")
+                }
+            } else {
+                setTimeout(function() { refresh_exe_job(jobId)} , 2000)
+            }
+        })
+    }
+
+
+</script>

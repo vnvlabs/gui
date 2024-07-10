@@ -207,14 +207,16 @@ def configure(id_):
 @blueprint.route('/view')
 def view():
     try:
-        return render_template("inputfiles/view.html", error=request.args.get("error"))
+        return render_template("inputfiles/view.html", fid=request.args.get("id_"), error=request.args.get("error"))
     except Exception as e:
         return render_error(501, "Error Loading File")
 
 @blueprint.route('/tree')
 def tree():
     try:
-        return  VnVInputFile.get_trees()
+        se = request.args.get("se","root")
+        sf = int(request.args.get("sf","0"))
+        return  VnVInputFile.get_trees(se,sf)
     except Exception as e :
         return make_response(jsonify({}),500)
 
@@ -323,7 +325,7 @@ def execute(id_):
                 script, name = file.script(None, "SAMPLE")
                 return make_response(script, 200)
             else:
-                return make_response(file.execute(), 200)
+                return make_response("job-" + file.execute(), 200)
 
     except Exception as e:
         print(e)

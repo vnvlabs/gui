@@ -28,7 +28,7 @@ function execute_the_job(fileid) {
 
   $.get(`/inputfiles/execute/${fileid}`, function(data) {
       refresh_jobs_list(fileid)
-      $('#pills-jobs-tab').click()
+      update_inputtree_data(true, data, fileid)
   });
 }
 

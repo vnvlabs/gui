@@ -2,6 +2,8 @@ import os
 import re
 import subprocess
 import json
+import tempfile
+
 import pyhit as pyhit
 from flask import render_template, make_response, jsonify
 import uuid 
@@ -549,6 +551,7 @@ class HiveFile():
         self.moose_executable = kwargs.get("moose-exe", find_moose_executable_recursive(os.path.dirname(filename)))
         if self.moose_executable is None:
             self.moose_executable = os.path.join(os.path.dirname(filename),os.path.splitext(os.path.basename(filename))[0] + "-opt")
+
         self.schema, self.error = self.extract_moose_schema(self.moose_executable, **kwargs)
         self.cwd = os.path.dirname(filename)
 
@@ -575,13 +578,14 @@ class HiveFile():
 
     def regenerate_mesh(self, text):
         try:
-            with open(os.path.join(self.cwd, f"{self.uuid}.i"),'w') as f:
+            iname = f"{os.path.join(tempfile.gettempdir(),self.uuid)}.i"
+            oname = f"{os.path.join(tempfile.gettempdir(), self.uuid)}.e"
+            with open(os.path.join(self.cwd, iname),'w') as f:
                 f.write(text)
 
-            a = subprocess.run([self.moose_executable, "-i", f"{self.uuid}.i", "--mesh-only"], cwd=self.cwd, timeout=10, capture_output=True)
-            mfile = os.path.join(self.cwd, f'{self.uuid}_in.e')
-            if a.returncode == 0 and os.path.exists(mfile):
-                return f"/pv?file={os.path.join(self.cwd, f'{self.uuid}_in.e')}" ,200
+            a = subprocess.run([self.moose_executable, "-i", iname, "--mesh-only", oname ], cwd=self.cwd, timeout=10, capture_output=True)
+            if a.returncode == 0 and os.path.exists(oname):
+                return f"/paraview?file={oname}",200
         except Exception as e:
             print(e)
             pass
@@ -590,9 +594,11 @@ class HiveFile():
     
     def validate(self, text):
         try:
-            with open(os.path.join(self.cwd, f"{self.uuid}.i"), 'w') as f:
+            iname = f"{os.path.join(tempfile.gettempdir(), self.uuid)}.i"
+
+            with open(iname, 'w') as f:
                 f.write(text)
-            a = subprocess.run([self.moose_executable, "-i", f"{self.uuid}.i", "--check-input","--color","off"], cwd=self.cwd, capture_output=True, timeout=10)
+            a = subprocess.run([self.moose_executable, "-i", iname, "--check-input","--color","off"], cwd=self.cwd, capture_output=True, timeout=10)
             stdout = a.stdout.decode("ascii")
             stderr = a.stderr.decode("ascii")
             if a.returncode == 0:
@@ -632,7 +638,7 @@ SAVED_SCHEMA = {}
 def render_hive(filename, **kwargs):
         hive = HiveFile(filename,**kwargs)
         SAVED_HIVE_FILES[hive.uuid] = hive
-        return render_template("moose/hive.html", hive=hive)
+        return render_template("hive/hive.html", hive=hive)
 
 
 def get_hive_file(uuid):

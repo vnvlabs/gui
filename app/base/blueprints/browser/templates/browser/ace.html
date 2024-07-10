@@ -3,6 +3,22 @@
 
 <script>
 
+function save_ace_file(fileId, filename) {
+    var editor = ace.edit('{{uuid}}');
+    var code = editor.getValue();
+    addToast("Saving File", "", 4000)
+    $.post(`/browser/save_file/${fileId}`, {
+       "filename" : filename,
+       "value" : code
+    }, function(data, s, xhr){
+        if (xhr.status == 200) {
+            addToast("Save Successful","", 4000)
+        } else {
+            addToast("Save Failed: " + data, "", 4000)
+        }
+     });
+}
+
 $( document ).ready(function(){
 
 
@@ -14,9 +30,19 @@ $( document ).ready(function(){
         theme: "ace/theme/tomorrow_night_blue",
         autoScrollEditorIntoView: true,
         minLines: 40,
-        mode : mode.mode,
-        readOnly: true
+        mode : mode.mode
     });
+
+     var buttonHtml = `
+        <button class="btn btn-primary" title="Save File" style="margin-left:10px;" onclick='save_ace_file({{file.getVnVFileId()}}, "{{file.url()}}")'>
+            Save
+        </button>
+    `;
+    $('#browser-buttons').append(buttonHtml);
+
+
+
+
 });
 
 </script>

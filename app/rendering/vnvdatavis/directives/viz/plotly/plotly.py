@@ -449,7 +449,9 @@ class PlotlyDirec(PlotlyChartDirective):
                              labels: ['Loaded','Remaining'],
                              type: 'pie'}}
                           ],
-                          {{showlegend:false,
+                          {{
+                            
+                            showlegend:false,
                             annotations: [
                                {{ 
                                   font: {{ size: 20 }},

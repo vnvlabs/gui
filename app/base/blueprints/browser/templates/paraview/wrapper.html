@@ -1,0 +1,25 @@
+{% set no_padding = 1 %}
+{% extends "layouts/base.html" %}
+
+{% block title %} {{title_name()}} {% endblock %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+
+    <div class='content' style="display:flex; align-items:center; justify-content:center; font-size:30px" >
+        Loading Paraview
+    </div>
+    <script src="{{url_for('base.browser.static', filename='Visualizer.js')}}"></script>
+    <script>
+      Visualizer.connectWithArgsAsConfig({ application: 'visualizer', "sessionManagerURL" : "{{sessionManagerUrl}}" });
+      Visualizer.autoStopServer({{autostop}});
+    </script>
+
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+
+{% endblock javascripts %}

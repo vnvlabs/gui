@@ -15,7 +15,7 @@
                     ajaxURL:"{{ url_for('base.files.viewers.unit_table', id_=file.id_)}}",
                     dataTree:true,
                     width: "100%",
-                    layout:"fitDataStretch",
+                    layout:"fitData",
                     dataTreeStartExpanded:true,
                     rowClick: function(e,row) {
                       var url = "{{url_for('base.files.viewers.unit',id_=file.id_)}}"

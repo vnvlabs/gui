@@ -4,18 +4,23 @@ import hashlib
 import json
 import os
 import subprocess
+import tarfile
 import urllib.request
 import uuid
+import zipfile
 from pathlib import Path
 
 import docutils
 import markdown as markdown
 import flask
+import netCDF4
 import pygments
 from flask import render_template, make_response, jsonify, current_app
 from pygments.lexers import guess_lexer_for_filename
 
 from app import Directory
+from app.models.netcdf import ncdump
+from app.models.vnv_hdf5 import h5dump
 
 
 def getPath(filename, exten=None):
@@ -39,6 +44,12 @@ def getUID(filename, exten=None):
     return uu
 
 
+
+    with open(filename, 'r',encoding="utf-8-sig") as f:
+        return f"<div>{markdown.markdown(f.read())}</div>"
+
+
+
 def render_image(filename, **kwargs):
     return f"<img class='card' src='/temp/files/{getUID(filename)}' style='max-width:100%;'>"
 
@@ -46,6 +57,15 @@ def render_image(filename, **kwargs):
 def render_html(filename, **kwargs):
     return f"<iframe class='card' src='/temp/files/{getUID(filename)}' style='width: 100%;height:80vh;'>"
 
+def render_tar(filename, **kwargs):
+        with tarfile.open(filename, "r") as tar:
+            members = [a.name for a in tar.getmembers()]
+            return render_template("browser/json.html", RAWDATA=json.dumps(json_to_jstree_json({"root" : members})))
+
+def render_zip(filename, **kwargs):
+
+    zip = zipfile.ZipFile(filename,'r')
+    return render_template("browser/json.html", RAWDATA=json.dumps(json_to_jstree_json({"root" : zip.namelist()})))
 
 def render_pdf(filename, **kwargs):
     return f"<iframe class='card' src='/temp/files/{getUID(filename)}' style='width: 100%;height:80vh;'>"
@@ -53,7 +73,7 @@ def render_pdf(filename, **kwargs):
 
 def render_paraview(filename, **kwargs):
     if current_app.config["PARAVIEW"] > 0:
-        return f"<iframe class='card' src='/pv?file={filename}' style='width: 100%;height:80vh;'>"
+        return f"<iframe class='card' src='/paraview?file={filename}' style='width: 100%;height:80vh;'>"
     return f"<div> Paraview Is Not Configured. Reconfigure with paraview to open {filename}."
 
 def render_vti(filename, **kwargs):
@@ -79,7 +99,7 @@ def render_markdown(filename, **kwargs):
 
 def render_code(filename, **kwargs):
     with open(filename, 'r', encoding="utf-8-sig") as f:
-        return render_template("browser/ace.html", TEXT=f.read(), filename=filename)
+        return render_template("browser/ace.html", TEXT=f.read(), filename=filename, file=kwargs.get("file"))
 
 
 def render_csv(filename, **kwargs):
@@ -119,6 +139,22 @@ def render_json(filename, **kwargs):
         reader = json.load(f)
         return render_template("browser/json.html", RAWDATA=json.dumps(json_to_jstree_json(reader)))
 
+
+def render_netcdf(filename, **kwargs):
+    from netCDF4 import Dataset
+    rootgrp = Dataset(filename, "r")
+    reader = json.loads(ncdump(rootgrp))
+    return render_template("browser/json.html", RAWDATA=json.dumps(json_to_jstree_json(reader)))
+
+def render_hdf5(filename, **kwargs):
+    from h5py import File as FS
+    rootgrp = FS(filename, mode="r")
+    reader = json.loads(h5dump(rootgrp))
+    rdata=json.dumps(json_to_jstree_json(reader))
+    return render_template("browser/json.html", RAWDATA=rdata)
+
+
+
 def auto_reader(filename, **kwargs):
     ext = os.path.splitext(filename)
     if ext[1] in EXT_MAP and EXT_MAP[ext[1]] in FILE_READERS:
@@ -136,8 +172,13 @@ FILE_READERS = {
     "rst": render_rst,
     "json": render_json,
     "auto" : auto_reader,
-    "pdf" : render_pdf
+    "pdf" : render_pdf,
+    "netcdf" : render_netcdf,
+    "hdf5" : render_hdf5,
+    "zip" : render_zip,
+    "tar" : render_tar
 }
+
 
 EXT_MAP = {
     ".jpeg": "image",
@@ -148,7 +189,15 @@ EXT_MAP = {
     ".md": "markdown",
     ".e": "paraview",
     ".json": "json",
-    ".pdf" : "pdf"
+    ".pdf" : "pdf",
+    ".nc" : "netcdf",
+    ".nc4" : "netcdf",
+    ".h5" : "hdf5",
+    ".hdf5" : "hdf5",
+    ".tar" : "tar",
+    ".tar.gz" : "tar",
+    ".gz": "tar",
+    ".zip" : "zip"
 }
 
 
@@ -179,15 +228,16 @@ icon_map = {
 
 
 class LocalFile:
-    def __init__(self, abspath, vnvfileid, connection, reader=None, **kwargs):
+    def __init__(self, abspath, vnvfileid, connection, reader=None, root_p=False, **kwargs):
 
         self.inputpath = abspath
 
         self.vnvfileid = vnvfileid
         self.connection = connection
+        self.root_p = root_p
+
         self.setInfo()
         self.reader = get_reader(reader, self.ext)
-
         self.breadcrumb = None
         self.iconStr = None
         self.exists_ = None
@@ -197,11 +247,14 @@ class LocalFile:
         self.root_ = None
         self.options = kwargs
 
+    def list_readers(self):
+        return list(sorted(FILE_READERS.keys()))
+
     def render_reader(self):
         if self.reader is not None:
             reader_func = FILE_READERS.get(self.reader)
             if reader_func is not None:
-                return reader_func(self.download(), **self.options)
+                return reader_func(self.download(), file=self, **self.options)
         return "<div> Reader is not implemented yet. Sorry</div>"
 
     def setHighlightLines(self, hl_lines):
@@ -223,9 +276,12 @@ class LocalFile:
     def url(self):
         return urllib.request.pathname2url(self.abspath)
 
+    def hidden(self):
+        return "hidden-file" if self.name.startswith('.') else ""
+
     def is_dir(self):
         if self.is_dir_ is None:
-            self.is_dir_ = self.connection.is_dir(self.abspath)
+            self.is_dir_ = self.connection.is_dir(self.abspath, self.root_p)
         return self.is_dir_
 
     def connected(self):
@@ -233,20 +289,22 @@ class LocalFile:
 
     def exists(self):
         if self.exists_ is None:
-            self.exists_ = self.connection.exists(self.abspath)
+            self.exists_ = self.connection.exists(self.abspath, self.root_p)
         return self.exists_
 
     def children(self):
         if self.children_ is None:
             self.children_ = [LocalFile(i, self.vnvfileid, self.connection) for i in
-                              self.connection.children(self.abspath)]
+                              self.connection.children(self.abspath, self.root_p)]
             self.children_.sort(key=lambda x: x.name)
         return self.children_
 
     def download(self):
         if self.download_ is None:
-            self.download_ = self.connection.download(self.abspath)
+            self.download_ = self.connection.download(self.abspath, self.root_p)
         return self.download_
+
+
 
     def render(self, modal=""):
 
@@ -267,7 +325,7 @@ class LocalFile:
 
     def crumb(self):
         if self.breadcrumb is None:
-            cc = self.connection.crumb(self.dir)
+            cc = self.connection.crumb(self.dir, self.root_p)
             self.breadcrumb = [LocalFile(i, self.vnvfileid, self.connection) for i in cc]
             self.breadcrumb.append(self)
         return self.breadcrumb

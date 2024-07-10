@@ -1,0 +1,44 @@
+<h2 style="flex:1">{{hive.filename}}</h2>
+<div style="display:flex; align-items:end; margin-bottom:15px;">
+    <form style="flex:1" id="schema_form" method="post">
+        <div id="name-group" class="form-group" style="margin-right:10px; margin-bottom:0px; ">
+            <label for="moose-exe" class="col-form-label">Hive Executable used to Generate the Schema:</label>
+            <div style="display:flex; justify-content:flex-end;">
+                <input style="flex:1; margin-right:10px; " type="text" class="form-control" name="moose-exe" id="moose-exe" value="{{hive.moose_executable}}">
+                <button type="button" class="btn  btn-primary" form="schema_form" onclick="set_schema('{{hive.uuid}}')" style="margin-right:10px;">Set Schema</button>
+                <button type="button" class="btn btn-primary" style="margin-right:10px;" onclick='save_hive_file("{{hive.uuid}}")'>Save</button>
+                <button type="button" class="btn btn-primary" style="margin-right:10px;" onclick='format_hive_file("{{hive.uuid}}")'>Format</button>
+                <button type="button" class="btn btn-primary" style="margin-right:10px;" onclick='toggle_mesh("{{hive.uuid}}")'>Show/Hide Mesh</button>
+                <button type="button" class="btn btn-primary" style="margin-right:10px;" onclick='regen_mesh("{{hive.uuid}}")'>Reload Mesh</button>
+
+
+            </div>
+        </div>
+    </form>
+</div>
+
+<div style="display:flex;">
+
+    <div id="view_file" style="flex:1; font-size:20px; height:1000px; width:100%; padding-top:10px; margin-bottom:20px;">{{hive.read()}}</div>
+    <div id="mesh_file" style="flex:1; display:none; font-size:20px; height:1000px; width:100%; flex:1; padding-left:1px; margin-bottom:20px;">
+        <iframe id="mesh_frame" style="height:1000px; border:none; width:100%"></iframe>
+    </div>
+</div>
+
+<script>
+var HIVE_AUTOCOMPLETE_URL = "{{url_for('base.hive.autocomplete')}}"
+
+var HIVE_MESH_URL = "{{url_for('base.hive.mesh')}}"
+var HIVE_SCHEMA_URL = "{{url_for('base.hive.schema')}}"
+var HIVE_VALIDATE_URL = "{{url_for('base.hive.validate')}}"
+var HIVE_SAVE_URL = "{{url_for('base.hive.save')}}"
+var HIVE_FORMAT_URL = "{{url_for('base.hive.format')}}"
+
+
+$( document ).ready(function(){
+    setup_hive_ace_editor('{{hive.uuid}}');
+});
+
+</script>
+
+<script src="{{url_for('base.hive.static', filename='hive.js')}}"></script>

@@ -19,7 +19,7 @@ def register_blueprints(apps, config):
     base.config(config)
     apps.register_blueprint(base.blueprint)
     base.template_globals(global_template_variables)
-
+    base.setup_app(apps)
 
     @apps.context_processor
     def inject_stage_and_region():

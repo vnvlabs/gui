@@ -67,7 +67,7 @@ class QuickTableChartDirective(TableChartDirective):
             data = options.get("data")
 
             return  {
-                      "layout" : "fitDataStretch",
+                      "layout" : "fitData",
                       "data" : data,
                       "columns": [
                           { "title" : names[i] , "field" : fields[i]} for i in range(0,len(names))
@@ -78,12 +78,12 @@ class QuickTableChartDirective(TableChartDirective):
         return "?context=quick-table"
 
     def getRawContent(self):
-        title = self.options.get("title","\"VnV Table\"")
+        title = self.options.get("title","VnV Table")
         return f"""{{
           "names" : {self.options.get("names","[]")},
           "fields" : {self.options.get("fields","[]")},
           "data" : {self.options.get("data","[]")},
-          "title" : \"{self.options.get("title",title)}\"
+          "title" : {json.dumps(title)}
         }}
         """
 

@@ -8,6 +8,7 @@ function remove_inputfile(id_) {
         $( "#inputfile-" + id_).remove();
         $.post( "/inputfiles/delete/" + id_, function( data ) {
             m.modal('hide')
+            update_inputtree_data(true)
         });
      }
   })
@@ -193,11 +194,17 @@ function resetIFState() {
    $('.if-element-page').remove()
 }
 
+currentSelectedFile = null
+currentSelectedElement = null
+
 function updateIFState(ipid, fileId) {
 
    if (!fileId) {
         fileId = 0
    }
+
+   currentSelectedFile = fileId
+   currentSelectedElement = ipid
 
    eid = "if-element-" + ipid;
    elmid = "#" + eid

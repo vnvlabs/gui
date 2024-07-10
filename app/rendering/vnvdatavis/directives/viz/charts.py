@@ -53,7 +53,10 @@ class JsonChartDirective(SphinxDirective):
         return self.script_template
 
     def getContent(self):
-        return re.sub('{{(.*?)}}', lambda x: jmes_jinja_query( x.group(1)),self.getRawContent())
+        try:
+            return re.sub('{{(.*?)}}', lambda x: jmes_jinja_query( x.group(1)),self.getRawContent())
+        except Exception as e:
+            return "Invalid Content " + str(e)
 
     def getHtml(self, id_, uid):
         return f'''
