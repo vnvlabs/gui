@@ -316,7 +316,3 @@ def faker(PREFIX="../build"):
     VnVFile.add("Heat", "/home/ben/source/vv/applications/heat/build/outputs/out", "file", get_file_template_root(), {})
 
     return
-
-
-VnVFile.add("Demo", "/home/ben/o11", "file",
-            get_file_template_root(), {})
