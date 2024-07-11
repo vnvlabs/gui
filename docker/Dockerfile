@@ -8,7 +8,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=America/New_York
 
 
-ENV THEIA_DEFAULT_PLUGINS=local-dir:/vnvgui/theia/plugins
+ENV THEIA_DEFAULT_PLUGINS=local-dir:/gui/theia/plugins
 ENV NODE_VERSION=18.0.0
 ENV YARN_VERSION=1.22.19
 ENV PARAVIEW_DIR=/vnvgui/paraview 
@@ -55,34 +55,12 @@ RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
     && ln -s /opt/yarn/bin/yarn /usr/local/bin/yarnpkg \
     && rm yarn-v$YARN_VERSION.tar.gz
 
-#Copy theia config Leave this seperate so we can cache that god awfull thing above. 
-COPY theia /vnvgui/theia
-RUN cd /vnvgui/theia && yarn --pure-lockfile && cd browser-app && yarn theia download:plugins --ignore-errors 
+RUN git clone https://github.com/vnvlabs/gui.git && git checkout wip
+RUN cd gui/theia && yarn --pure-lockfile && cd browser-app && yarn theia download:plugins --ignore-errors
+RUN cd gui/scripts && ./download_paraview.sh && tar -xf ./pv.tar.gz -C ./paraview --strip-components=1 && rm ./pv.tar.gz
+RUN cd gui && virtualenv virt && virt/bin/pip install -r requirements.tet
+RUN cd gui/python_api && mkdir -p build && cd build && cmake .. && make -j
 
-#Install paraview
-COPY ./scripts/download_paraview.sh /vnvgui/paraview/download_paraview.sh
-RUN  cd /vnvgui/paraview && ./download_paraview.sh
-RUN tar -xf /vnvgui/paraview/pv.tar.gz -C /vnvgui/paraview --strip-components=1 && rm /vnvgui/paraview/pv.tar.gz 
-
-
-#Install the vnv gui
-COPY ./requirements.txt /vnvgui/gui/requirements.txt
-RUN cd /vnvgui/gui && virtualenv virt && virt/bin/pip install -r ./requirements.txt 
-
-COPY ./python_api /vnvgui/gui/python_api
-RUN cd /vnvgui/gui/python_api && mkdir -p build && cd build && rm -rf * && cmake .. && make -j 
-
-COPY ./run.py /vnvgui/gui/run.py
-COPY ./app /vnvgui/gui/app
-COPY ./launch.sh /vnvgui/gui/launch.sh
-COPY ./paraview /vnvgui/gui/paraview
-COPY ./theia /vnvgui/gui/theia
-
-EXPOSE 5100
-EXPOSE 5101
-EXPOSE 5102
-EXPOSE 5103
-
-WORKDIR /vnvgui/gui
+WORKDIR ./gui
 ENTRYPOINT ["./launch.sh"]
 
