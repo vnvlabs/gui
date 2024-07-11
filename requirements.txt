@@ -5,7 +5,7 @@ humanize~=3.11.0
 jmespath~=0.10.0
 docutils~=0.17.1
 Markdown~=3.3.4
-Sphinx~=4.1.2
+Sphinx~=4.3.1
 numpy
 flask-socketio~=5.1.1
 jsonschema~=3.2.0

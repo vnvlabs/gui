@@ -13,13 +13,13 @@ class MyConfig:
     LOCAL = False
     basedir = os.path.abspath(os.path.dirname(__file__))
     auth = False
-    port = 5001
+    port = 5000
     HOST = "0.0.0.0"
     DEFAULT_DATA_PREFIX = "../build/"
     LOGOUT_COOKIE = "vnvnginxcode"
 
     THEIA = 0
-    THEIA_PORT = 5002
+    THEIA_PORT = 5001
     THEIA_DIR=""
     NODE_EXE=""
 
@@ -29,42 +29,35 @@ class MyConfig:
     PARAVIEW_SESSION_PORT_END=5100
     PARAVIEW_DATA_DIR="/"
 
-    NGINX_ADDRESS= "localhost"
-    NGINX_PORT=4001
+    NGINX_ADDRESS= f"{HOST}:{port}"
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--port", help="port to run on (default 5001)")
-parser.add_argument("--host", help="host to run on (default localhost)")
-parser.add_argument("--paraview", help="directory containing paraview")
-parser.add_argument("--theia", help="directory containing theia")
-parser.add_argument("--node", help="path to node exe to use when running theia")
-parser.add_argument("--profile", help="profile for debugging")
+parser.add_argument("--profile", help="profile for debugging", default="default")
+parser.add_argument("--host", help="host address", default="http://0.0.0.0:5000")
+
 
 args, unknown = parser.parse_known_args()
 
-if args.port:
-    MyConfig.port = args.port
-
-if args.host:
-    MyConfig.HOST = args.host
-
-if args.paraview:
-    MyConfig.PARAVIEW = 1
-    MyConfig.PARAVIEW_DIR = args.paraview
-
-if args.theia:
-    MyConfig.THEIA = 1
-    MyConfig.THEIA_DIR = args.theia
-
-if args.node:
-    MyConfig.NODE_EXE = args.node
-
 if args.profile == "ben":
+
     MyConfig.THEIA=1
     MyConfig.THEIA_DIR="/home/ben/source/vnvlabs.com/vnvlabs/gui/theia"
     MyConfig.NODE_EXE="/home/ben/.nvm/versions/node/v20.2.0/bin/node"
     MyConfig.PARAVIEW = 1
     MyConfig.PARAVIEW_DIR="/home/ben/source/vnvlabs.com/vnvlabs/gui/scripts/ParaView-5.10.1-osmesa-MPI-Linux-Python3.9-x86_64"
+
+elif args.profile == "docker":
+
+    MyConfig.port = 5000
+    MyConfig.THEIA = 1
+    MyConfig.THEIA_PORT = 5001
+    MyConfig.THEIA_DIR="/gui/theia"
+    MyConfig.NODE_EXE="node"
+    MyConfig.PARAVIEW = 1
+    MyConfig.PARAVIEW_DIR="/gui/scripts/paraview"
+    MyConfig.PARAVIEW_SESSION_PORT_START=5002
+    MyConfig.PARAVIEW_SESSION_PORT_START = 5100
+    MyConfig.NGINX_ADDRESS = args.host
 
 if __name__ == "__main__":
 

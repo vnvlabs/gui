@@ -1,19 +1,12 @@
 
 
-ARG FROM_IMAGE=ubuntu:20.04
+ARG FROM_IMAGE=ubuntu:latest
 FROM ${FROM_IMAGE}
 
-ENV DEBIAN_FRONTEND=noninteractive 
-
+ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=America/New_York
 
-
-ENV THEIA_DEFAULT_PLUGINS=local-dir:/gui/theia/plugins
-ENV NODE_VERSION=18.0.0
-ENV YARN_VERSION=1.22.19
-ENV PARAVIEW_DIR=/vnvgui/paraview 
-ENV PVPYTHON=${PARAVIEW_DIR}/bin/pvpython 
-ENV PATH=/vnvgui/node/bin/:$PATH 
+ENV PATH=/node/bin/:$PATH
 
 
 RUN apt-get -y update && apt-get -y upgrade && apt-get -y install \
@@ -23,44 +16,39 @@ RUN apt-get -y update && apt-get -y upgrade && apt-get -y install \
     libssl-dev \
     python3-dev \
     python3-pip \
+    python3-virtualenv \
     gsl-bin \
     libgsl-dev \
     cmake \ 
     swig \
+    jwm \
     libglapi-mesa pkg-config libsecret-1-dev \
-    && pip3 install virtualenv  
+    libx11-dev libxkbfile-dev \
+    libsecret-1-dev
+
+ENV THEIA_DEFAULT_PLUGINS=local-dir:/gui/theia/plugins
+ENV SHELL=/bin/bash
+ENV NODE_VERSION="20.2.0"
+RUN curl https://raw.githubusercontent.com/nvm-sh/nvm/master/nvm.sh > nvm.sh
+RUN chmod u+x nvm.sh
+RUN bash -c ". ./nvm.sh && nvm install $NODE_VERSION \
+    && nvm use $NODE_VERSION \
+    && nvm alias default $NODE_VERSION \
+    && npm install -g yarn"
+
+ENV PATH=/versions/node/v${NODE_VERSION}/bin:$PATH
 
 
-# Install Node.js
-RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
-    && case "${dpkgArch##*-}" in \
-    amd64) ARCH='x64';; \
-    ppc64el) ARCH='ppc64le';; \
-    s390x) ARCH='s390x';; \
-    arm64) ARCH='arm64';; \
-    armhf) ARCH='armv7l';; \
-    i386) ARCH='x86';; \
-    *) echo "unsupported architecture"; exit 1 ;; \
-    esac \
-    && curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-$ARCH.tar.xz" \
-    && mkdir -p /vnvgui/node \
-    && tar -xJf "node-v$NODE_VERSION-linux-$ARCH.tar.xz" -C /vnvgui/node --strip-components=1 --no-same-owner \
-    && rm "node-v$NODE_VERSION-linux-$ARCH.tar.xz" \
-    && ln -s /vnvgui/node/bin/node /usr/local/bin/nodejs \
-    && ln -s /vnvgui/node/bin/node /usr/local/bin/node \
-    &&  curl -fSLO --compressed "https://yarnpkg.com/downloads/$YARN_VERSION/yarn-v$YARN_VERSION.tar.gz" \
-    && mkdir -p /opt/yarn \
-    && tar -xzf yarn-v$YARN_VERSION.tar.gz -C /opt/yarn --strip-components=1 \
-    && ln -s /opt/yarn/bin/yarn /usr/local/bin/yarn \
-    && ln -s /opt/yarn/bin/yarn /usr/local/bin/yarnpkg \
-    && rm yarn-v$YARN_VERSION.tar.gz
-
-RUN git clone https://github.com/vnvlabs/gui.git && git checkout wip
-RUN cd gui/theia && yarn --pure-lockfile && cd browser-app && yarn theia download:plugins --ignore-errors
-RUN cd gui/scripts && ./download_paraview.sh && tar -xf ./pv.tar.gz -C ./paraview --strip-components=1 && rm ./pv.tar.gz
-RUN cd gui && virtualenv virt && virt/bin/pip install -r requirements.tet
+RUN git clone https://github.com/vnvlabs/gui.git && cd gui && git checkout wip
+RUN cd gui/theia && yarn --pure-lockfile && yarn theia build && cd browser-app && yarn theia download:plugins --ignore-errors
+RUN cd gui/scripts && ./download_paraview.sh && mkdir paraview && tar -xf ./pv.tar.gz -C paraview --strip-components=1 && rm ./pv.tar.gz
+RUN cd gui && virtualenv virt && virt/bin/pip install -r requirements.txt
+RUN cd gui && git submodule update --init
 RUN cd gui/python_api && mkdir -p build && cd build && cmake .. && make -j
 
+ENV PARAVIEW_DIR=/gui/scripts/paraview
+ENV PVPYTHON=${PARAVIEW_DIR}/bin/pvpython
+
 WORKDIR ./gui
-ENTRYPOINT ["./launch.sh"]
+ENTRYPOINT ["/gui/virt/bin/python","run.py","--profile","--docker"]
 

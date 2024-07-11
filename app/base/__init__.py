@@ -213,7 +213,7 @@ def paraview_websocket(uid):
         return make_response(jsonify({"error": "paraview not configured"}), 200)
 
     port, success = wait_for_paraview_to_start(uid)
-    return make_response(jsonify({"sessionURL": f"ws://{current_app.config['NGINX_ADDRESS']}:{current_app.config['NGINX_PORT']}/ws/{uid}"}), 200)
+    return make_response(jsonify({"sessionURL": f"ws://{current_app.config['NGINX_ADDRESS']}/ws/{uid}"}), 200)
 
 
 
@@ -222,7 +222,7 @@ def theia_route():
     if current_app.config["THEIA"] == 1:
 
 
-        src=f"http://{current_app.config['NGINX_ADDRESS']}:{current_app.config['NGINX_PORT']}/theia_redirect"
+        src=f"http://{current_app.config['NGINX_ADDRESS']}/theia_redirect"
         if "wrapped" in request.args:
             return render_template("ide.html", src=src)
         else:
