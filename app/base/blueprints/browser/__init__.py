@@ -56,7 +56,6 @@ def render(id_):
         file = LocalFile(filename, id_, connection, reader=reader, **render_args)
         return make_response(file.render(modal=modal),200)
 
-
     except Exception as e:
         return render_error(203,"Could not open file", nohome=True)
 

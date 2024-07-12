@@ -63,18 +63,33 @@ function show_file_reader(vnvfileid, filename, reader , type, options) {
                  }  else {
                    $('#' + type).html(data)
                  }
-              }
+              },
+
            })
        } else {
 
-        $.get(url, function(data) {
-          if (type.length == 0 ) {
-            $('#file_viewer_modal_body').html(data)
-            $('#file_viewer_modal').modal('show')
-          } else {
-            $('#' + type).html(data)
-          }
-        });
+            $.ajax({
+                url: url,
+                type: "GET",
+                success: function(data) {
+                    if (type.length == 0 ) {
+                        $('#file_viewer_modal_body').html(data)
+                        $('#file_viewer_modal').modal('show')
+                    } else {
+                        $('#' + type).html(data)
+                    }
+                },
+                error: function(xhr, status, error) {
+                    if (type.length == 0 ) {
+                        $('#file_viewer_modal_body').html(error)
+                        $('#file_viewer_modal').modal('show')
+                    } else {
+                        $('#' + type).html(error)
+                    }
+                },
+
+            });
+
        }
 }
 
