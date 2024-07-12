@@ -222,7 +222,7 @@ def theia_route():
     if current_app.config["THEIA"] == 1:
 
 
-        src=f"http://{current_app.config['NGINX_ADDRESS']}/theia_redirect"
+        src=f"{current_app.config['NGINX_ADDRESS']}/theia_redirect"
         if "wrapped" in request.args:
             return render_template("ide.html", src=src)
         else:
@@ -234,7 +234,7 @@ def theia_route():
 @blueprint.route('/theia_redirect/')
 def theia_route_redirect():
     if current_app.config["THEIA"] == 1:
-        src=f"http://localhost:{current_app.config['THEIA_PORT']}"
+        src=f"http://0.0.0.0:{current_app.config['THEIA_PORT']}"
         return make_response(redirect(src), 302)
 
     return render_error(200, "Eclipse Theia is not configured", nohome=True)

@@ -43,6 +43,7 @@ RUN git clone https://github.com/vnvlabs/gui.git && cd gui && git checkout wip
 RUN cd gui/theia && yarn --pure-lockfile && yarn theia build && cd browser-app && yarn theia download:plugins --ignore-errors
 RUN cd gui/scripts && ./download_paraview.sh && mkdir paraview && tar -xf ./pv.tar.gz -C paraview --strip-components=1 && rm ./pv.tar.gz
 
+RUN echo "force"
 RUN cd gui && git pull
 RUN cd gui && virtualenv virt && virt/bin/pip install -r requirements.txt
 RUN cd gui && git submodule update --init
