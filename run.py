@@ -78,4 +78,4 @@ if __name__ == "__main__":
     if app_config.THEIA == 1:
         launch_theia(app_config.THEIA_DIR, os.getcwd(), app_config.HOST, app_config.THEIA_PORT, node=app_config.NODE_EXE)
 
-    socketio.run(app,use_reloader=False, host=app_config.HOST, port=app_config.port)
+    socketio.run(app, debug=False, host=app_config.HOST, port=app_config.port)

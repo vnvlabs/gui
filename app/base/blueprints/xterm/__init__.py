@@ -33,11 +33,10 @@ def set_winsize(fd, row, col, xpix=0, ypix=0):
     fcntl.ioctl(fd, termios.TIOCSWINSZ, winsize)
 
 
-def read_and_forward_pty_output(id_):
+def read_and_forward_pty_output(fd, id_):
     max_read_bytes = 1024 * 20
     while True:
         socketio.sleep(0.01)
-        fd = CONNECTIONS[id_]["fd"]
         if fd:
             timeout_sec = 0
             (data_ready, _, _) = select.select([fd], [], [], timeout_sec)
@@ -48,7 +47,8 @@ def read_and_forward_pty_output(id_):
                 socketio.emit("pty-output", {"output": output}, namespace="/pty")
 
 
-def process(file):
+def process(file, dir='/'):
+
     if file.getXtermId() in CONNECTIONS and CONNECTIONS[file.getXtermId()].get("cd"):
         pass
     else:
@@ -56,13 +56,13 @@ def process(file):
         # create child process attached to a pty we can read from and write to
         (cd, fd) = pty.fork()
         if cd == 0:
-            subprocess.run("bash", cwd=file.get_working_directory())
+            subprocess.run("bash", cwd=dir)
         else:
             # this is the parent process fork.
             # store child fd and pid
             CONNECTIONS[file.getXtermId()] = {"fd": fd, "cd": cd, "o": []}
             set_winsize(fd, 50, 50)
-            socketio.start_background_task(target=read_and_forward_pty_output, id_=file.getXtermId())
+            socketio.start_background_task(target=read_and_forward_pty_output, fd=fd, id_=file.getXtermId())
 
     return render_template("xterm/index.html", id_=file.getXtermId())
 
@@ -70,14 +70,20 @@ def process(file):
 def index(id_):
 
     with VnVInputFile.find(id_) as file:
-        return process(file)
+        if os.path.exists(file.get_working_directory()):
+            return process(file, dir=file.get_working_directory())
+        else:
+            return process(file, dir='/')
 
 
 @blueprint.route("/file/<int:id_>")
 def index1(id_):
 
     with VnVFile.find(id_) as file:
-        return process(file)
+        if os.path.exists(file.get_working_directory()):
+            return process(file, dir=file.get_working_directory())
+        else:
+            return process(file, dir='/')
 
 
 @socketio.on("pty-input", namespace="/pty")
