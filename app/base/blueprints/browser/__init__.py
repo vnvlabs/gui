@@ -30,7 +30,7 @@ blueprint = Blueprint(
 def browse_route():
     filename = request.args.get("filename","")
     return render_template("browser/browse.html", model="inline-", filename=filename)
-    
+
 
 
 @blueprint.route("/render/<int:id_>", methods=["GET", "POST"])

@@ -47,9 +47,9 @@ def read_and_forward_pty_output(fd, id_):
                 socketio.emit("pty-output", {"output": output}, namespace="/pty")
 
 
-def process(file, dir='/'):
+def process(xtermid, dir='/'):
 
-    if file.getXtermId() in CONNECTIONS and CONNECTIONS[file.getXtermId()].get("cd"):
+    if xtermid in CONNECTIONS and CONNECTIONS[xtermid].get("cd"):
         pass
     else:
 
@@ -60,20 +60,20 @@ def process(file, dir='/'):
         else:
             # this is the parent process fork.
             # store child fd and pid
-            CONNECTIONS[file.getXtermId()] = {"fd": fd, "cd": cd, "o": []}
+            CONNECTIONS[xtermid] = {"fd": fd, "cd": cd, "o": []}
             set_winsize(fd, 50, 50)
-            socketio.start_background_task(target=read_and_forward_pty_output, fd=fd, id_=file.getXtermId())
+            socketio.start_background_task(target=read_and_forward_pty_output, fd=fd, id_=xtermid)
 
-    return render_template("xterm/index.html", id_=file.getXtermId())
+    return render_template("xterm/index.html", id_=xtermid)
 
 @blueprint.route("/ifile/<int:id_>")
 def index(id_):
 
     with VnVInputFile.find(id_) as file:
         if os.path.exists(file.get_working_directory()):
-            return process(file, dir=file.get_working_directory())
+            return process(file.getXtermId(), dir=file.get_working_directory())
         else:
-            return process(file, dir='/')
+            return process(file.getXtermId(), dir='/')
 
 
 @blueprint.route("/file/<int:id_>")
@@ -81,9 +81,17 @@ def index1(id_):
 
     with VnVFile.find(id_) as file:
         if os.path.exists(file.get_working_directory()):
-            return process(file, dir=file.get_working_directory())
+            return process(file.getXtermId(), dir=file.get_working_directory())
         else:
-            return process(file, dir='/')
+            return process(file.getXtermId(), dir='/')
+
+@blueprint.route("/main")
+def wrap():
+   return render_template("xterm/wrapper.html")
+
+@blueprint.route("/root")
+def index3():
+   return process("root", dir="/")
 
 
 @socketio.on("pty-input", namespace="/pty")
