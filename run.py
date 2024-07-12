@@ -51,10 +51,10 @@ elif args.profile == "docker":
     MyConfig.port = 5000
     MyConfig.THEIA = 1
     MyConfig.THEIA_PORT = 5001
-    MyConfig.THEIA_DIR="/home/ubuntu/gui/theia"
-    MyConfig.NODE_EXE="/home/ubuntu/versions/node/v20.2.0/bin/node"
+    MyConfig.THEIA_DIR="/gui/theia"
+    MyConfig.NODE_EXE="/versions/node/v20.2.0/bin/node"
     MyConfig.PARAVIEW = 1
-    MyConfig.PARAVIEW_DIR="/home/ubuntu/gui/scripts/paraview"
+    MyConfig.PARAVIEW_DIR="/gui/scripts/paraview"
     MyConfig.PARAVIEW_SESSION_PORT_START=5002
     MyConfig.PARAVIEW_SESSION_PORT_END = 5100
     MyConfig.NGINX_ADDRESS = args.host
