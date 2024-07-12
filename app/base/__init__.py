@@ -209,33 +209,39 @@ def paraview_route():
 
 @blueprint.route("/paraview/session/<int:uid>", methods=["POST"])
 def paraview_websocket(uid):
+
     if current_app.config["PARAVIEW"] == 0:
         return make_response(jsonify({"error": "paraview not configured"}), 200)
 
-    port, success = wait_for_paraview_to_start(uid)
-    return make_response(jsonify({"sessionURL": f"{current_app.config['NGINX_WSADDRESS']}/ws/{uid}"}), 200)
+    wait_for_paraview_to_start(uid)
 
+    nginx = current_app.config["NGINX_ADDRESS"]
+
+    if nginx is not None:
+        nginxp = "wss" if current_app.config["NGINX_PROTO"] else "ws"
+        ws = f"{nginxp}://{nginx}/ws/{uid}"
+    else:
+        ws = f"ws://0.0.0.0:{uid}/ws"
+
+    return make_response(jsonify({"sessionURL": ws}), 200)
 
 
 @blueprint.route('/theia')
 def theia_route():
     if current_app.config["THEIA"] == 1:
 
+        nginx = current_app.config["NGINX_ADDRESS"]
 
-        src=f"{current_app.config['NGINX_ADDRESS']}/theia_redirect"
+        if nginx is not None:
+            nginxp = "https" if current_app.config["NGINX_PROTO"] else "http"
+            src=f"{nginxp}://{nginx}/theia_redirect"
+        else:
+            src = f"http://0.0.0.0:{current_app.config['THEIA_PORT']}"
+
         if "wrapped" in request.args:
             return render_template("ide.html", src=src)
         else:
             return make_response(redirect(src), 302)
-
-    return render_error(200, "Eclipse Theia is not configured", nohome=True)
-
-
-@blueprint.route('/theia_redirect/')
-def theia_route_redirect():
-    if current_app.config["THEIA"] == 1:
-        src=f"http://0.0.0.0:{current_app.config['THEIA_PORT']}"
-        return make_response(redirect(src), 302)
 
     return render_error(200, "Eclipse Theia is not configured", nohome=True)
 

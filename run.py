@@ -9,6 +9,9 @@ from theia import launch_theia
 
 
 class MyConfig:
+    NGINX_ADDRESS=None
+    NGINX_SECURE=False
+
     DEBUG = False
     LOCAL = False
     basedir = os.path.abspath(os.path.dirname(__file__))
@@ -29,13 +32,14 @@ class MyConfig:
     PARAVIEW_SESSION_PORT_END=5100
     PARAVIEW_DATA_DIR="/"
 
-    NGINX_ADDRESS= f"http://{HOST}:{port}"
-    NGINX_WSADDRESS = f"ws://{HOST}:{port}"
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--profile", help="profile for debugging", default="default")
-parser.add_argument("--host", help="host address", default="http://0.0.0.0:5000")
+
+parser.add_argument("--nginx", help="host address")
+parser.add_argument("--nginx_secure", type=bool, help="host address is https", default=False)
+
 
 
 args, unknown = parser.parse_known_args()
@@ -59,7 +63,13 @@ elif args.profile == "docker":
     MyConfig.PARAVIEW_DIR="/gui/scripts/paraview"
     MyConfig.PARAVIEW_SESSION_PORT_START=5002
     MyConfig.PARAVIEW_SESSION_PORT_END = 5100
-    MyConfig.NGINX_ADDRESS = args.host
+
+    if args.nginx:
+        MyConfig.NGINX_ADDRESS = args.nginx
+        MyConfig.NGINX_PROTO = args.nginx_secure
+
+
+
 
 if __name__ == "__main__":
 
