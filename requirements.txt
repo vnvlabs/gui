@@ -15,7 +15,6 @@ ansi2html~=1.7.0
 Flask-Markdown~=0.3
 docker
 python-socketio[Client]
-flask-socketio
 flask-sock
 websocket-client
 asyncio

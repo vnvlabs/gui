@@ -1,6 +1,6 @@
 
 
-ARG FROM_IMAGE=ubuntu:latest
+ARG FROM_IMAGE=ubuntu:20.04
 FROM ${FROM_IMAGE}
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -52,5 +52,5 @@ ENV PARAVIEW_DIR=/gui/scripts/paraview
 ENV PVPYTHON=${PARAVIEW_DIR}/bin/pvpython
 
 WORKDIR ./gui
-ENTRYPOINT ["/gui/virt/bin/python","run.py","--profile","--docker"]
+ENTRYPOINT ["/gui/virt/bin/python","run.py","--profile","docker"]
 
