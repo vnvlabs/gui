@@ -213,7 +213,7 @@ def paraview_websocket(uid):
         return make_response(jsonify({"error": "paraview not configured"}), 200)
 
     port, success = wait_for_paraview_to_start(uid)
-    return make_response(jsonify({"sessionURL": f"ws://{current_app.config['NGINX_ADDRESS']}/ws/{uid}"}), 200)
+    return make_response(jsonify({"sessionURL": f"{current_app.config['NGINX_WSADDRESS']}/ws/{uid}"}), 200)
 
 
 

@@ -50,6 +50,7 @@ RUN cd gui && git submodule update --init
 RUN cd gui/python_api && mkdir -p build && cd build && cmake .. && make -j
 
 RUN cd gui && git pull
+RUN cd gui && git pull
 ENV PARAVIEW_DIR=/gui/scripts/paraview
 ENV PVPYTHON=${PARAVIEW_DIR}/bin/pvpython
 

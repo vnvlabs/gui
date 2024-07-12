@@ -29,7 +29,9 @@ class MyConfig:
     PARAVIEW_SESSION_PORT_END=5100
     PARAVIEW_DATA_DIR="/"
 
-    NGINX_ADDRESS= f"{HOST}:{port}"
+    NGINX_ADDRESS= f"http://{HOST}:{port}"
+    NGINX_WSADDRESS = f"ws://{HOST}:{port}"
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--profile", help="profile for debugging", default="default")
