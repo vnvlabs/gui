@@ -81,10 +81,10 @@ function show_file_reader(vnvfileid, filename, reader , type, options) {
                 },
                 error: function(xhr, status, error) {
                     if (type.length == 0 ) {
-                        $('#file_viewer_modal_body').html(error)
+                        $('#file_viewer_modal_body').html("Could not open file or directory.")
                         $('#file_viewer_modal').modal('show')
                     } else {
-                        $('#' + type).html(error)
+                        $('#' + type).html("Could not open file or directory")
                     }
                 },
 

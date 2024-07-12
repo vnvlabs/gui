@@ -33,10 +33,11 @@ def set_winsize(fd, row, col, xpix=0, ypix=0):
     fcntl.ioctl(fd, termios.TIOCSWINSZ, winsize)
 
 
-def read_and_forward_pty_output(fd, id_):
+def read_and_forward_pty_output(id_):
     max_read_bytes = 1024 * 20
     while True:
         socketio.sleep(0.01)
+        fd = CONNECTIONS[id_]["fd"]
         if fd:
             timeout_sec = 0
             (data_ready, _, _) = select.select([fd], [], [], timeout_sec)
@@ -61,7 +62,7 @@ def process(file):
             # store child fd and pid
             CONNECTIONS[file.getXtermId()] = {"fd": fd, "cd": cd, "o": []}
             set_winsize(fd, 50, 50)
-            socketio.start_background_task(target=read_and_forward_pty_output, fd=fd, id_=file.getXtermId())
+            socketio.start_background_task(target=read_and_forward_pty_output, id_=file.getXtermId())
 
     return render_template("xterm/index.html", id_=file.getXtermId())
 
