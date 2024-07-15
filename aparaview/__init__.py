@@ -104,16 +104,7 @@ mutex_lock = Lock()
 def start_paraview_server(filename):
 
     if filename is None:
-        if filename in PARAVIEW_FILE_SERVERS:
-            port = PARAVIEW_FILE_SERVERS[filename]
-
-            if paraview_sessions[port].isdone():
-                PARAVIEW_FILE_SERVERS.pop(filename)
-                paraview_sessions.pop(port)
-                print("Closed it Out:")
-            else:
-                return port, True
-
+        return current_app.config["PARAVIEW_PORT"] , True
 
     with mutex_lock:
         port = pick_paraview_port(filename)
@@ -143,6 +134,9 @@ def start_paraview_server(filename):
 def wait_for_paraview_to_start(port):
 
     start_time = time.time()
+
+    if port == current_app.config["PARAVIEW_PORT"]:
+        return port, True
 
     if port not in paraview_sessions:
         return port, False

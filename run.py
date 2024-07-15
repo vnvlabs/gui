@@ -29,6 +29,7 @@ class MyConfig:
 
     PARAVIEW = 0
     PARAVIEW_DIR=""
+    PARAVIEW_PORT = 5002
     PARAVIEW_SESSION_PORT_START=5003
     PARAVIEW_SESSION_PORT_END=5100
     PARAVIEW_DATA_DIR="/"
@@ -63,7 +64,8 @@ elif args.profile == "docker":
     MyConfig.NODE_EXE="/versions/node/v20.2.0/bin/node"
     MyConfig.PARAVIEW = 1
     MyConfig.PARAVIEW_DIR="/gui/scripts/paraview"
-    MyConfig.PARAVIEW_SESSION_PORT_START=5002
+    MyConfig.PARAVIEW_PORT=5002
+    MyConfig.PARAVIEW_SESSION_PORT_START=5003
     MyConfig.PARAVIEW_SESSION_PORT_END = 5100
 
 MyConfig.ADDRESS = args.address
@@ -71,7 +73,8 @@ MyConfig.SECURE = args.secure
 MyConfig.NGINX = args.nginx
 
 
-
+def launch_paraview(PARAVIEW_DIR, port, HOST):
+    os.system(f"{PARAVIEW_DIR}/bin/pvpython -u -m paraview.apps.visualizer --port {port} --host {HOST} --data / --timeout 500000")
 
 
 if __name__ == "__main__":
@@ -80,5 +83,6 @@ if __name__ == "__main__":
     app = create_app(app_config)
     if app_config.THEIA == 1:
         launch_theia(app_config.THEIA_DIR, os.getcwd(), app_config.HOST, app_config.THEIA_PORT, node=app_config.NODE_EXE)
-
+    if app_config.PARAVIEW == 1:
+        launch_paraview(app_config.PARAVIEW_DIR, app_config.PARAVIEW_PORT, app_config.HOST)
     socketio.run(app, debug=False, host=app_config.HOST, port=app_config.port)

@@ -26,15 +26,16 @@
             {% endfor %}
         </ul>
 
+        {% if not file.is_dir()%}
         <div class="" style="margin-right: 10px;">
-             <select type="text" class="form-control" id="existing" name="executable">
+             <select type="text" class="form-control" id="existing" name="executable" onchange="show_file_reader({{file.getVnVFileId()}},'{{file.url()}}',this.value,'{{modal}}')">
                 <!-- iterates through all possible executables -->
                 {%for r in file.list_readers() %}
-                    <option value="{{r}}" {%if r == file.reader %} selected {%endif%} onclick="show_file_reader({{file.getVnVFileId()}},'{{file.url()}}','{{r}}','{{modal}}')" >{{r}}</option>
+                    <option value="{{r}}" {%if r == file.reader %} selected {%endif%} >{{r}}</option>
                 {%endfor%}
              </select>
-
         </div>
+        {% endif %}
 
         <!--show_file_reader
           button: "Upload"
