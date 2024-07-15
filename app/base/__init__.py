@@ -13,7 +13,7 @@ from pygments.formatters.html import HtmlFormatter
 from werkzeug.utils import redirect
 from pygments.lexers import get_lexer_by_name
 
-from paraview import start_paraview_server, wait_for_paraview_to_start
+from aparaview import start_paraview_server, wait_for_paraview_to_start
 from . import blueprints
 
 from werkzeug.security import generate_password_hash, check_password_hash

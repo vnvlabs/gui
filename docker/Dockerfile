@@ -54,7 +54,8 @@ RUN echo "sdfsf" && cd gui && git pull
 ENV PARAVIEW_DIR=/gui/scripts/paraview
 ENV PVPYTHON=${PARAVIEW_DIR}/bin/pvpython
 
-RUN echo "ssdsddfo3sdf3fsdfsi55sdfsdsdfsdfsdfsdsdsdfsdfff"
+RUN echo "sdfo3sdf3fsdfsi55sdfsdsdfsdfsdfsdsdsdfsdfff"
+
 
 
 RUN cd gui && git pull
