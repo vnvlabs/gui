@@ -74,7 +74,7 @@ MyConfig.NGINX = args.nginx
 
 
 def launch_paraview(PARAVIEW_DIR, port, HOST):
-    os.system(f"{PARAVIEW_DIR}/bin/pvpython -u -m paraview.apps.visualizer --port {port} --host {HOST} --data / --timeout 500000")
+    os.system(f"{PARAVIEW_DIR}/bin/pvpython -u -m paraview.apps.visualizer --port {port} --host {HOST} --data / --timeout 500000 &")
 
 
 if __name__ == "__main__":
