@@ -221,7 +221,7 @@ def paraview_websocket(uid):
         nginxp = "wss" if current_app.config["NGINX_PROTO"] else "ws"
         ws = f"{nginxp}://{nginx}/ws/{uid}"
     else:
-        ws = f"ws://0.0.0.0:{uid}/ws"
+        ws = f"ws://{current_app.config['HOST']}:{uid}/ws"
 
     return make_response(jsonify({"sessionURL": ws}), 200)
 
@@ -236,7 +236,7 @@ def theia_route():
             nginxp = "https" if current_app.config["NGINX_PROTO"] else "http"
             src=f"{nginxp}://{nginx}/theia_redirect"
         else:
-            src = f"http://0.0.0.0:{current_app.config['THEIA_PORT']}"
+            src = f"http://{current_app.config['HOST']}:{current_app.config['THEIA_PORT']}"
 
         if "wrapped" in request.args:
             return render_template("ide.html", src=src)
