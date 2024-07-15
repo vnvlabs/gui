@@ -122,9 +122,6 @@ def wait_for_paraview_to_start(port):
     while paraview_sessions[port].returncode is None:
         if port in paraview_sessions_started:
             return port, True
-        time.sleep(4)
-        return port,True
-
 
         # Your loop code here
         current_time = time.time()
