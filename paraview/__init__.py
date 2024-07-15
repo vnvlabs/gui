@@ -129,6 +129,7 @@ def wait_for_paraview_to_start(port):
         if elapsed_time > 10:
             return port, False
         line = paraview_sessions[port].stdout.readline()
+        print("Line:" , line)
         if "Starting factory" in line.decode("ascii"):
             paraview_sessions_started[port] = True
             return port, True
