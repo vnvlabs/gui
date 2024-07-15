@@ -125,6 +125,7 @@ def wait_for_paraview_to_start(port):
         # Your loop code here
         current_time = time.time()
         elapsed_time = current_time - start_time
+        print(elapsed_time, elapsed_time > 10 )
         if elapsed_time > 10:
             return port, False
         line = paraview_sessions[port].stdout.readline()
