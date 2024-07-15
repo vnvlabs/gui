@@ -127,6 +127,7 @@ def start_paraview_server(filename):
 
 
 
+
         if filename is not None and os.path.exists(filename):
             f = os.path.abspath(filename)
             cmd += ["--load-file", f[1:]]
