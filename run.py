@@ -9,8 +9,9 @@ from theia import launch_theia
 
 
 class MyConfig:
-    NGINX_ADDRESS=None
-    NGINX_SECURE=False
+    ADDRESS='0.0.0.0'
+    SECURE=False
+    NGINX=False
 
     DEBUG = False
     LOCAL = False
@@ -37,8 +38,9 @@ class MyConfig:
 parser = argparse.ArgumentParser()
 parser.add_argument("--profile", help="profile for debugging", default="default")
 
-parser.add_argument("--nginx", help="host address")
-parser.add_argument("--nginx_secure", type=bool, help="host address is https", default=False)
+parser.add_argument("--address", help="host address", default='0.0.0.0')
+parser.add_argument("--secure", type=bool, help="host address is https", default=False)
+parser.add_argument("--nginx", type=bool, help="is this behind the nginx server", default=False)
 
 
 
@@ -64,9 +66,10 @@ elif args.profile == "docker":
     MyConfig.PARAVIEW_SESSION_PORT_START=5002
     MyConfig.PARAVIEW_SESSION_PORT_END = 5100
 
-    if args.nginx:
-        MyConfig.NGINX_ADDRESS = args.nginx
-        MyConfig.NGINX_PROTO = args.nginx_secure
+MyConfig.ADDRESS = args.address
+MyConfig.SECURE = args.secure
+MyConfig.NGINX = args.nginx
+
 
 
 
