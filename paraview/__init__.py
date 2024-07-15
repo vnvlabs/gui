@@ -122,7 +122,7 @@ def start_paraview_server(filename):
 
         print("Launching Paraview on Port ", port, filename)
         cmd = [
-           f"{current_app.config['PARAVIEW_DIR']}bin/pvpython", "-u", "-m", "paraview.apps.visualizer", "--host", "0.0.0.0", "--port", str(port), "--data", '/', "--timeout", "660000"
+           f"{current_app.config['PARAVIEW_DIR']}/bin/pvpython", "-u", "-m", "paraview.apps.visualizer", "--host", "0.0.0.0", "--port", str(port), "--data", '/', "--timeout", "660000"
         ]
 
 
