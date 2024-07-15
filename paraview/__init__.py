@@ -45,6 +45,7 @@ class ParaviewSession:
           current_time = time.time()
           elapsed_time = current_time - self.launchTime
           if elapsed_time > 10:
+                print("Returning due to timeout")
                 return self.port, True
 
           line = self.process.stdout.readline()
@@ -136,14 +137,14 @@ def start_paraview_server(filename):
 
         print("Launching Paraview on Port ", port, filename)
         cmd = [
-            "bin/pvpython", "-u", "-m", "paraview.apps.visualizer", "--host", current_app.config["HOST"], "--port", str(port), "--data", '/'
+            "bin/pvpython", "-u", "-m", "paraview.apps.visualizer", "--host", current_app.config["HOST"], "--port", str(port), "--data", '/', "--timeout", "660000"
         ]
 
         if filename is not None and os.path.exists(filename):
             f = os.path.abspath(filename)
             cmd += ["--load-file", f[1:]]
 
-        paraview_sessions[port] = ParaviewSession(port, subprocess.Popen(cmd, cwd=current_app.config["PARAVIEW_DIR"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT))
+        paraview_sessions[port] = ParaviewSession(port, subprocess.Popen(cmd, env={"PYTHONUNBUFFERED":"1"}, cwd=current_app.config["PARAVIEW_DIR"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT))
 
         PARAVIEW_FILE_SERVERS[filename] = port
 
