@@ -18,43 +18,28 @@ extract_dir = "<dir>"  # Replace <dir> with the actual directory
 paraview_sessions = {}
 
 class ParaviewSession:
-    def __init__(self, port, subpro):
-        self.process = subpro
+    def __init__(self, port, cmd):
+
+        #self.process = subprocess.Popen(cmd, env={"PYTHONUNBUFFERED":"1"}, cwd=current_app.config["PARAVIEW_DIR"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        self.process = os.system(' '.join(cmd) + " &")
         self.started = False
         self.launchTime = time.time()
         self.port = port
         self.isstarted = False
 
     def isdone(self):
-        return  self.process.poll() is not None
+        False
+        #return  self.process.poll() is not None
 
-
-    def launched(self):
-        t = time.time()
-        if t - self.launchTime > 10:
-            return self.port,True
-        else:
-            return self.wait_till_launched()
 
     def wait_till_launched(self):
 
         while not self.isdone():
           if self.isstarted:
               return self.port, True
-
-          current_time = time.time()
-          elapsed_time = current_time - self.launchTime
-          if elapsed_time > 10:
-                print("Returning due to timeout")
-                return self.port, True
-
-          line = self.process.stdout.readline()
-          print("Line:", line)
-          if "Starting factory" in line.decode("ascii"):
-              self.isstarted = True
-              return self.port, True
-          else:
-                time.sleep(2)
+          time.sleep(5)
+          self.isstarted = True
+          return self.port, True
 
 
 # Function to download the file
@@ -137,14 +122,16 @@ def start_paraview_server(filename):
 
         print("Launching Paraview on Port ", port, filename)
         cmd = [
-            "bin/pvpython", "-u", "-m", "paraview.apps.visualizer", "--host", current_app.config["HOST"], "--port", str(port), "--data", '/', "--timeout", "660000"
+            "{current_app.config['PARAVIEW_DIR']}bin/pvpython", "-u", "-m", "paraview.apps.visualizer", "--host", "0.0.0.0", "--port", str(port), "--data", '/', "--timeout", "660000"
         ]
+
+
 
         if filename is not None and os.path.exists(filename):
             f = os.path.abspath(filename)
             cmd += ["--load-file", f[1:]]
 
-        paraview_sessions[port] = ParaviewSession(port, subprocess.Popen(cmd, env={"PYTHONUNBUFFERED":"1"}, cwd=current_app.config["PARAVIEW_DIR"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT))
+        paraview_sessions[port] = ParaviewSession(port, cmd)
 
         PARAVIEW_FILE_SERVERS[filename] = port
 
