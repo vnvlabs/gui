@@ -98,8 +98,7 @@ def start_paraview_server(filename):
 
     print("Launching Paraview on Port ", port, filename)
     cmd = [
-        "bin/pvpython", "-m", "paraview.apps.visualizer", "--host", current_app.config["HOST"], "--port", str(port), "--data",
-        current_app.config["PARAVIEW_DATA_DIR"], "--timeout", str(600000)
+        "bin/pvpython", "-m", "paraview.apps.visualizer", "--host", current_app.config["HOST"], "--port", str(port), "--data", '/'
     ]
 
     if filename is not None and os.path.exists(filename):
