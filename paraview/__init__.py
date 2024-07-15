@@ -131,9 +131,11 @@ def wait_for_paraview_to_start(port):
         line = paraview_sessions[port].stdout.readline()
         print("Line:" , line)
         if "Starting factory" in line.decode("ascii"):
+            print("HERE")
             paraview_sessions_started[port] = True
             return port, True
         else:
+            print("Node")
             time.sleep(2)
             pass
 
