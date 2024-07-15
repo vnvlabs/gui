@@ -16,7 +16,7 @@ tar_path = "pv.tar.gz"
 extract_dir = "<dir>"  # Replace <dir> with the actual directory
 
 paraview_sessions = {}
-
+paraview_sessions_started = {}
 
 # Function to download the file
 def download_file(url, path):
@@ -106,17 +106,25 @@ def start_paraview_server(filename):
         f = os.path.abspath(filename)
         cmd += ["--load-file", f[1:]]
 
+    paraview_sessions_started.pop(port,None)
     paraview_sessions[port] = subprocess.Popen(cmd, cwd=current_app.config["PARAVIEW_DIR"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, preexec_fn=preexec_function)
 
     PARAVIEW_FILE_SERVERS[filename] = port
 
     return port,True
 
+
+
 def wait_for_paraview_to_start(port):
 
     start_time = time.time()
 
+
     while paraview_sessions[port].returncode is None:
+
+        if port in paraview_sessions_started:
+            return port, True
+
         # Your loop code here
         current_time = time.time()
         elapsed_time = current_time - start_time
@@ -125,6 +133,8 @@ def wait_for_paraview_to_start(port):
 
         line = paraview_sessions[port].stdout.readline()
         if "Starting factory" in line.decode("ascii"):
+            paraview_sessions_started[port] = True
+
             return port, True
         else:
             print(line)
