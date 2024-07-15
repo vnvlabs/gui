@@ -117,7 +117,6 @@ def start_paraview_server(filename):
 def wait_for_paraview_to_start(port):
 
     start_time = time.time()
-    print("Waiting here")
 
     while paraview_sessions[port].returncode is None:
         if port in paraview_sessions_started:
@@ -128,9 +127,7 @@ def wait_for_paraview_to_start(port):
         elapsed_time = current_time - start_time
         if elapsed_time > 10:
             return port, False
-        print("SDFSDF")
         line = paraview_sessions[port].stdout.readline()
-        print("sdfsdfSDFSDF", line)
         if "Starting factory" in line.decode("ascii"):
             paraview_sessions_started[port] = True
             return port, True
