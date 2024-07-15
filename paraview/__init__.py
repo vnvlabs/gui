@@ -106,7 +106,7 @@ def start_paraview_server(filename):
         cmd += ["--load-file", f[1:]]
 
     paraview_sessions_started.pop(port,None)
-    paraview_sessions[port] = subprocess.Popen(cmd, cwd=current_app.config["PARAVIEW_DIR"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, preexec_fn=preexec_function)
+    paraview_sessions[port] = subprocess.Popen(cmd, cwd=current_app.config["PARAVIEW_DIR"], shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     PARAVIEW_FILE_SERVERS[filename] = port
 
@@ -120,9 +120,9 @@ def wait_for_paraview_to_start(port):
 
 
     while paraview_sessions[port].returncode is None:
-
         if port in paraview_sessions_started:
             return port, True
+
 
         # Your loop code here
         current_time = time.time()
@@ -133,10 +133,8 @@ def wait_for_paraview_to_start(port):
         line = paraview_sessions[port].stdout.readline()
         if "Starting factory" in line.decode("ascii"):
             paraview_sessions_started[port] = True
-
             return port, True
         else:
-            print(line)
             pass
 
     return port, False
