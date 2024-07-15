@@ -224,7 +224,7 @@ def paraview_websocket(uid):
                 ws = f"{p}://{address}/ws/{uid}"
         else:
                 ws = f"{p}://{address}:{uid}/ws"
-
+        print("Returning WEBSOCKET", ws)
         return make_response(jsonify({"sessionURL": ws}), 200)
     else:
         return make_response(jsonify({"error" : "Paraview Failed To Start"}),200)

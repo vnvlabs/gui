@@ -16,7 +16,45 @@ tar_path = "pv.tar.gz"
 extract_dir = "<dir>"  # Replace <dir> with the actual directory
 
 paraview_sessions = {}
-paraview_sessions_started = {}
+
+class ParaviewSession:
+    def __init__(self, port, subpro):
+        self.process = subpro
+        self.started = False
+        self.launchTime = time.time()
+        self.port = port
+        self.isstarted = False
+
+    def isdone(self):
+        return  self.process.poll() is not None
+
+
+    def launched(self):
+        t = time.time()
+        if t - self.launchTime > 10:
+            return self.port,True
+        else:
+            return self.wait_till_launched()
+
+    def wait_till_launched(self):
+
+        while not self.isdone():
+          if self.isstarted:
+              return self.port, True
+
+          current_time = time.time()
+          elapsed_time = current_time - self.launchTime
+          if elapsed_time > 10:
+                return self.port, True
+
+          line = self.process.stdout.readline()
+          print("Line:", line)
+          if "Starting factory" in line.decode("ascii"):
+              self.isstarted = True
+              return self.port, True
+          else:
+                time.sleep(2)
+
 
 # Function to download the file
 def download_file(url, path):
@@ -47,6 +85,8 @@ PARAVIEW_FILE_SERVERS = {}
 
 PARAVIEW_MAX = 20
 
+
+
 def preexec_function():
     import ctypes
     libc = ctypes.CDLL('libc.so.6')
@@ -61,7 +101,7 @@ def pick_paraview_port(filename):
         if i in paraview_sessions:
 
             # If was used but now closed, then delete it.
-            if paraview_sessions[i].poll() is not None:
+            if paraview_sessions[i].isdone() is not None:
                 paraview_sessions.pop(i)
                 port = i
                 break
@@ -81,34 +121,31 @@ def start_paraview_server(filename):
         if filename in PARAVIEW_FILE_SERVERS:
             port = PARAVIEW_FILE_SERVERS[filename]
 
-            if paraview_sessions[port].poll() is not None:
+            if paraview_sessions[port].isdone():
                 PARAVIEW_FILE_SERVERS.pop(filename)
                 paraview_sessions.pop(port)
-                print("Closed it Tou:")
+                print("Closed it Out:")
             else:
                 return port, True
 
 
     with mutex_lock:
         port = pick_paraview_port(filename)
+        if port is None:
+            return port, False
 
+        print("Launching Paraview on Port ", port, filename)
+        cmd = [
+            "bin/pvpython", "-u", "-m", "paraview.apps.visualizer", "--host", current_app.config["HOST"], "--port", str(port), "--data", '/'
+        ]
 
-    if port is None:
-        return port, False
+        if filename is not None and os.path.exists(filename):
+            f = os.path.abspath(filename)
+            cmd += ["--load-file", f[1:]]
 
-    print("Launching Paraview on Port ", port, filename)
-    cmd = [
-        "bin/pvpython", "-u", "-m", "paraview.apps.visualizer", "--host", current_app.config["HOST"], "--port", str(port), "--data", '/'
-    ]
+        paraview_sessions[port] = ParaviewSession(port, subprocess.Popen(cmd, cwd=current_app.config["PARAVIEW_DIR"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT))
 
-    if filename is not None and os.path.exists(filename):
-        f = os.path.abspath(filename)
-        cmd += ["--load-file", f[1:]]
-
-    paraview_sessions_started.pop(port,None)
-    paraview_sessions[port] = subprocess.Popen(cmd, cwd=current_app.config["PARAVIEW_DIR"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-
-    PARAVIEW_FILE_SERVERS[filename] = port
+        PARAVIEW_FILE_SERVERS[filename] = port
 
     return port,True
 
@@ -118,26 +155,7 @@ def wait_for_paraview_to_start(port):
 
     start_time = time.time()
 
-    while paraview_sessions[port].returncode is None:
-        if port in paraview_sessions_started:
-            return port, True
+    if port not in paraview_sessions:
+        return port, False
 
-        # Your loop code here
-        current_time = time.time()
-        elapsed_time = current_time - start_time
-        print(elapsed_time, elapsed_time > 10 )
-        if elapsed_time > 10:
-            return port, False
-        line = paraview_sessions[port].stdout.readline()
-        print("Line:" , line)
-        if "Starting factory" in line.decode("ascii"):
-            print("HERE")
-            paraview_sessions_started[port] = True
-            return port, True
-        else:
-            print("Node")
-            time.sleep(2)
-            pass
-
-    return port, False
-
+    return paraview_sessions[port].wait_till_launched()
