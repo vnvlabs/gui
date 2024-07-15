@@ -213,19 +213,21 @@ def paraview_websocket(uid):
     if current_app.config["PARAVIEW"] == 0:
         return make_response(jsonify({"error": "paraview not configured"}), 200)
 
-    wait_for_paraview_to_start(uid)
+    port, success =  wait_for_paraview_to_start(uid)
+    if success:
 
-    address = current_app.config["ADDRESS"]
-    p = "wss" if current_app.config["SECURE"] else "ws"
-    nginx = current_app.config["NGINX"]
+        address = current_app.config["ADDRESS"]
+        p = "wss" if current_app.config["SECURE"] else "ws"
+        nginx = current_app.config["NGINX"]
 
-    if nginx:
-            ws = f"{p}://{address}/ws/{uid}"
+        if nginx:
+                ws = f"{p}://{address}/ws/{uid}"
+        else:
+                ws = f"{p}://{address}:{uid}/ws"
+
+        return make_response(jsonify({"sessionURL": ws}), 200)
     else:
-            ws = f"{p}://{address}:{uid}/ws"
-
-    return make_response(jsonify({"sessionURL": ws}), 200)
-
+        return make_response(jsonify({"error" : "Paraview Failed To Start"}),200)
 
 @blueprint.route('/theia')
 def theia_route():
