@@ -11,7 +11,7 @@
     <div style="flex:1; font-size:35px; margin-left:10px; font-weight:bold;">{{job.getName()}}</div>
     <div style="display:flex; justify-content:flex-end">
 
-        <button class="{{job.getId()|safe}}_rn btn btn-primary" style="margin-right:10px;" {%if not job.running()%} hidden {%endif%} onclick='refresh_exe_job("{{job.getId()}}")'>Refresh</button>
+        <button class="{{job.getId()|safe}}_rn btn btn-primary" style="margin-right:10px;" {%if not job.running()%} hidden {%endif%} onclick='refresh_aexe_job("{{job.getId()}}")'>Refresh</button>
 
         <!--
           button: "Cancel"
@@ -72,7 +72,7 @@
 {% if job.running() %}
 <script>
     $(document).ready(function() {
-      refresh_exe_job('{{job.getId()}}')
+      refresh_aexe_job('{{job.getId()}}')
     })
 
 </script>{% endif %}
@@ -92,7 +92,7 @@
     }
 
 
-    function refresh_exe_job(jobId) {
+    function refresh_aexe_job(jobId) {
 
         $.get("/inputfiles/refresh_job/{{file.id_}}/" + jobId , function(data) {
 
@@ -100,7 +100,7 @@
             if (sta != "running") {
                 $("." + jobId + "_nn" ).removeAttr("hidden")
                 $("." + jobId + "_rn" ).attr("hidden","")
-                $('#stdout_' + jobId).html(data["stdout"])
+                $('#astdout_' + jobId).html(data["stdout"])
                 if (data["exitcode"] == 0) {
                     $('#astatus_' + jobId).html("Complete")
                     $('#astatus_' + jobId).removeClass()
@@ -111,7 +111,7 @@
                     $('#astatus_' + jobId).addClass("badge badge-danger")
                 }
             } else {
-                setTimeout(function() { refresh_exe_job(jobId)} , 2000)
+                setTimeout(function() { refresh_aexe_job(jobId)} , 2000)
             }
         })
     }

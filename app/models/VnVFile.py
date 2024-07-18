@@ -83,7 +83,7 @@ class ProvFileWrapper:
         return json.dumps(json_to_jstree_json(json.loads(self.text())))
 
     def get_comments(self):
-        return json.loads(self.text()).get("comments","# sdfsdfs\n\n Hello there people. ")
+        return json.loads(self.text()).get("comments","")
 
     def copy(self):
         return self.file.copy

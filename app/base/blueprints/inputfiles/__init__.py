@@ -252,7 +252,6 @@ def delete_job(id_, jobid):
 @blueprint.route('/refresh_job/<int:id_>/<jobid>', methods=["GET"])
 def refresh_job(id_, jobid):
     with VnVInputFile.find(id_) as file:
-        file.refresh_job(jobid);
         return make_response(jsonify(file.refresh_job(jobid)), 200)
     return render_error(jsonify({"stdout": "no file found", "errorcode": 100}), 200)
 

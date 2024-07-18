@@ -66,6 +66,7 @@ class VnVJob:
     def refresh(self):
         if self.running():
             return { "status" : "running" }
+
         return {
             "exitcode" : self.exitcode(),
             "stdout" : self.stdout()
