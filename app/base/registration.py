@@ -5,7 +5,7 @@ import time
 vnv_plugins = {}
 vnv_reports = {}
 vnv_executables = {}
-vnv_last = [time.time()]
+vnv_last = [0]
 
 def load_registrations():
 #Load the users home registration file.
