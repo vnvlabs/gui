@@ -341,7 +341,7 @@ class VnVInputFile:
             s["schema"] = {"dump": True, "quit": True}
             path = self.connection.write(json.dumps(s), None)
             aa = getSpecDumpCommand(path)
-            res = self.connection.execute(aa, env={**os.environ, "VNV_INPUT_FILE": path})
+            res = self.connection.execute(aa, env={**os.environ, "VNV_INPUT_FILE": path, "VNV_ON" : 1})
             a = res.find("===START SCHEMA DUMP===") + len("===START SCHEMA DUMP===")
             b = res.find("===END SCHEMA_DUMP===")
             
