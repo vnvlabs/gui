@@ -69,42 +69,6 @@ def load_blueprint(name, directory):
     blueprint.register_blueprint(ALL_BLUEPRINTS[name].blueprint)
 
 
-def updateBranding(config, pd):
-    
-    if "blueprints" in config:
- 
-        if config.get("exclude_parent_blueprints", False):
-               for k in CUSTOM_BLUEPRINTS:
-                   ALL_BLUEPRINTS.pop(k)
-            
-        bp = config["blueprints"]
-        for k, v in bp.items():
-            temp_bp_dir = os.path.join(VNV_DIR_PATH, "temp", "blueprints", k)
-            if os.path.exists(temp_bp_dir):
-                shutil.rmtree(temp_bp_dir)
-
-            print("Adding Additional module ", k)
-            shutil.copytree(os.path.join(pd, v), temp_bp_dir, dirs_exist_ok=True)
-            threading.Event().wait(1)
-            ALL_BLUEPRINTS[k] = importlib.import_module("app.temp.blueprints." + k)
-            CUSTOM_BLUEPRINTS.append(k)
-            
-    if blueprints.HAS_VNV:
-        
-        if config.get("exclude_parent_excutables", False):
-            blueprints.inputfiles.vnv_executables = {}
-
-        for key, value in config.get("executables", {}).items():
-                        
-            blueprints.inputfiles.vnv_executables[key] = {
-                "filename" :  os.path.join(pd, os.path.expandvars(value["filename"])),
-                "description" : value.get("description", "No Description Available"),
-                "package" :  value.get("package", "VnV")
-            }
-
-        blueprints.files.load_defaults(config.get("reports", {}),  config.get("exclude_parent_reports", False))
-
-
 FIRST_TIME = None
 if FIRST_TIME is None:
     FIRST_TIME = False
@@ -152,16 +116,26 @@ if FIRST_TIME is None:
     #Load the users home registration file. 
     global_reg_file = os.path.expanduser("~/.vnv")
     try:
-     with open(global_reg_file,'r') as f:
+     with (open(global_reg_file,'r') as f):
         reg = json.load(f)
-        
-        for package,filename in reg["gui"].items():
-            try:  
-                with open(filename,'r') as w:
-                   updateBranding(json.load(w), os.path.dirname(filename))
-            except Exception as e:
-                print(e)
-                print("Failed to load declared config file: ", filename )
+
+        #Process all the files that have been added
+        for name, value in reg.get("executables",{}).items():
+            filename = value["filename"]
+            pd = os.path.dirname(filename)
+            full_filename =  os.path.join(pd, os.path.expandvars(filename))
+            blueprints.inputfiles.vnv_executables[name] = {
+                "filename": full_filename,
+                "description": value.get("description", "No Description Available"),
+                "package": name
+            }
+
+        for name, value in reg.get("plugins",{}).items():
+            blueprints.inputfiles.vnv_plugins[name] = value
+
+        for name, value in reg.get("reports",{}).items():
+            blueprints.files.reports[name] = value
+
     except:
         pass
 

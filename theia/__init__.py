@@ -7,7 +7,7 @@ def preexec_function():
     libc = ctypes.CDLL('libc.so.6')
     libc.prctl(1, signal.SIGTERM)
 
-def launch_theia(theia_directory, logs_directory, hostname, port, node="node"):
+def launch_theia(theia_directory, logs_directory, hostname, port, node="node", home="/"):
     if os.path.exists(f"{theia_directory}/browser-app/src-gen/backend/main.js"):
 
         curr_dir = os.getcwd()
@@ -19,7 +19,8 @@ def launch_theia(theia_directory, logs_directory, hostname, port, node="node"):
             '/',
             '--port', str(port),
             '--hostname=' + hostname,
-            f'--plugins=local-dir:{theia_directory}/browser-app/plugins'
+            f'--plugins=local-dir:{theia_directory}/browser-app/plugins',
+            home
         ]
 
         log_file = f'{logs_directory}/theia_logs'

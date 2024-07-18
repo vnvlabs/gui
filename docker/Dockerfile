@@ -19,7 +19,6 @@ RUN apt-get -y update && apt-get -y upgrade && apt-get -y install \
     python3-virtualenv \
     gsl-bin \
     libgsl-dev \
-    cmake \ 
     swig \
     jwm \
     libglapi-mesa pkg-config libsecret-1-dev \
@@ -54,7 +53,7 @@ RUN echo "sdfsf" && cd gui && git pull
 ENV PARAVIEW_DIR=/gui/scripts/paraview
 ENV PVPYTHON=${PARAVIEW_DIR}/bin/pvpython
 
-RUN echo "sdfo3sdf3fsdfsi55sdfsdsdfsdfsdfsdsdsdfsddtr4354f"
+RUN echo "sdfo3sdf3fsdfsi55sdfsdsdfr4354f"
 
 
 

@@ -297,10 +297,15 @@ def unique_files():
     ]
 
 
+reports = {}
+def list_registered_reports():
+    return reports
+
 def template_globals(globs):
     viewers.template_globals(globs)
     globs["files"] = VnVFile.FILES
     globs["uniquefiles"] = unique_files
+    globs["registered_reports"] = list_registered_reports
 
 
 def load_defaults(CONFIG, exclude):

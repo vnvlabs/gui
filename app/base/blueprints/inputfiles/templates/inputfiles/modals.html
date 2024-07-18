@@ -39,7 +39,7 @@
                         <select type="text" class="form-control" id="existing" name="executable">
                             <!-- iterates through all possible executables -->
                             {%for r in list_vnv_executables() %}
-                            <option value="{{r[0]}}" {%if loop.index0 == 0 %} selected {%endif%}  data-message="{{r[1]}}" >{{r[0]}}</option>
+                            <option value="{{r[0]}}" {%if loop.index0 == 0 %} selected {%endif%}  data-message="{{r[1]}}" >{{r[2]}}: {{r[0]}}</option>
                             {%endfor%}
                         </select>
                         <small id="application_description"> {{list_vnv_executables()[0][1]}} </small>

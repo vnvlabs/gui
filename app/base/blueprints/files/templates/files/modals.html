@@ -3,23 +3,29 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="new_file_modal_label">Load A New VnV Report</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                        aria-hidden="true">&times;</span></button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span></button>
             </div>
 
-            <div style="padding:20px;">
-                Enter the required information below to load an existing VnV Report. 
+            <div>
+                     <label for="report-select">Select a report to load:</label>
+                    <select id="report-select" name="report" onchange="updateFields(this)">
+                        <option value="">Enter The Path to your path below, or select from one of the reports we found on the system.</option>
+                        {% for key, value in list_registered_reports().items() %}
+                            <option value="{{ key }}" data-value="{{ value }}">{{ key }} ({{value}})</option>
+                        {% endfor %}
+                    </select>
             </div>
 
             <div class="modal-body">
                 <form id="new_file_form" action="/files/new" method="post">
-                     <div id="name-group" class="form-group">
+                    <div id="name-group" class="form-group">
                         <label for="name" class="col-form-label">Name</label>
-                        <input type="text" class="form-control" name="name" id="name" value="Untitled Report">
+                        <input id="new-report-name" type="text" class="form-control" name="name" id="name" value="Untitled Report">
                         <small>This name will be used to identify the report in menus and titles.</small>
-                     </div>
+                    </div>
 
-                    <div class="autocomplete form-group" style="width:100%" >
+                    <div class="autocomplete form-group" style="width:100%">
                         <label id="reader_label" for="inputfilename" class="col-form-label">FileName For The VnV Output File</label>
                         <input id="inputfilename" type="text" class="form-control" name="filename" autocomplete="off" placeholder="" value="">
                     </div>
@@ -27,7 +33,7 @@
                     <script>
                         $( document ).ready(function() {
 
-                
+
                             autocomplete(document.getElementById('inputfilename'), function() {
                                 return "&context=" + $('#reader').val();
                             })
@@ -48,8 +54,8 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="file_viewer_modal_label">View File </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                        aria-hidden="true">&times;</span></button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span></button>
             </div>
             <div id="file_viewer_modal_body" class="modal-body" style="display:flex; justify-content:center">
 
@@ -59,40 +65,44 @@
     </div>
 </div>
 
-<div id="data-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="data-modal-label"
-     aria-hidden="true">
+<div id="data-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="data-modal-label" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document" style="max-width:90%">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="data-modal-label">Data Explorer</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body" id="data-modal-body">
-            </div>
+            <div class="modal-body" id="data-modal-body"></div>
         </div>
     </div>
 </div>
 
 
-<div id="comm-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="comm-modal-label"
-     aria-hidden="true">
+<div id="comm-modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="comm-modal-label" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="comm-modal-label">Injection Point Communication Map</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body" id="comm-modal-body">
-                <div id="commmap-chart" ></div>
+                <div id="commmap-chart"></div>
             </div>
         </div>
     </div>
 </div>
 
 
-
 <script>
-
+    function updateFields(selectElement) {
+        var selectedKey = selectElement.options[selectElement.selectedIndex].value;
+        var selectedValue = selectElement.options[selectElement.selectedIndex].getAttribute('data-value');
+        document.getElementById('new-report-name').value = selectedKey;
+        document.getElementById('inputfilename').value = selectedValue;
+    }
 </script>
+

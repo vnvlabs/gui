@@ -12,6 +12,8 @@ from pathlib import Path
 import shlex
 import paramiko
 from ansi2html import Ansi2HTMLConverter
+from flask import current_app
+
 from app.models.RemoteFileInfo import get_file_name
 from datetime import datetime
 
@@ -469,6 +471,7 @@ class VnVLocalConnection:
         return path
 
     def home(self):
+        return current_app.config["HOME"]
         return os.path.expanduser("~")
 
     def root(self):

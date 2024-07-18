@@ -336,6 +336,7 @@ def list_vnv_executables():
     return [[k, v["description"], v["package"]] for k, v in vnv_executables.items()]
 
 
+
 def template_globals(globs):
     globs["inputfiles"] = VnVInputFile.FILES
     globs["list_vnv_executables"] = list_vnv_executables

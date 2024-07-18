@@ -13,6 +13,8 @@ class MyConfig:
     SECURE=False
     NGINX=False
 
+    HOME=os.environ.get("VNV_HOME_PATH",os.path.expanduser("~"))
+
     DEBUG = False
     LOCAL = False
     basedir = os.path.abspath(os.path.dirname(__file__))
@@ -73,8 +75,8 @@ MyConfig.SECURE = args.secure
 MyConfig.NGINX = args.nginx
 
 
-def launch_paraview(PARAVIEW_DIR, port, HOST):
-    os.system(f"{PARAVIEW_DIR}/bin/pvpython -u -m paraview.apps.visualizer --port {port} --host {HOST} --data / --timeout 500000 &")
+def launch_paraview(PARAVIEW_DIR, port, HOST, home="/"):
+    os.system(f"{PARAVIEW_DIR}/bin/pvpython -u -m paraview.apps.visualizer --port {port} --host {HOST} --data {home} --timeout 500000 &")
 
 
 if __name__ == "__main__":
@@ -82,7 +84,8 @@ if __name__ == "__main__":
     app_config = MyConfig()
     app = create_app(app_config)
     if app_config.THEIA == 1:
-        launch_theia(app_config.THEIA_DIR, os.getcwd(), app_config.HOST, app_config.THEIA_PORT, node=app_config.NODE_EXE)
+        launch_theia(app_config.THEIA_DIR, os.getcwd(), app_config.HOST, app_config.THEIA_PORT, node=app_config.NODE_EXE, home=app_config.HOME)
     if app_config.PARAVIEW == 1:
-        launch_paraview(app_config.PARAVIEW_DIR, app_config.PARAVIEW_PORT, app_config.HOST)
+        launch_paraview(app_config.PARAVIEW_DIR, app_config.PARAVIEW_PORT, app_config.HOST, home=app_config.HOME)
+
     socketio.run(app, debug=False, host=app_config.HOST, port=app_config.port)
