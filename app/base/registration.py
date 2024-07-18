@@ -16,7 +16,7 @@ def load_registrations():
 #Load the users home registration file.
     global_reg_file = os.path.expanduser("~/.vnv")
     try:
-     with (open(global_reg_file,'r') as f):
+     with open(global_reg_file,'r') as f:
         reg = json.load(f)
 
         #Process all the files that have been added
