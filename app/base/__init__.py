@@ -18,6 +18,7 @@ from . import blueprints
 
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.Directory import VNV_DIR_PATH
+from app.base.registration import load_registrations
 from .utils.utils import render_error
 
 
@@ -104,40 +105,9 @@ if FIRST_TIME is None:
         except:
             print("Could not load moose")
 
-        blueprints.inputfiles.vnv_executables["Custom"] = {
-            "filename" : "",
-            "description" : "Custom Path",
-            "package" : ""   
-        }
 
-    
-    
 
-    #Load the users home registration file. 
-    global_reg_file = os.path.expanduser("~/.vnv")
-    try:
-     with (open(global_reg_file,'r') as f):
-        reg = json.load(f)
-
-        #Process all the files that have been added
-        for name, value in reg.get("executables",{}).items():
-            filename = value["filename"]
-            pd = os.path.dirname(filename)
-            full_filename =  os.path.join(pd, os.path.expandvars(filename))
-            blueprints.inputfiles.vnv_executables[name] = {
-                "filename": full_filename,
-                "description": value.get("description", "No Description Available"),
-                "package": name
-            }
-
-        for name, value in reg.get("plugins",{}).items():
-            blueprints.inputfiles.vnv_plugins[name] = value
-
-        for name, value in reg.get("reports",{}).items():
-            blueprints.files.reports[name] = value
-
-    except:
-        pass
+    load_registrations()
 
     from app.base.blueprints import notifications
     from app.base.blueprints import browser

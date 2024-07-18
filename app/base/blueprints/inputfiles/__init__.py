@@ -16,14 +16,14 @@ from app.Directory import STATIC_FILES_DIR
 from app.models import VnVFile
 from app.models.VnVInputFile import VnVInputFile
 from ..files import get_file_from_runinfo
+from app.base.registration import list_vnv_executables, vnv_executables
 from ...utils.utils import render_error
 from pygments import highlight
 from pygments.formatters.html import HtmlFormatter
 from werkzeug.utils import redirect
 from pygments.lexers import guess_lexer, guess_lexer_for_filename, get_lexer_by_name
 
-vnv_executables = {}
-vnv_plugins = {}
+
 
 blueprint = Blueprint(
     'inputfiles',
@@ -332,8 +332,6 @@ def execute(id_):
         return render_error(501, "Error Loading File")
 
 
-def list_vnv_executables():
-    return [[k, v["description"], v["package"]] for k, v in vnv_executables.items()]
 
 
 

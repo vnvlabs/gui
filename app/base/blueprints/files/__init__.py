@@ -13,6 +13,7 @@ import socket
 from app import Directory
 from . import viewers
 from app.models.VnVFile import VnVFile
+from ...registration import list_registered_reports
 from ...utils.utils import render_error
 
 blueprint = Blueprint(
@@ -297,15 +298,11 @@ def unique_files():
     ]
 
 
-reports = {}
-def list_registered_reports():
-    return reports
-
 def template_globals(globs):
     viewers.template_globals(globs)
     globs["files"] = VnVFile.FILES
     globs["uniquefiles"] = unique_files
-    globs["registered_reports"] = list_registered_reports
+    globs["list_registered_reports"] = list_registered_reports
 
 
 def load_defaults(CONFIG, exclude):
