@@ -39,10 +39,9 @@
                         <select type="text" class="form-control" id="existing" name="executable">
                             <!-- iterates through all possible executables -->
                             {%for r in list_vnv_executables() %}
-                            <option value="{{r[0]}}" {%if loop.index0 == 0 %} selected {%endif%}  data-message="{{r[1]}}" >{{r[0]}}</option>
+                            <option value="{{r[0]}}" {%if loop.index0 == 0 %} selected {%endif%}  data-message="{{r[1]}}" >{{r[0]}}: {{r[1]}}</option>
                             {%endfor%}
                         </select>
-                        <small id="application_description"> {{list_vnv_executables()[0][1]}} </small>
                     </div>
                      <!-- 
                       input text field: "VnV Application Path"
@@ -59,7 +58,6 @@
 
                             $('#existing').on('change', function() {
                                 $('#inputfile_custom').toggle($(this).val() === "Custom")
-                                $('#application_description').html($(this).find(":selected").data("message"));
                             })
                             $('#inputfile_custom').toggle($('#existing').val() === "Custom")
                         });

@@ -12,7 +12,7 @@
                     <select id="report-select" name="report" onchange="updateFields(this)">
                         <option value="">Enter The Path to your path below, or select from one of the reports we found on the system.</option>
                         {% for key, value in list_registered_reports().items() %}
-                            <option value="{{ key }}" data-value="{{ value }}">{{ key }} ({{value}})</option>
+                            <option value="{{ key }}" data-value="{{ value }}">{{ key }}: ({{value}})</option>
                         {% endfor %}
                     </select>
             </div>
