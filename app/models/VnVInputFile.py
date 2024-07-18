@@ -13,6 +13,7 @@ from ansi2html import Ansi2HTMLConverter
 from flask import jsonify, render_template
 from jsonschema.exceptions import ErrorTree, ValidationError, SchemaError
 
+from app.base.registration import vnv_plugins, list_vnv_plugins
 from app.models import VnV
 from app.models.VnVConnection import VnVLocalConnection, VnVConnection, connectionFromJson
 from app.models.json_heal import autocomplete
@@ -508,7 +509,7 @@ class VnVInputFile:
     }
 
     def autocomplete_input(self, row, col, pre, val):
-        return autocomplete(val, self.specLoad, int(row), int(col), plugins=self.plugs)
+        return autocomplete(val, self.specLoad, int(row), int(col), plugins=list_vnv_plugins)
 
     def autocomplete_spec(self, row, col, pre, val):
         return []
