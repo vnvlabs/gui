@@ -255,6 +255,13 @@ def refresh_job(id_, jobid):
         return make_response(jsonify(file.refresh_job(jobid)), 200)
     return render_error(jsonify({"stdout": "no file found", "errorcode": 100}), 200)
 
+@blueprint.route('/update_description/<int:id_>', methods=["GET"])
+def refresh_job(id_, jobid):
+    with VnVInputFile.find(id_) as file:
+        if VnVInputFile.update_spec_is_running():
+            return make_response("",201)
+        return make_response(file.get_executable_description(),200)
+    return render_error("Could not load the description", 200)
 
 @blueprint.route('/cancel_job/<int:id_>/<jobid>', methods=["POST"])
 def cancel_job(id_, jobid):
@@ -338,4 +345,4 @@ def template_globals(globs):
     globs["inputfiles"] = VnVInputFile.FILES
     globs["list_vnv_executables"] = list_vnv_executables
 
-VnVInputFile.add("Demo", "/home/ben/source/vnvlabs.com/vnvlabs/applications/simple/build/cpp/injectionPoint",)
+#VnVInputFile.add("Demo", "/home/ben/source/vnvlabs.com/vnvlabs/applications/simple/build/cpp/injectionPoint",)

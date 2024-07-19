@@ -31,7 +31,23 @@
 <h5>Executable File Size: {{file.get_executable_size()}} </h5>
 <h5>Executable TimeStamp: {{file.get_executable_timestamp()}} </h5>
 
-<div id="main_desc" class="card" style="padding:15px">
+
+{% if file.update_spec_is_running() %}
+<script>
+    function update_the_description() {
+        $.get("/inputfiles/update_description/{{file.id_}}/" + jobId , function(data, status,xhr) {
+
+            if (xhr.status == 200) {
+               $('#main_desc_{{file.id_}}').html(data);
+            } else {
+                setTimeout(update_the_description, 3000)
+            }
+        })
+    }
+    setTimeout(update_the_description, 3000)
+</script>
+{% endif %}
+
+<div id="main_desc_{{file.id_}}" class="card" style="padding:15px">
     {{file.get_executable_description()|safe}}
 </div>
-

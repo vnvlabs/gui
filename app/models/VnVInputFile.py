@@ -373,10 +373,8 @@ class VnVInputFile:
     VNVINPUTFILEDEF = 1022334234443
 
     def get_executable_description(self):
-        if self.rendered is None:
-            self.rendered = flask.render_template_string(render_rst_to_string(self.get_executable_description_()),
+        return flask.render_template_string(render_rst_to_string(self.get_executable_description_()),
                                                          file=self, data=DataClass(self, self.id_, 1022334234443))
-        return self.rendered if len(self.rendered) else "No Description Provided"
 
     def getId(self):
         return self.id_
