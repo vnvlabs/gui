@@ -258,7 +258,7 @@ def refresh_job(id_, jobid):
 @blueprint.route('/update_description/<int:id_>', methods=["GET"])
 def update_description(id_):
     with VnVInputFile.find(id_) as file:
-        if VnVInputFile.update_spec_is_running():
+        if file.update_spec_is_running():
             return make_response("",201)
         return make_response(file.get_executable_description(),200)
     return render_error("Could not load the description", 200)
