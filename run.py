@@ -95,6 +95,7 @@ if __name__ == "__main__":
     for k,v in app_config.DEFAULT_EXES.items():
         if os.path.exists(v):
             VnVInputFile.add(k,v)
+
     for k, v in app_config.DEFAULT_REPORTS.items():
         load_default_file(k,v)
 

@@ -479,20 +479,13 @@ namespace
               rootNode()->registerNode(a);
 
               a->setname(key);
-              std::cout << a->toJson().dump() << std::endl;
-
               a->add(exist);
-              std::cout << a->toJson().dump() << std::endl;
-
               a->add(val);
-              std::cout << a->toJson().dump() << std::endl;
-
+             
               map[key] = a;
             }
             else
             {
-              std::cout << exist->getAsArrayNode(exist)->toJson().dump() << std::endl;
-
               exist->getAsArrayNode(exist)->add(val);
             }
           }

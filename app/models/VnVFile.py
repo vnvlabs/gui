@@ -214,7 +214,7 @@ class CommRender:
                 else:
                     res[y] = {"name": f"Row {y}", "row": y, "data": [{"x": x, "y": int(
                         node) * (1 if self.inComm(proc) else -1), "r": proc, "o": self.inComm(proc)}]}
-        print(res)
+
         return json.dumps(sorted(res.values(), key=lambda x: x["row"]))
 
     def inComm(self, proc):
@@ -559,8 +559,6 @@ class ActionRender:
     def getHtml(self):
         t = self.templates.get_action(self.data.getPackage(), self.data.getName())
 
-        print(t)
-        print(self.templates.file)
         a = render_vnv_template(t, data=self.data.getData(), file=self.templates.file)
 
         if len(a) > 0:
