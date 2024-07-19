@@ -35,7 +35,7 @@
 {% if file.update_spec_is_running() %}
 <script>
     function update_the_description() {
-        $.get("/inputfiles/update_description/{{file.id_}}/" + jobId , function(data, status,xhr) {
+        $.get("/inputfiles/update_description/{{file.id_}}" , function(data, status,xhr) {
 
             if (xhr.status == 200) {
                $('#main_desc_{{file.id_}}').html(data);
