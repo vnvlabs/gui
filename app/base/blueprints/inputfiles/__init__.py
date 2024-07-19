@@ -256,7 +256,7 @@ def refresh_job(id_, jobid):
     return render_error(jsonify({"stdout": "no file found", "errorcode": 100}), 200)
 
 @blueprint.route('/update_description/<int:id_>', methods=["GET"])
-def refresh_job(id_, jobid):
+def update_description(id_):
     with VnVInputFile.find(id_) as file:
         if VnVInputFile.update_spec_is_running():
             return make_response("",201)
