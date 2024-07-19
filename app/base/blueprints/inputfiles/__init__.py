@@ -344,5 +344,3 @@ def execute(id_):
 def template_globals(globs):
     globs["inputfiles"] = VnVInputFile.FILES
     globs["list_vnv_executables"] = list_vnv_executables
-
-#VnVInputFile.add("Demo", "/home/ben/source/vnvlabs.com/vnvlabs/applications/simple/build/cpp/injectionPoint",)

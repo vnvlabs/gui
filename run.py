@@ -4,7 +4,10 @@ import os
 import sys
 
 from app import create_app
+from app.base.blueprints.files import load_default_file
 from app.base.blueprints.xterm import socketio
+from app.models.VnVFile import VnVFile
+from app.models.VnVInputFile import VnVInputFile
 from theia import launch_theia
 
 
@@ -36,6 +39,8 @@ class MyConfig:
     PARAVIEW_SESSION_PORT_END=5100
     PARAVIEW_DATA_DIR="/"
 
+    DEFAULT_EXES = {}
+    DEFAULT_REPORTS = {}
 
 
 parser = argparse.ArgumentParser()
@@ -69,6 +74,8 @@ elif args.profile == "docker":
     MyConfig.PARAVIEW_PORT=5002
     MyConfig.PARAVIEW_SESSION_PORT_START=5003
     MyConfig.PARAVIEW_SESSION_PORT_END = 5100
+    MyConfig.DEFAULT_EXES = {"Moose Example 1" : "/software/moose/examples/ex01_inputfile/ex01-opt"}
+
 
 MyConfig.ADDRESS = args.address
 MyConfig.SECURE = args.secure
@@ -79,10 +86,18 @@ def launch_paraview(PARAVIEW_DIR, port, HOST, home="/"):
     os.system(f"{PARAVIEW_DIR}/bin/pvpython -u -m paraview.apps.visualizer --port {port} --host {HOST} --data {home} --timeout 500000 &")
 
 
+
 if __name__ == "__main__":
 
     app_config = MyConfig()
     app = create_app(app_config)
+
+    for k,v in app_config.DEFAULT_EXES.items():
+        if os.path.exists(v):
+            VnVInputFile.add(k,v)
+    for k, v in app_config.DEFAULT_REPORTS.items():
+        load_default_file(k,v)
+
     if app_config.THEIA == 1:
         launch_theia(app_config.THEIA_DIR, os.getcwd(), app_config.HOST, app_config.THEIA_PORT, node=app_config.NODE_EXE, home=app_config.HOME)
     if app_config.PARAVIEW == 1:

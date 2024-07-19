@@ -312,6 +312,13 @@ def load_defaults(CONFIG, exclude):
     for key,value in CONFIG.items():
         VnVFile.add(key, value["filename"], value["reader"],  get_file_template_root(), value.get("config",{}))
 
+def load_default_file(name, fname):
+    if not os.path.exists(fname):
+        return False
+    elif not os.path.isdir(fname):
+        return False
+    return VnVFile.add(name, fname, "file",  get_file_template_root(), {})
+
 
 def faker(PREFIX="../build"):
     VnVFile.add("Euler", "/home/ben/source/vv/vv-neams/build/examples/cpp/outputs/euler/out", "file",  get_file_template_root(), {})
