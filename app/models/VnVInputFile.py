@@ -5,6 +5,7 @@ import select
 import subprocess
 import tempfile
 import textwrap
+import threading
 import uuid
 
 import flask
@@ -96,8 +97,6 @@ class Dependency:
         return d
 
 
-
-
 class VnVInputFile:
     COUNTER = 5000
 
@@ -108,103 +107,75 @@ class VnVInputFile:
     EXTRA_TABS = {}
 
     def tablist(self):
-       try:
+        try:
 
             a = {
-            #! "exec": ["Execution Configuration", "inputfiles/execute.html"],
-            "description" : ["Configuration", "inputfiles/about.html"],
-            "inputfile": ["VnV Input File", "inputfiles/input.html"],
-            "comments" : ["Comments", "inputfiles/comments.html"],
-            "browse": ["Browse", "files/file_browser.html"],
-            "terminal": ["Terminal", "inputfiles/xterm.html"],
+                # ! "exec": ["Execution Configuration", "inputfiles/execute.html"],
+                "description": ["Configuration", "inputfiles/about.html"],
+                "inputfile": ["VnV Input File", "inputfiles/input.html"],
+                "comments": ["Comments", "inputfiles/comments.html"],
+                "browse": ["Browse", "files/file_browser.html"],
+                "terminal": ["Terminal", "inputfiles/xterm.html"],
 
             }
 
-            for k,v in self.extra.items():
-              if v is not None:
-                for kk,vv in v.tablist().items():
-                    a[kk] = vv
+            for k, v in self.extra.items():
+                if v is not None:
+                    for kk, vv in v.tablist().items():
+                        a[kk] = vv
 
             return a
-       except Exception as e:
-           print("HEy YO ", e)
-           return {}
+        except Exception as e:
+            print("HEy YO ", e)
+            return {}
 
     def __init__(self, name, path=None):
-        
+
         self.name = name
         self.displayName = name
         self.filename = path if path is not None else "path/to/application"
-
         self.comments = ""
-
         self.icon = "icon-box"
         self.id_ = VnVInputFile.get_id()
         self.connection = VnVLocalConnection()
-
         self.loadfile = ""
         self.additionalPlugins = {}
-
         self.spec = "{}"
         self.specLoad = {}
-
         self.execFile = ""
         self.specValid = False
         self.desc = None
         self.rendered = None
         self.specDump = "${application}"
         self.plugs = {}
-
-        # Update my specification -- based on the input file.
-        self.updateSpec()
-
+        self.xtermid = uuid.uuid4().hex
         self.master_fd = None
         self.slave_fd = None
-
-
-        #Get the default as defined in the specification which was loaded on the prev line
-        defs = self.get_executable_defaluts()
-
-        # Set the execution file
-        if "empty_exec" in defs and defs["empty_exec"]:
-            execObj = {}
-        else:
-            execObj = self.defaultExecution()
-            
-        if "exec" in defs:
-            for key, value in defs["exec"].items():
-                execObj[key] = value
-        
-        #self.exec = json.dumps(execObj, indent=4)
-
         self.extra = {}
+        self.updateSpecThread = None
 
-
-        # Set the default Input file values.
-        if "input" in defs:
-            jsoninput = defs["input"]
-        else:
-            jsoninput = {
-                "outputEngine": {
-                    "file" : {
-                        "filename" : "outputs"
-                    }
+        jsoninput = {
+            "runTests": True,
+            "outputEngine": {
+                "file": {
+                    "filename": "outputs"
                 }
-            }
+            },
+            "injectionPoints": {
+                "runAll": True,
+                "runAll_tests": {
+                    "VNV:cputime": {}
+                }
+            },
+            "execution" : self.defaultExecution()
+        }
 
-        
-        jsoninput["execution"] = execObj        
         self.value = json.dumps(jsoninput, indent=4)
-        
-        for k, v in VnVInputFile.EXTRA_TABS.items():
-            self.extra[k] = v(self, name, path, defs, defs.get("plugs",{}))
 
-        if "plugins" in defs and isinstance(defs["plugins"],dict):
-            self.plugs = defs["plugins"]
+        for k, v in VnVInputFile.EXTRA_TABS.items():
+            self.extra[k] = v(self, name, path, {}, {})
 
         self.updateSpec()
-
-        self.xtermid = uuid.uuid4().hex
 
     def getXtermId(self):
         return self.xtermid
@@ -226,7 +197,7 @@ class VnVInputFile:
         a["rendered"] = self.rendered
 
         a["extra"] = {}
-        for k,v in self.extra.items():
+        for k, v in self.extra.items():
             a["extra"][k] = v.toJson()
 
         return a
@@ -235,7 +206,6 @@ class VnVInputFile:
         import os
         from app.models.readers import LocalFile
         return LocalFile(os.path.dirname(self.filename), self.id_, self.connection, reader="directory")
-
 
     @staticmethod
     def fromJson(a):
@@ -253,7 +223,7 @@ class VnVInputFile:
         r.execFile = a["execFile"]
         r.plugs = a["plugs"]
 
-        for k,v in r.extra.items():
+        for k, v in r.extra.items():
             v.fromJson(a["extra"][k])
 
         try:
@@ -306,8 +276,14 @@ class VnVInputFile:
         self.value = newValue
 
     def validateInput(self, newVal):
+
+        if self.update_spec_is_running():
+            return [{"row": 1, "column": 1, "text": "specification is not available yet", "type": 'warning',
+                     "source": 'vnv'}]
+
         try:
             a = json.loads(newVal)
+
             jsonschema.validate(a, schema=self.specLoad)
             return []
         except ValidationError as v:
@@ -319,9 +295,22 @@ class VnVInputFile:
     def schema(self):
         return self.spec
 
-
+    def update_spec_is_running(self):
+        return self.updateSpecThread is not None and self.updateSpecThread.is_alive()
 
     def updateSpec(self):
+
+        # set it to none if it is done
+        if self.updateSpecThread is not None:
+            if not self.updateSpecThread.is_alive():
+                self.updateSpecThread = None
+
+        if self.updateSpecThread is None:
+            self.updateSpecThread = threading.Thread(target=self.actually_update_spec)
+            self.updateSpecThread.start()
+
+    def actually_update_spec(self):
+
         self.specValid = False
         self.rendered = None
         self.specLoad = {"error": "No specification available"}
@@ -342,20 +331,20 @@ class VnVInputFile:
             s["schema"] = {"dump": True, "quit": True}
             path = self.connection.write(json.dumps(s), None)
             aa = getSpecDumpCommand(path)
-            res = self.connection.execute(aa, env={**os.environ, "VNV_INPUT_FILE": path, "VNV_ON" : "1"})
+            res = self.connection.execute(aa, env={**os.environ, "VNV_INPUT_FILE": path, "VNV_ON": "1"})
             a = res.find("===START SCHEMA DUMP===") + len("===START SCHEMA DUMP===")
             b = res.find("===END SCHEMA_DUMP===")
-            
+
             if a > 0 and b > 0 and b > a:
-                #read the spec
+                # read the spec
                 self.spec = res[a:b]
-                #parse the spec
+                # parse the spec
                 self.specLoad = json.loads(self.spec)
-                #add our execution spec
+                # add our execution spec
                 self.specLoad["properties"]["execution"] = VnVInputFile.getExecutionSchema()
-                #dump the spec to get back to string
+                # dump the spec to get back to string
                 self.spec = json.dumps(self.specLoad, indent=4)
-                #update some other stuff. 
+                # update some other stuff.
                 self.specValid = True
                 self.rendered = self.get_executable_description()
             else:
@@ -369,26 +358,24 @@ class VnVInputFile:
             self.specLoad["error-exception"] = str(e)
             self.spec = json.dumps(self.specLoad, indent=4)
 
-    NO_INFO = "No Application Information Available\n===================================="
+    NO_INFO = "This is not a vnv application.\n===================================="
 
     def get_executable_description_(self):
-        if self.specLoad is not None:
+        if self.update_spec_is_running():
+            return "We are still loading the executable specification. Please reload in a few seconds."
+        elif self.specLoad is not None:
             desc = self.specLoad.get("definitions", {}).get("executable", {})
             return desc.get("template", self.NO_INFO) if desc is not None else self.NO_INFO
-
         else:
             return self.NO_INFO
-        
-    def get_executable_defaluts(self):
-        if self.specLoad is not None:
-            return self.specLoad.get("definitions", {}).get("executable", {}).get("default",{})
-        return {}
-    
+
+
     VNVINPUTFILEDEF = 1022334234443
 
     def get_executable_description(self):
         if self.rendered is None:
-            self.rendered = flask.render_template_string(render_rst_to_string(self.get_executable_description_()), file=self, data=DataClass(self, self.id_, 1022334234443))
+            self.rendered = flask.render_template_string(render_rst_to_string(self.get_executable_description_()),
+                                                         file=self, data=DataClass(self, self.id_, 1022334234443))
         return self.rendered if len(self.rendered) else "No Description Provided"
 
     def getId(self):
@@ -424,24 +411,24 @@ class VnVInputFile:
             "environment": {
                 "type": "object"
             },
-            "mpi" : {
-              "type" : "object",
-              "properties" : {
-                  "on" : { "type" : "boolean", "default" : False },
-                  "processors" : { "type" : "integer" , "default" : 1},
-                  "runner" : {"type" : "string", "default" : "mpirun"},
-                  "extra-args" : {"type" : "string"}
-              }  
+            "mpi": {
+                "type": "object",
+                "properties": {
+                    "on": {"type": "boolean", "default": False},
+                    "processors": {"type": "integer", "default": 1},
+                    "runner": {"type": "string", "default": "mpirun"},
+                    "extra-args": {"type": "string"}
+                }
             },
-            "executioner" : {
-                "type" : "object",
-                "properties" : {
-                  "name" : { 
-                      "type" : "string" ,
-                      "enum" : [ "bash" , "slurm" ],
-                      "default" : "bash"
-                  }
-                }  
+            "executioner": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "enum": ["bash", "slurm"],
+                        "default": "bash"
+                    }
+                }
             },
             "vnv-input-file": {"type": "string"},
             "command-line": {"type": "string",
@@ -494,21 +481,29 @@ class VnVInputFile:
 
     def defaultExecution(self):
         return {
-        "vnv": True,
-        "shell": "bash",
-        "working-directory": "${application_dir}",
-        "environment": {},
-        "mpi" : { "on" : False, "processors" : 1},
-        "vnv-input-file": "GUI",
-        "input-staging": [],
-        "output-staging": [],
-        "command-line": "${application}",
-        "name": self.name,
-        "active_overrides": [],
-        "overrides": {}
-    }
+            "vnv": True,
+            "shell": "bash",
+            "working-directory": "${application_dir}",
+            "environment": {},
+            "mpi": {"on": False, "processors": 1},
+            "vnv-input-file": "GUI",
+            "input-staging": [],
+            "output-staging": [],
+            "command-line": "${application}",
+            "name": self.name,
+            "active_overrides": [],
+            "overrides": {}
+        }
 
     def autocomplete_input(self, row, col, pre, val):
+        if self.update_spec_is_running():
+            return [{
+                    "caption": "Specification is still loading",
+                    "value": f"loading...",
+                    "meta": "loading...",
+                    "desc": "loading..."
+            }]
+
         return autocomplete(val, self.specLoad, int(row), int(col), plugins=list_vnv_plugins)
 
     def autocomplete_spec(self, row, col, pre, val):
@@ -529,35 +524,31 @@ class VnVInputFile:
                 return i
         return None
 
-
     def vnvInputFile(self):
         j = json.loads(self.value)
         if "actions" not in j:
             j["actions"] = {}
 
-        for k,v in self.extra.items():
+        for k, v in self.extra.items():
             v.fullInputFile(j)
 
         if len(self.comments):
             j["comments"] = self.comments
 
-        j.pop("execution",{})
+        j.pop("execution", {})
         return json.dumps(j, indent=4)
-
 
     def fullInputFile(self):
         j = json.loads(self.value)
         if "actions" not in j:
             j["actions"] = {}
 
-        for k,v in self.extra.items():
+        for k, v in self.extra.items():
             v.fullInputFile(j)
 
         return json.dumps(j, indent=4)
 
-
-    
-    def execute(self, val = None):
+    def execute(self, val=None):
         if val is None or len(val) == 0:
             val = self.value
 
@@ -574,14 +565,13 @@ class VnVInputFile:
 
         return self.connection.execute_script(script, name=name, metadata=meta)
 
-
     def script(self, val, workflowId):
 
         if val is None:
             val = self.value
 
         inputfile = json.loads(val)
-        data = inputfile.get("execution",{})
+        data = inputfile.get("execution", {})
         for i in data.get("active_overrides", []):
             if i in data.get("overrides", {}):
                 over = data["overrides"][i]
@@ -623,15 +613,15 @@ class VnVInputFile:
     @staticmethod
     def find(id_):
         if not isinstance(id_, int):
-           try:
-               id_ = int(id_)
-           except:
-               raise Exception("Invalid file id")
+            try:
+                id_ = int(id_)
+            except:
+                raise Exception("Invalid file id")
         if id_ in VnVInputFile.FILES:
             return VnVInputFile.FileLockWrapper(VnVInputFile.FILES[id_])
         raise FileNotFoundError
 
-    def render(self,key):
+    def render(self, key):
         if key == "exe":
             return render_template("inputfiles/jobs.html", file=self)
         if key[0:4] == "job-":
@@ -640,13 +630,11 @@ class VnVInputFile:
 
         f = self.tablist().get(key)
         if f is not None:
-            return render_template(f[1],file=self)
+            return render_template(f[1], file=self)
         return "Error: Unknown Page"
 
-    def is_selected(self,myelm, myfile,selectedElement,selectedFile):
+    def is_selected(self, myelm, myfile, selectedElement, selectedFile):
         return myelm == selectedElement and myfile == selectedFile
-
-
 
     def get_tree_for_processor(self, selectedElement, selectedFile):
 
@@ -659,27 +647,28 @@ class VnVInputFile:
             return a
 
         def get_state(myelm):
-            return { "opened" : True, "selected" : get_is_selected(myelm) }
+            return {"opened": True, "selected": get_is_selected(myelm)}
 
         infotree = [
-            {"fid" : k , "vid" : self.id_, "text" : v[0], "icon" : "fa fa-info", "state" : get_state(k)}  for k,v in self.tablist().items()
+            {"fid": k, "vid": self.id_, "text": v[0], "icon": "fa fa-info", "state": get_state(k)} for k, v in
+            self.tablist().items()
         ]
 
         jlist = [
-            {"fid": "job-" + j.getId(), "vid": self.id_, "text": j.getName(), "icon": j.icon(), "state" : get_state(f"job-{j.getId()}")} for j in self.get_jobs()
+            {"fid": "job-" + j.getId(), "vid": self.id_, "text": j.getName(), "icon": j.icon(),
+             "state": get_state(f"job-{j.getId()}")} for j in self.get_jobs()
         ]
 
         infotree.append(
-                {"fid": "exe", "vid": self.id_, "text": "Execute", "icon": "feather icon-cpu" , "children" : jlist,  "state" : get_state("exe") }
+            {"fid": "exe", "vid": self.id_, "text": "Execute", "icon": "feather icon-cpu", "children": jlist,
+             "state": get_state("exe")}
         )
-
-
 
         tree = {
             "fid": "description",
             "text": self.name,
             "state": get_state("description"),
-            "icon" : f"feather icon-home trash",
+            "icon": f"feather icon-home trash",
             "children": infotree,
             "vid": self.id_,
         }
@@ -697,7 +686,7 @@ class VnVInputFile:
             "state": {"opened": True},
             "icon": "feather icon-home",
             "children": [],
-            "vid" : 0
+            "vid": 0
         }
         if selectedElement == "root" and selectedFile == 0:
             tree['state']['selected'] = True
@@ -707,12 +696,12 @@ class VnVInputFile:
 
         for id in VnVInputFile.FILES:
             with VnVInputFile.find(id) as file:
-                ftree, found =  file.get_tree_for_processor(selectedElement, selectedFile)
+                ftree, found = file.get_tree_for_processor(selectedElement, selectedFile)
                 tree["children"].append(ftree)
                 if found:
                     sefound = True
         if sefound:
-            return jsonify({"data": tree,"se" : selectedElement, "sf" : selectedFile}), 200
+            return jsonify({"data": tree, "se": selectedElement, "sf": selectedFile}), 200
         else:
             return jsonify({"data": tree, "se": "root", "sf": 0}), 200
 
@@ -731,13 +720,12 @@ def njoin(array):
     return "\n".join(array)
 
 
-
-
 def get_bash_header(application_path, data, workflowName):
-    
-    inputfilename = data.get("vnv-input-file") if data.get("vnv-input-file","GUI") not in ["","GUI"] else os.path.join(tempfile.gettempdir(),".vnv-input-${VNV_WORKFLOW_ID}")
+    inputfilename = data.get("vnv-input-file") if data.get("vnv-input-file", "GUI") not in ["",
+                                                                                            "GUI"] else os.path.join(
+        tempfile.gettempdir(), ".vnv-input-${VNV_WORKFLOW_ID}")
     add_inputfile = "" if data.get("vnv-input-file") == None else f"export VNV_INPUT_FILE={inputfilename}"
-    
+
     return textwrap.dedent(f"""
     {data.get("shebang", "#!/usr/bin/bash")}
     export application={application_path}
@@ -745,39 +733,42 @@ def get_bash_header(application_path, data, workflowName):
     export VNV_WORKFLOW_ID={workflowName}
     {add_inputfile}
     cd {data.get("working-directory", "${application_dir}")}"""
-    )
+                           )
+
 
 def get_bash_environment(data):
     return njoin(["export " + k + "=" + v for k, v in data.get("environment", {})])
 
+
 def get_bash_inputstaging(data):
     return njoin([a["action"] + " " + a["source"] + " " + a["dest"]] for a in data.get("input-staging", {}))
 
+
 def get_bash_commandline(data):
     command_line = data.get("command-line", "echo 'No Command line provided'")
-    
-    mpi = data.get("mpi",{})
-    if mpi.get("on",False):     
-        return f"""{mpi.get("runner","mpirun")} -n {mpi.get("processors",1)} {mpi.get("extra-args","")} {command_line}"""
-    
-    return command_line 
+
+    mpi = data.get("mpi", {})
+    if mpi.get("on", False):
+        return f"""{mpi.get("runner", "mpirun")} -n {mpi.get("processors", 1)} {mpi.get("extra-args", "")} {command_line}"""
+
+    return command_line
+
 
 def get_bash_outputstaging(data):
     return njoin([a["action"] + " " + a["source"] + " " + a["dest"]] for a in data.get("output-staging", {}))
-    
+
 
 def get_bash_write_inputfile(data, inputfile):
-    if data.get("vnv-input-file","GUI") in ["GUI",""]:
-       return textwrap.dedent(f'''
+    if data.get("vnv-input-file", "GUI") in ["GUI", ""]:
+        return textwrap.dedent(f'''
         \ncat << EOF > ${{VNV_INPUT_FILE}}
             {inputfile}
-        \nEOF\n''') 
-    
+        \nEOF\n''')
+
     return ""
 
 
 def bash_script(application_path, inputfile, data, workflowName):
-
     script = textwrap.dedent(f"""
 
     {get_bash_header(application_path, data, workflowName)}
@@ -786,5 +777,5 @@ def bash_script(application_path, inputfile, data, workflowName):
     {get_bash_inputstaging(data)}
     {get_bash_commandline(data)}
     {get_bash_outputstaging(data)}""")
-    
+
     return script

@@ -7,18 +7,21 @@
                     <span aria-hidden="true">&times;</span></button>
             </div>
 
-            <div>
-                     <label for="report-select">Select a report to load:</label>
-                    <select id="report-select" name="report" onchange="updateFields(this)">
-                        <option value="">Enter The Path to your path below, or select from one of the reports we found on the system.</option>
-                        {% for key, value in list_registered_reports().items() %}
-                            <option value="{{ key }}" data-value="{{ value }}">{{ key }}: ({{value}})</option>
-                        {% endfor %}
-                    </select>
-            </div>
+
 
             <div class="modal-body">
                 <form id="new_file_form" action="/files/new" method="post">
+
+                    <div id="select-group" class="form-group">
+                        <label for="report-select" class="col-form-label">Name</label>
+                        <select id="report-select" name="report" onchange="updateFields(this)">
+                            <option value="">Select A VnV Report.</option>
+                            {% for key, value in list_registered_reports().items() %}
+                            <option value="{{ key }}" data-value="{{ value }}">{{ key }}: ({{value}})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
                     <div id="name-group" class="form-group">
                         <label for="name" class="col-form-label">Name</label>
                         <input id="new-report-name" type="text" class="form-control" name="name" id="name" value="Untitled Report">
