@@ -13,8 +13,8 @@
                 <form id="new_file_form" action="/files/new" method="post">
 
                     <div id="select-group" class="form-group">
-                        <label for="report-select" class="col-form-label">Name</label>
-                        <select id="report-select" name="report" onchange="updateFields(this)">
+                        <label for="report-select" class="form-label">Name</label>
+                        <select class="form-control" id="report-select" name="report" onchange="updateFields(this)">
                             <option value="">Select A VnV Report.</option>
                             {% for key, value in list_registered_reports().items() %}
                             <option value="{{ key }}" data-value="{{ value }}">{{ key }}: ({{value}})</option>
