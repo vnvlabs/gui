@@ -531,7 +531,7 @@ class VnVInputFile:
             v.fullInputFile(j)
 
         if len(self.comments):
-            j["comments"] = self.comments
+            j["comments"] = {"value" : self.comments}
 
         j.pop("execution", {})
         return json.dumps(j, indent=4)
@@ -543,6 +543,9 @@ class VnVInputFile:
 
         for k, v in self.extra.items():
             v.fullInputFile(j)
+
+        if len(self.comments):
+            j["comments"] = {"value" : self.comments}
 
         return json.dumps(j, indent=4)
 
