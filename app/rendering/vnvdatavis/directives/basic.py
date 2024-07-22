@@ -176,7 +176,7 @@ class VnVBrowserDirective(SphinxDirective):
 
 
 class VnVCustomCodeDirective(SphinxDirective):
-    required_arguments = 1
+    required_arguments = 0
     optional_arguments = 0
     file_argument_whitespace = True
     has_content = True
@@ -186,18 +186,18 @@ class VnVCustomCodeDirective(SphinxDirective):
     }
 
     script_template = '''
-    <div class="vnv_code" style="width:{width}; height:{height}; padding:10px; background:black; color:white; margin-left:10px; margin-right:10px;">
-      {content}
-    </div>
-    '''
+      <div class="vnv_code" style="width:{width}; height:{height}; padding:20px; background:black; color:white; border-radius:10px;">
+        <pre style="color:white">{content}</pre>
+      </div>
+      '''
 
     def getHtml(self, id_):
         return self.script_template.format(
             id_=id_,
             uid = uuid.uuid4().hex,
-            height=self.options.get("height", "400px"),
+            height=self.options.get("height", "auto"),
             width=self.options.get("width", "100%"),
-            content="\n".join(self.content)
+            content="\n".join(self.content).strip()
         )
 
     def run(self):
@@ -220,7 +220,7 @@ class VnVHiveCodeDirective(SphinxDirective):
     }
 
     script_template = '''
-    <div class="vnv_code" style="width:{width}; height:{height}; padding:20px; background:black; color:white; ">
+    <div class="vnv_code" style="width:{width}; height:{height}; padding:20px; background:black; color:white; border-radius:10px; ">
       <pre style="color:white">{content}</pre>
     </div>
     '''
@@ -251,7 +251,7 @@ class VnVHiveCodeDirective(SphinxDirective):
                     else:
                         r.append(line)
                         if line.startswith("[]"):
-                            return "\n".join(r)
+                            return "\n".join(r).strip()
 
             return "Error: Could not find block"
         return "File Does not exist"
