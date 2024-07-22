@@ -20,11 +20,7 @@
                                     var $anchor = $(this);
                                     if ($anchor.find('.addDelete').length == 0 ) {
 
-                                        var $span1 = $('<span>').html('<i class="feather icon-play"></i>')
-                                        .on('click', function() {
-                                            const fileId = $('#treeview1').jstree(true).get_node('#' + $anchor.attr('id')).original.vid
-                                            execute_the_job(fileId);
-                                        }).addClass('addDelete')
+
 
                                         var $span = $('<span>').html('<i class="feather icon-trash"></i>')
                                         .on('click', function() {
@@ -33,7 +29,6 @@
                                         }).addClass('addDelete')
 
 
-                                        $anchor.append($span1);
                                         $anchor.append($span);
                                         $anchor.css('width','98%');
                                     }
@@ -81,19 +76,7 @@
 
                 }
 
-                function execute_the_job(fileid) {
 
-                  $.get(`/inputfiles/execute/${fileid}`, function(data) {
-                      refresh_jobs_list(fileid)
-                      update_inputtree_data(true, data, fileid)
-                  });
-                }
-
-                function preview_the_job(fileid) {
-                   $.get(`/inputfiles/execute/${fileid}?highlight&dryrun=1`, function(data) {
-                           aceView("Executable Script Preview", data,"sh")
-                   });
-                }
 
                 $(document).ready(function () {
                     update_tree_data(true)
