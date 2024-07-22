@@ -81,7 +81,7 @@
                 }
 
                 function execute_the_job(fileid) {
-
+                  event.stopPropagation();
                   $.get(`/inputfiles/execute/${fileid}`, function(data) {
                       update_inputtree_data(true, data, fileid)
                       refresh_jobs_list(fileid)
