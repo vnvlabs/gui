@@ -84,6 +84,7 @@
 
                   $.get(`/inputfiles/execute/${fileid}`, function(data) {
                       refresh_jobs_list(fileid)
+                      debugger;
                       update_inputtree_data(true, data, fileid)
                   });
                 }
