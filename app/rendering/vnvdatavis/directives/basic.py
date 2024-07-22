@@ -202,7 +202,9 @@ class VnVCustomCodeDirective(SphinxDirective):
 
     def run(self):
         target, target_id = get_target_node(self)
+        print(self.getHtml(target_id))
         block = VnVChartNode(html=self.getHtml(target_id))
+
         return [target, block]
 
 
