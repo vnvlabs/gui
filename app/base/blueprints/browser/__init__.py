@@ -30,6 +30,8 @@ blueprint = Blueprint(
 @blueprint.route("")
 def browse_route():
     filename = request.args.get("filename","")
+    if "nohead" in request.args:
+        return render_template("browser/browsen.html", model="inline-", filename=filename)
     return render_template("browser/browse.html", model="inline-", filename=filename)
 
 
@@ -116,7 +118,7 @@ def reader(id_):
             filename = connection.home()
 
         try:
-
+            filename = os.path.expandvars(filename)
             if connection.exists(filename):
                 file = LocalFile(filename, id_, connection, reader=reader, **render_args)
                 return render_template("browser/browser.html", file=file, modal=modal)

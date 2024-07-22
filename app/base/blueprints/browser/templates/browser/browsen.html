@@ -1,0 +1,24 @@
+
+{% extends "layouts/base2.html" %}
+
+{% block title %} {{title_name()}} {% endblock %}
+
+<!-- Specific CSS goes HERE -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block content %}
+<div id='browser' style="flex: 1; margin-bottom: 0px; border: none;"></div>
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}
+
+<script>
+$(document).ready(function(){
+    $.get("/browser/reader/1000?modal=browser&filename=" + encodeURIComponent('{{filename}}'), function(data) {
+        $('#browser').html(data)
+    })
+})
+</script>
+
+{% endblock javascripts %}
