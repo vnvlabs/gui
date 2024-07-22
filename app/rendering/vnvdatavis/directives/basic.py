@@ -229,7 +229,7 @@ class VnVHiveCodeDirective(SphinxDirective):
         return self.script_template.format(
             id_=id_,
             uid = uuid.uuid4().hex,
-            height=self.options.get("height", "400px"),
+            height=self.options.get("height", "auto"),
             width=self.options.get("width", "100%"),
             content=self.getContent()
         )
@@ -247,15 +247,20 @@ class VnVHiveCodeDirective(SphinxDirective):
                             r.append(line)
                             start = True
                     else:
+                        r.append(line)
                         if line.startswith("[]"):
                             return "\n".join(r)
 
             return "Error: Could not find block"
+        return "File Does not exist"
 
     def run(self):
-        target, target_id = get_target_node(self)
-        block = VnVChartNode(html=self.getHtml(target_id))
-        return [target, block]
+        try:
+            target, target_id = get_target_node(self)
+            block = VnVChartNode(html=self.getHtml(target_id))
+            return [target, block]
+        except Exception as e:
+            print(e)
 
 
 vnv_directives["vnv-hive-code"] = VnVHiveCodeDirective
