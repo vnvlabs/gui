@@ -202,7 +202,7 @@ function updateIFState(ipid, fileId) {
    if (!fileId) {
         fileId = 0
    }
-
+    debugger;
    currentSelectedFile = fileId
    currentSelectedElement = ipid
 
