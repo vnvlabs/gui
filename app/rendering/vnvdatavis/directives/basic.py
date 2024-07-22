@@ -173,9 +173,41 @@ class VnVBrowserDirective(SphinxDirective):
         block = VnVChartNode(html=self.getHtml(target_id,  j))
         return [target, block]
 
+
+
+class VnVCustomCodeDirective(SphinxDirective):
+    required_arguments = 1
+    optional_arguments = 0
+    file_argument_whitespace = True
+    has_content = False
+    option_spec = {
+        "height": str,
+        "width": str,
+    }
+
+    script_template = '''
+    <div class="vnv_code" style="width:{width}; height:{height}; padding:10px; background:black; color:white; margin-left:10px; margin-right:10px;">
+      {content}
+    </div>
+    '''
+
+    def getHtml(self, id_):
+        return self.script_template.format(
+            id_=id_,
+            uid = uuid.uuid4().hex,
+            height=self.options.get("height", "400px"),
+            width=self.options.get("width", "100%"),
+            content="\n".join(self.content)
+        )
+
+    def run(self):
+        target, target_id = get_target_node(self)
+        block = VnVChartNode(html=self.getHtml(target_id))
+        return [target, block]
+
+vnv_directives["vnv-code"] = VnVCustomCodeDirective
 vnv_directives["vnv-file"] = VnVBrowserDirective
 vnv_directives["vnv-image"] = JsonImageDirective
-vnv_directives["vnv-code"] = JsonCodeBlockDirective
 vnv_directives["vnv-print"] = JmesStringDirective
 vnv_directives["vnv-process"] = VnVProcessDirective
 
