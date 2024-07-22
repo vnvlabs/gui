@@ -154,7 +154,7 @@ class VnVBrowserDirective(SphinxDirective):
 
     script_template = '''
     <div class="vnv_image" style="width:{width}; height:{height}; margin-left:auto; margin-right:auto;">
-     <iframe src='/browser/render&filename={file}'></iframe>   
+     <iframe src='/browser&filename={file}' style="height:100%; width:100%; border:none;"></iframe>   
     </div>
     '''
 
