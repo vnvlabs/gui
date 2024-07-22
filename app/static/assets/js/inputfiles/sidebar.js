@@ -169,14 +169,14 @@ function get_ace_editor(fileid, elmId, mode, live, autocompl, autosave) {
 
 function refresh_jobs_list(fileId) {
         $.get("/inputfiles/joblist/" + fileId, function(data) {
-            $('#input-file-job-list').html(data)
+            $('#input-file-job-list-' + fileId).html(data)
         })
 }
 
 function delete_exe_job(e,fileId, jobId) {
     e.stopPropagation();
     $.post("/inputfiles/delete_job/" + fileId + "/" + jobId, function(data) {
-            $('#input-file-job-list').html(data)
+            $('#input-file-job-list-' + fileId).html(data)
     })
 
 }
@@ -184,7 +184,7 @@ function delete_exe_job(e,fileId, jobId) {
 function cancel_exe_job(e, fileId, jobId) {
     e.stopPropagation();
     $.post("/inputfiles/cancel_job/" + fileId + "/" + jobId, function(data) {
-            $('#input-file-job-list').html(data)
+            $('#input-file-job-list-' + fileid).html(data)
     })
 
 }
@@ -206,7 +206,7 @@ function updateIFState(ipid, fileId) {
    currentSelectedFile = fileId
    currentSelectedElement = ipid
 
-   eid = "if-element-" + ipid;
+   eid = "if-element-" + ipid + fileId;
    elmid = "#" + eid
    $('.if-element-page').toggle(false)
 

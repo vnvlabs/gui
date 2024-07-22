@@ -14,7 +14,7 @@
 
                     <div id="select-group" class="form-group">
                         <label for="report-select" class="form-label">Name</label>
-                        <select class="form-control" id="report-select" name="report" onchange="updateFields(this)">
+                        <select class="form-control" id="report-select"  style="width:100%" name="report" onchange="updateFields(this)">
                             <option value="">Select A VnV Report.</option>
                             {% for key, value in list_registered_reports().items() %}
                             <option value="{{ key }}" data-value="{{ value }}">{{ key }}: ({{value}})</option>

@@ -9,36 +9,24 @@
     {%endif%}
 </div>
 
-<div id="{{VALUE}}file" style="font-size:20px; height:1000px; width:100%; margin-bottom:20px;">{{TEXT}}</div>
+<div id="{{VALUE}}file-{{file.id_}}" style="font-size:20px; height:1000px; width:100%; margin-bottom:20px;">{{TEXT}}</div>
 
 <script>
 
 function load_{{VALUE}}_file(fileid,elm) {
    $.post("/inputfiles/load_{{VALUE}}/" + fileid, elm.serialize(), function(data) {
-        ace.edit("{{VALUE}}file").setValue(data)
+        ace.edit("{{VALUE}}file-" + fileid).setValue(data)
    })
 }
 
-function toggle_autocomplete_{{VALUE}}() {
-    e = ace.edit("{{VALUE}}file")
-    live = !e.getOption("enableLiveAutocompletion")
-    e.setOptions({
-       enableLiveAutocompletion : live
-    });
-
-}
-
-function show_load_{{VALUE}}(fileid) {
-   show_input_modal(fileid,"#config_{{VALUE}}_load")
-}
 
 function save_{{VALUE}}_file(fileid) {
-  save_input_object(fileid,"{{VALUE}}file", "save_{{VALUE}}")
+  save_input_object(fileid,"{{VALUE}}file-" + fileid", "save_{{VALUE}}")
 }
 
 $( document ).ready(function(){
 
-    get_ace_editor({{file.id_}}, "{{VALUE}}file","{{MODE}}", true,
+    get_ace_editor({{file.id_}}, "{{VALUE}}file-{{file.id_}}","{{MODE}}", true,
 
     function(editor, session, pos, prefix, callback) {
             $.get(`/inputfiles/autocomplete/{{VALUE}}/{{file.id_}}?row=${pos.row}&col=${pos.column}&pre=${prefix}&val=${encodeURIComponent(editor.getValue())}`, function(data) {

@@ -29,7 +29,7 @@
     <tbody>
     <!-- iterates through all jobs then creates buttons for them -->
     {% for job in file.get_jobs() %}
-    <tr style="cursor:pointer;" title="click to expand" onclick='expand_job_section("{{job.getId()|safe}}")'>
+    <tr style="cursor:pointer;" title="click to expand" onclick='expand_job_section("{{job.getId()|safe}}", "{{file.id_|safe}}")'>
         <td style="vertical-align:middle;">
             <div id="status_{{job.getId()|safe}}" class="badge
                             {%if job.running() == True %} badge-warning">Running
@@ -74,7 +74,7 @@
     <tr id="jcontent_{{job.getId()|safe}}" style="display:none" >
         <td colspan="4">
             <div class="jcontent" style="overflow:auto;">
-               <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+               <ul class="nav nav-pills mb-3" id="pills-tab-{{job.getId()}}" role="tablist">
                 <li class="nav-item">
                     <a class="nav-link active" state="main-tab" id="pills-script-tab-{{job.getId()}}" data-toggle="pill"
                        href="#pills-script-{{job.getId()}}" role="tab"
@@ -92,7 +92,7 @@
                 </li>
             </ul>
 
-            <div class="tab-content fcolumn fchild " id="pills-tabContent">
+            <div class="tab-content fcolumn fchild " id="pills-tabContent-{{job.getId()}}">
 
                 <div class="tab-pane fade show active finlinecolumn fchild" id="pills-script-{{job.getId()}}" role="tabpanel"
                      aria-labelledby="pills-script-tab-{{job.getId()}}">
@@ -137,9 +137,9 @@
         })
     }
 
-    function expand_job_section(jobId) {
+    function expand_job_section(jobId, fileId) {
 
-        var p = $('#input-file-job-list').width()
+        var p = $('#input-file-job-list-' + fileId).width()
         $('.jcontent').width(p)
 
         var a = $("#jcontent_" + jobId)
@@ -176,7 +176,7 @@
     }
 
     $(window).on('resize', function() {
-        var p = $('#input-file-job-list').width()
+        var p = $('#input-file-job-list-' + {{file.id_}}).width()
         $('.jcontent').width(p)
     })
 

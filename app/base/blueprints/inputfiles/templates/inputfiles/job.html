@@ -42,7 +42,7 @@
 
 
 <div class="jcontent" style="overflow:auto; margin-top:20px; ">
-    <ul class="nav nav-pills mb-3" id="apills-tab" role="tablist">
+    <ul class="nav nav-pills mb-3" id="apills-tab-{{job.getId()}}" role="tablist">
         <li class="nav-item">
             <a class="nav-link active" state="main-tab" id="apills-script-tab-{{job.getId()}}" data-toggle="pill" href="#apills-script-{{job.getId()}}" role="tab" aria-controls="pills-script" aria-selected="true">Script</a>
         </li>
@@ -54,7 +54,7 @@
         </li>
     </ul>
 
-    <div class="tab-content fcolumn fchild " id="apills-tabContent">
+    <div class="tab-content fcolumn fchild " id="apills-tabContent-{{job.getId()}}">
 
         <div class="tab-pane fade show active finlinecolumn fchild" id="apills-script-{{job.getId()}}" role="tabpanel" aria-labelledby="pills-script-tab-{{job.getId()}}">
             {{highlight_code(job.script(), "sh")|safe}}

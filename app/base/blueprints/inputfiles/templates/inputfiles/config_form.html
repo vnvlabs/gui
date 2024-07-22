@@ -18,8 +18,8 @@
     </div>
 
     <div class="form-group">
-        <label for="specDump">Command required to extract application schema.</label>
-        <input name="specDump" type="text" class="form-control" id="specDump" value="{{file.specDump}}">
+        <label for="specDump-{{uuid}}">Command required to extract application schema.</label>
+        <input name="specDump" type="text" class="form-control" id="specDump-{{uuid}}" value="{{file.specDump}}">
         <small>
             This should be the command required to ensure INJECTION_INITIALIZE gets called within the
             application. VnV uses an environment variable to set the VnV Input file internally.  We
@@ -30,8 +30,8 @@
     </div>
 
     <div class="form-group">
-        <label for="specDump">Additional Plugins</label>
-        <textarea name="plugs" type="text" class="form-control" id="plugins" rows="10">{{file.plugs_str()}}</textarea>
+        <label for="plugins-{{uuid}}">Additional Plugins</label>
+        <textarea name="plugs" type="text" class="form-control" id="plugins-{{uuid}}" rows="10">{{file.plugs_str()}}</textarea>
         <small>
             This should be a key value map representing the additional vnv plugins you would
             like to be included when generating the specification. You have to explicitly
