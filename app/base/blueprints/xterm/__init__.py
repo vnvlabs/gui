@@ -44,7 +44,7 @@ def read_and_forward_pty_output(fd, id_):
                 output = os.read(fd, max_read_bytes).decode(
                     errors="ignore"
                 )
-                socketio.emit("pty-output", {"output": output}, namespace="/pty")
+                socketio.emit("pty-output", {"output": output, "id" : id_}, namespace="/pty")
 
 
 def process(xtermid, dir='/'):
@@ -88,6 +88,7 @@ def index1(id_):
 @blueprint.route("/main")
 def wrap():
    return render_template("xterm/wrapper.html")
+
 
 @blueprint.route("/root")
 def index3():
