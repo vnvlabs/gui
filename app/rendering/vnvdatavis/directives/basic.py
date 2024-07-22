@@ -162,8 +162,8 @@ class VnVBrowserDirective(SphinxDirective):
         return self.script_template.format(
             id_=id_,
             uid = uuid.uuid4().hex,
-            height=self.options.get("height", "auto"),
-            width=self.options.get("width", "auto"),
+            height=self.options.get("height", "400px"),
+            width=self.options.get("width", "100%"),
             file=" ".join(self.arguments)
         )
 
