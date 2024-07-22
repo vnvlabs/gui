@@ -24,18 +24,5 @@
 
 <script>
 
-function execute_the_job(fileid) {
-
-  $.get(`/inputfiles/execute/${fileid}`, function(data) {
-      refresh_jobs_list(fileid)
-      update_inputtree_data(true, data, fileid)
-  });
-}
-
-function preview_the_job(fileid) {
-   $.get(`/inputfiles/execute/${fileid}?highlight&dryrun=1`, function(data) {
-           aceView("Executable Script Preview", data,"sh")
-   });
-}
 
 </script>
