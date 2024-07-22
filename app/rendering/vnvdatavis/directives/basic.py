@@ -205,6 +205,59 @@ class VnVCustomCodeDirective(SphinxDirective):
         block = VnVChartNode(html=self.getHtml(target_id))
         return [target, block]
 
+
+class VnVHiveCodeDirective(SphinxDirective):
+    required_arguments = 1
+    optional_arguments = 0
+    file_argument_whitespace = True
+    has_content = False
+    option_spec = {
+        "height": str,
+        "width": str,
+        "block" : str
+    }
+
+    script_template = '''
+    <div class="vnv_code" style="width:{width}; height:{height}; padding:10px; background:black; color:white; margin-left:10px; margin-right:10px;">
+      {content}
+    </div>
+    '''
+
+    def getHtml(self, id_):
+
+
+        return self.script_template.format(
+            id_=id_,
+            uid = uuid.uuid4().hex,
+            height=self.options.get("height", "400px"),
+            width=self.options.get("width", "100%"),
+            content="\n".join(self.content)
+        )
+
+    def run(self):
+
+        filename = os.path.expandvars(" ".join(self.arguments))
+        if os.path.exists(filename):
+            r = []
+            start = False
+            with open(filename) as f:
+                for line in f.readlines():
+                    if start == False:
+                        if line.startswith("[" + self.options.get("block","Mesh") + "]"):
+                            r.append(line)
+                            start = True
+                    else:
+                        if line.startswith("[]"):
+                            return "\n".join(r)
+
+            return "Error: Could not find block"
+
+        target, target_id = get_target_node(self)
+        block = VnVChartNode(html=self.getHtml(target_id))
+        return [target, block]
+
+
+vnv_directives["vnv-hive-code"] = VnVHiveCodeDirective
 vnv_directives["vnv-code"] = VnVCustomCodeDirective
 vnv_directives["vnv-file"] = VnVBrowserDirective
 vnv_directives["vnv-image"] = JsonImageDirective
