@@ -41,7 +41,8 @@ class ParaviewSession:
               return self.port, True
 
           try:
-              requests.get('http://localhost:{port}/index.html')
+              a = requests.get('http://localhost:{port}/index.html')
+              print(a.status_code, " is the code")
               self.isstarted = True
               return self.port, True
 
