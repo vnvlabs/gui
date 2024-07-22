@@ -142,6 +142,38 @@ class JsonImageDirective(SphinxDirective):
         return [target, block]
 
 
+class VnVBrowserDirective(SphinxDirective):
+    required_arguments = 1
+    optional_arguments = 0
+    file_argument_whitespace = True
+    has_content = False
+    option_spec = {
+        "height": str,
+        "width": str,
+    }
+
+    script_template = '''
+    <div class="vnv_image" style="width:{width}; height:{height}; margin-left:auto; margin-right:auto;">
+     <iframe src='/browser?no_head=1&filename={file}'></iframe>   
+    </div>
+    '''
+
+    def getHtml(self, id_, content):
+        return self.script_template.format(
+            id_=id_,
+            uid = uuid.uuid4().hex,
+            height=self.options.get("height", "auto"),
+            width=self.options.get("width", "auto"),
+            file=" ".join(self.arguments)
+        )
+
+    def run(self):
+        j = self.process_condition()
+        target, target_id = get_target_node(self)
+        block = VnVChartNode(html=self.getHtml(target_id,  j))
+        return [target, block]
+
+vnv_directives["vnv-file"] = VnVBrowserDirective
 vnv_directives["vnv-image"] = JsonImageDirective
 vnv_directives["vnv-code"] = JsonCodeBlockDirective
 vnv_directives["vnv-print"] = JmesStringDirective
