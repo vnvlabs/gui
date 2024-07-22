@@ -38,6 +38,7 @@ def render(id_):
     reader = request.args.get("reader")
     filename = request.args.get("filename", "")
     modal = request.args.get("modal", "")
+
     connection = None
     if id_ == 1000 or not HAS_VNV:
         connection = MAIN_CONNECTION()
