@@ -1,4 +1,5 @@
 import json
+import os.path
 import re
 
 import jsonschema
@@ -53,6 +54,7 @@ def render(id_):
                 connection = VnVInputFile.FILES[id_].connection
 
     try:
+        filename = os.path.expandvars(filename)
         render_args = {a[7:]: request.args[a] for a in request.args if a.startswith("render_")}
         file = LocalFile(filename, id_, connection, reader=reader, **render_args)
         return make_response(file.render(modal=modal),200)
