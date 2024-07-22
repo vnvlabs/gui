@@ -168,7 +168,7 @@ class VnVBrowserDirective(SphinxDirective):
         )
 
     def run(self):
-        j = self.process_condition()
+        j = ""
         target, target_id = get_target_node(self)
         block = VnVChartNode(html=self.getHtml(target_id,  j))
         return [target, block]
