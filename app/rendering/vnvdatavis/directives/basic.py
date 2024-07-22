@@ -219,7 +219,9 @@ class VnVHiveCodeDirective(SphinxDirective):
 
     script_template = '''
     <div class="vnv_code" style="width:{width}; height:{height}; padding:10px; background:black; color:white; margin-left:10px; margin-right:10px;">
+      <pre style="color:white">
       {content}
+      </pre>
     </div>
     '''
 
