@@ -7,6 +7,7 @@ EXTBTN = [["format_input_file", "Format"],["shrink_input_file", "Minify"]] %}
 {%endwith%}
 
 <script>
+
 function format_input_file(fileid) {
    s = ace.edit("inputfile-" + fileid)
    try {
