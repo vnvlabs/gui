@@ -35,14 +35,16 @@ blueprint = Blueprint(
 @blueprint.route('/new', methods=["POST"])
 def new():
     try:
-
+        defs = {}
         c = request.form.get("executable")
         if c == "Custom":
             path = request.form["path"]
         else:
             path = os.path.join(VnVInputFile.VNV_PREFIX, vnv_executables.get(c)["filename"])
+            defs = vnv_executables.get(c).get('defs',{})
+            
 
-        file = VnVInputFile.add(request.form["name"], path)
+        file = VnVInputFile.add(request.form["name"], path, defs={})
 
         return make_response(redirect(url_for("base.inputfiles.view", id_=file.id_)),302)
 

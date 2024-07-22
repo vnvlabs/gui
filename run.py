@@ -74,7 +74,13 @@ elif args.profile == "docker":
     MyConfig.PARAVIEW_PORT=5002
     MyConfig.PARAVIEW_SESSION_PORT_START=5003
     MyConfig.PARAVIEW_SESSION_PORT_END = 5100
-    MyConfig.DEFAULT_EXES = {"Moose Example 1" : "/software/moose/examples/ex01_inputfile/ex01-opt"}
+
+    MyConfig.DEFAULT_EXES = {"Moose Example 1" : {
+        "path" : "/software/moose/examples/ex01_inputfile/ex01-opt",
+        "defs" : {
+            "args" : "-i ex01.i"}
+        }
+    }
 
 
 MyConfig.ADDRESS = args.address
@@ -94,7 +100,7 @@ if __name__ == "__main__":
 
     for k,v in app_config.DEFAULT_EXES.items():
         if os.path.exists(v):
-            VnVInputFile.add(k,v)
+            VnVInputFile.add(k,v["path"],defs=v["defs"])
 
     for k, v in app_config.DEFAULT_REPORTS.items():
         load_default_file(k,v)

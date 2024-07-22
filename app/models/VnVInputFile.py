@@ -129,7 +129,7 @@ class VnVInputFile:
             print("HEy YO ", e)
             return {}
 
-    def __init__(self, name, path=None):
+    def __init__(self, name, path=None, defs={}):
 
         self.name = name
         self.displayName = name
@@ -153,21 +153,22 @@ class VnVInputFile:
         self.slave_fd = None
         self.extra = {}
         self.updateSpecThread = None
-
+        self.defs = defs
+        
         jsoninput = {
-            "runTests": True,
+            "runTests": defs.get("runTests",True),
             "outputEngine": {
                 "file": {
-                    "filename": "outputs"
+                    "filename": defs.get("ofilename","outputs")
                 }
             },
             "injectionPoints": {
-                "runAll": True,
-                "runAll_tests": {
+                "runAll": defs.get("runAll",True),
+                "runAll_tests": defs.get("runAll_tests",{
                     "VNV:cputime": {}
-                }
+                })
             },
-            "execution" : self.defaultExecution()
+            "execution" : self.defaultExecution(defs)
         }
 
         self.value = json.dumps(jsoninput, indent=4)
@@ -477,7 +478,7 @@ class VnVInputFile:
 
         return VnVInputFile.EXECUTION_SCHEMA
 
-    def defaultExecution(self):
+    def defaultExecution(self, defs={}):
         return {
             "vnv": True,
             "shell": "bash",
@@ -487,7 +488,7 @@ class VnVInputFile:
             "vnv-input-file": "GUI",
             "input-staging": [],
             "output-staging": [],
-            "command-line": "${application}",
+            "command-line": "${application} " + defs.get('args','') ,
             "name": self.name,
             "active_overrides": [],
             "overrides": {}
@@ -590,7 +591,7 @@ class VnVInputFile:
     @staticmethod
     def add(name, path=None, defs={}, plugs={}):
 
-        f = VnVInputFile(name, path=path)
+        f = VnVInputFile(name, path=path, defs=defs)
         VnVInputFile.FILES[f.id_] = f
 
         return f
