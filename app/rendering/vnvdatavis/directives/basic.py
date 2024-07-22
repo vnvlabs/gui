@@ -231,10 +231,10 @@ class VnVHiveCodeDirective(SphinxDirective):
             uid = uuid.uuid4().hex,
             height=self.options.get("height", "400px"),
             width=self.options.get("width", "100%"),
-            content="\n".join(self.content)
+            content=self.getContent()
         )
 
-    def run(self):
+    def getContent(self):
 
         filename = os.path.expandvars(" ".join(self.arguments))
         if os.path.exists(filename):
@@ -252,6 +252,7 @@ class VnVHiveCodeDirective(SphinxDirective):
 
             return "Error: Could not find block"
 
+    def run(self):
         target, target_id = get_target_node(self)
         block = VnVChartNode(html=self.getHtml(target_id))
         return [target, block]
