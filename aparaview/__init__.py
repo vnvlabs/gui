@@ -6,6 +6,7 @@ import time
 import urllib.request
 from threading import Lock
 
+import requests
 from flask import current_app
 
 # URL of the file to be downloaded
@@ -35,11 +36,18 @@ class ParaviewSession:
     def wait_till_launched(self):
 
         while not self.isdone():
+
           if self.isstarted:
               return self.port, True
-          time.sleep(5)
-          self.isstarted = True
-          return self.port, True
+
+          try:
+              requests.get('http://localhost:{port}/index.html')
+              self.isstarted = True
+              return self.port, True
+
+          except Exception as e:
+              pass
+              time.sleep(3)
 
 
 # Function to download the file
@@ -115,9 +123,6 @@ def start_paraview_server(filename):
         cmd = [
            f"{current_app.config['PARAVIEW_DIR']}/bin/pvpython", "-u", "-m", "paraview.apps.visualizer", "--host", "0.0.0.0", "--port", str(port), "--data", '/', "--timeout", "660000"
         ]
-
-
-
 
         if filename is not None and os.path.exists(filename):
             f = os.path.abspath(filename)
