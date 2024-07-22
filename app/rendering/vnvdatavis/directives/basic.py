@@ -179,7 +179,7 @@ class VnVCustomCodeDirective(SphinxDirective):
     required_arguments = 1
     optional_arguments = 0
     file_argument_whitespace = True
-    has_content = False
+    has_content = True
     option_spec = {
         "height": str,
         "width": str,
