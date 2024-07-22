@@ -99,7 +99,7 @@ if __name__ == "__main__":
     app = create_app(app_config)
 
     for k,v in app_config.DEFAULT_EXES.items():
-        if os.path.exists(v):
+        if os.path.exists(v["path"]):
             VnVInputFile.add(k,v["path"],defs=v["defs"])
 
     for k, v in app_config.DEFAULT_REPORTS.items():
