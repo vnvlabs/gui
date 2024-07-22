@@ -248,7 +248,7 @@ def prov(id_):
 def browser(id_):
     try:
         with VnVFile.find(id_) as file:
-            return render_template("files/file_browser.html", file=file)
+            return render_template("files/file_browser.html", file=file, nobread=False)
     except Exception as e:
         print(e)
         return render_error(501, str(e))

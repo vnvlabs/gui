@@ -3,7 +3,9 @@
     <div id="inline-file-browser">
         {%with file = file.browse() %}
         {%with modal = "inline-file-browser" %}
+        {%with nobread = False %}
         {%include 'browser/browser.html' %}
+        {%endwith%}
         {%endwith%}
         {%endwith%}
     </div>

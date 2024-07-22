@@ -8,6 +8,8 @@
       container: "Browser buttons"
         holds "Configure" button, "Upload" button, and the path to the build directory (which is a ul)
      -->
+
+    {% if not nobread %}
     <div id="browser-buttons" style="display:flex; position:relative; align-items:center;margin-bottom:5px; ">
 
         <!--
@@ -15,6 +17,7 @@
             list of links to navigate to the build directory path
             the "home" directory has an icon that looks like a house
          -->
+
         <ul class="breadcrumb" style="margin-left:-15px; margin-bottom:-5px; flex:1">
             <li class="breadcrumb-item">
                 <a onclick='show_file_reader({{file.getVnVFileId()}},"{{file.root()}}","directory","{{modal}}")'><i class="feather icon-home" style="cursor:pointer"></i></a>
@@ -51,7 +54,7 @@
         </button>
         {% endif %}
     </div>
-
+    {% endif %}
 
     {% if error %}
     <div class="alert alert-danger" role="alert">

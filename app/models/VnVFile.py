@@ -1211,7 +1211,7 @@ class VnVFile:
         elif id == -208:
             return render_template("files/data.html", file=self)
         elif id == -209:
-            return render_template("files/file_browser.html", file=self)
+            return render_template("files/file_browser.html", file=self, nobread=False)
         elif id == -2091:
             return render_template("files/xterm.html", file=self)
         elif id == -220:

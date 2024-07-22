@@ -86,6 +86,7 @@ def reader(id_):
         filename = request.args.get("filename", "")
         modal = request.args.get("modal", "")
         connection = None
+        nobread = "nobread" in request.args
         if id_ == 1000 or not HAS_VNV:
             connection = MAIN_CONNECTION()
 
@@ -121,13 +122,13 @@ def reader(id_):
             filename = os.path.expandvars(filename)
             if connection.exists(filename):
                 file = LocalFile(filename, id_, connection, reader=reader, **render_args)
-                return render_template("browser/browser.html", file=file, modal=modal)
+                return render_template("browser/browser.html", file=file, modal=modal, nobread=nobread)
             return render_error(501, "File Does not exist: " + filename)
 
         except Exception as e:
             return render_template("browser/browser.html",
                                    file=LocalFile(connection.home(), id_, connection, **render_args), error=str(e),
-                                   modal=modal)
+                                   modal=modal, nobread=nobread)
 
     except Exception as e:
         return render_error(501, "Error Loading File:" + str(e))

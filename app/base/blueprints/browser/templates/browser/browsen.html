@@ -15,7 +15,7 @@
 
 <script>
 $(document).ready(function(){
-    $.get("/browser/reader/1000?modal=browser&filename=" + encodeURIComponent('{{filename}}'), function(data) {
+    $.get("/browser/reader/1000?nobread=1&modal=browser&filename=" + encodeURIComponent('{{filename}}'), function(data) {
         $('#browser').html(data)
     })
 })
