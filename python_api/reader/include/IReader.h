@@ -712,7 +712,6 @@ template <class DB> class StreamParserTemplate {
             p->setinternal(a);
           } else {
             p->getTests()->add(child);
-            std::cout << "Adding test to tests" << p->getTests()->size() << std::endl;
             p->getTestByUID(0);
           }
 

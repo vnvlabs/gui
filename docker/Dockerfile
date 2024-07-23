@@ -53,7 +53,8 @@ RUN echo "sdfsf" && cd gui && git pull
 ENV PARAVIEW_DIR=/gui/scripts/paraview
 ENV PVPYTHON=${PARAVIEW_DIR}/bin/pvpython
 
-RUN echo "2" && cd gui && git pull
+RUN echo "4" && cd gui && git pull
+RUN cd gui/python_api && mkdir -p build && cd build && cmake .. && make -j
 
 WORKDIR ./gui
 ENTRYPOINT ["/gui/virt/bin/python","run.py","--profile","docker"]

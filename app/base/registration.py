@@ -29,7 +29,8 @@ def load_registrations():
                 vnv_executables[name] = {
                     "filename": full_filename,
                     "description": value.get("description", "No Description Available"),
-                    "package": name
+                    "package": name,
+                    "defs" : value.get("defs",{})
                 }
 
             for name, value in reg.get("plugins",{}).items():

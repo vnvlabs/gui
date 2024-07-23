@@ -172,6 +172,14 @@ class CustomVnVFunctions(functions.Functions):
 
 
     @functions.signature({"types": []})
+    def _func_rand_nums(self, s):
+        import random
+        return random.choices(range(s*s), k=s)
+        # Given a object return it as json encoded string
+        return json.dumps(s, cls=VnVJsonEncoder)
+
+
+    @functions.signature({"types": []})
     def _func_iota(self,s):
         return [ i for i in range(0, len(s))]
 

@@ -164,9 +164,7 @@ class VnVInputFile:
             },
             "injectionPoints": {
                 "runAll": defs.get("runAll",True),
-                "runAll_tests": defs.get("runAll_tests",{
-                    "VNV:cputime": {}
-                })
+                "runAll_tests": defs.get("runAll_tests",{})
             },
             "execution" : self.defaultExecution(defs)
         }

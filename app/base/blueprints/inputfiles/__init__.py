@@ -44,7 +44,7 @@ def new():
             defs = vnv_executables.get(c).get('defs',{})
             
 
-        file = VnVInputFile.add(request.form["name"], path, defs={})
+        file = VnVInputFile.add(request.form["name"], path, defs=defs)
 
         return make_response(redirect(url_for("base.inputfiles.view", id_=file.id_)),302)
 
