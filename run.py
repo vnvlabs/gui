@@ -45,10 +45,10 @@ class MyConfig:
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--profile", help="profile for debugging", default="default")
-
 parser.add_argument("--address", help="host address", default='0.0.0.0')
 parser.add_argument("--secure", type=bool, help="host address is https", default=False)
 parser.add_argument("--nginx", type=bool, help="is this behind the nginx server", default=False)
+parser.add_argument("--load", type=bool, help="report to load", default=False)
 
 
 
@@ -75,11 +75,9 @@ elif args.profile == "docker":
     MyConfig.PARAVIEW_SESSION_PORT_START=5003
     MyConfig.PARAVIEW_SESSION_PORT_END = 5100
 
-    MyConfig.DEFAULT_EXES = {"Moose Example 1" : {
-        "path" : "/software/moose/examples/ex01_inputfile/ex01-opt",
-        "defs" : {
-            "args" : "-i ex01.i"}
-        }
+if args.load:
+    MyConfig.DEFAULT_EXES["Report 1"] = {
+        "path" : args.load
     }
 
 
